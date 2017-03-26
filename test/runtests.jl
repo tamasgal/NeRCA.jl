@@ -1,5 +1,8 @@
 using KM3NeT
 using Base.Test
 
-# write your own tests here
+tic()
+
 @test 2 == 2
+
+toc()
