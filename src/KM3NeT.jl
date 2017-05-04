@@ -1,13 +1,15 @@
 module KM3NeT
 
 
-immutable RawHit
-    dom_id::UInt
-    time::Int
-    channel_id::UInt8
-    tot::UInt8
+abstract Hit
+
+immutable TimesliceHit <: Hit
+    channel_id::Int8
+    time::Int32
+    tot::Int16
 end
 
+rows(x) = (x[i, :] for i in indices(x,1))
 
 
 end # module
