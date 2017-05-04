@@ -1,5 +1,7 @@
 module KM3NeT
 
+export TimesliceHit, rows
+
 
 abstract Hit
 
