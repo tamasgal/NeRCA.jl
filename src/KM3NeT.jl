@@ -15,7 +15,7 @@ immutable RawHit <: Hit
 end
 
 RawHit(hit::HDF5.HDF5Compound{15}) = begin
-    KM3NeT.RawHit(hit.data[1], hit.data[12], hit.data[13], )
+    KM3NeT.RawHit(hit.data[1], hit.data[12], hit.data[13], hit.data[5])
 end
 
 immutable TimesliceHit <: Hit
