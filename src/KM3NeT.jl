@@ -2,9 +2,40 @@ module KM3NeT
 
 using HDF5
 
-export TimesliceHit, rows
+export RawHit, TimesliceHit, rows
 
 
+# Basic types
+immutable Position{T<:AbstractFloat}
+    x::T
+    y::T
+    z::T
+end
+
+immutable Direction{T<:AbstractFloat}
+    x::T
+    y::T
+    z::T
+end
+
+
+# Hardware
+immutable PMT
+    channel_id::UInt8
+    pos::Position
+    dir::Direction
+end
+
+
+immutable DOM
+    id::UInt32
+    floor::UInt8
+    line::UInt8
+    pmts::Array{PMT}
+end
+
+
+# Signal
 abstract Hit
 
 immutable RawHit <: Hit
@@ -15,7 +46,7 @@ immutable RawHit <: Hit
 end
 
 RawHit(hit::HDF5.HDF5Compound{15}) = begin
-    KM3NeT.RawHit(hit.data[1], hit.data[12], hit.data[13], hit.data[5])
+    RawHit(hit.data[1], hit.data[12], hit.data[13], hit.data[5])
 end
 
 immutable TimesliceHit <: Hit
@@ -31,6 +62,7 @@ Base.show(io::IO, h::RawHit) = begin
 end
 
 
+# Utility
 rows(x) = (x[i, :] for i in indices(x,1))
 
 
