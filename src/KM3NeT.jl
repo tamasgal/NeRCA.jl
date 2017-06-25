@@ -2,7 +2,7 @@ module KM3NeT
 
 using HDF5
 
-export RawHit, TimesliceHit, rows, read_hits
+export Track, RawHit, TimesliceHit, rows, read_hits
 
 
 # Basic types
@@ -16,6 +16,25 @@ struct Direction{T<:AbstractFloat}
     x::T
     y::T
     z::T
+end
+
+# MC
+struct Track
+    bjorken_y::Float32
+    dir::Direction
+    pos::Position
+    E::Float64
+    interaction_channel::UInt8
+    is_cc::Bool
+    length::Float64
+    t::Int32
+    particle_type::Int32
+end
+
+Track(track::HDF5.HDF5Compound{15}) = begin
+    d = track.data
+    Track(d[1], Direction(d[2:4]...), Position(d[10:12]...),
+          d[5], d[7], d[8], d[9], d[13], d[14])
 end
 
 
@@ -41,7 +60,7 @@ abstract type Hit end
 struct RawHit <: Hit
     channel_id::UInt8
     dom_id::UInt32
-    time::Int32
+    t::Int32
     tot::UInt8
     triggered::Bool
 end
@@ -58,7 +77,7 @@ end
 
 
 Base.show(io::IO, h::RawHit) = begin
-    print(io, "$(typeof(h)): channel_id($(h.channel_id)), time($(h.time)), " *
+    print(io, "$(typeof(h)): channel_id($(h.channel_id)), time($(h.t)), " *
           "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
 end
 
@@ -77,6 +96,21 @@ function read_hits(filename::AbstractString,
         [RawHit.(read(file, "hits/$i")) for i ∈ event_ids]
     end
     return data
+end
+
+function read_tracks(filename::AbstractString)
+    f = h5open(filename, "r")
+    read(f, "mc_tracks")
+    tracks = Dict{Int, Array{Track, 1}}()
+    for d in data
+        event_id = d.data[15]
+        if !haskey(tracks, event_id)
+            tracks[event_id] = Array{Track, 1}()
+        end
+        push!(tracks[event_id], Track(d))
+    end
+    close(f)
+    return tracks
 end
 
 
