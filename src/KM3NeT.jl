@@ -92,16 +92,19 @@ end
 
 function read_hits(filename::AbstractString,
                    event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
-    data = h5open(filename, "r") do file
-        [RawHit.(read(file, "hits/$i")) for i ∈ event_ids]
+    hits = Dict{Int, Array{RawHit, 1}}()
+    f = h5open(filename, "r")
+    for event_id ∈ event_ids
+        hits[event_id] = RawHit.(read(f, "hits/$event_id"))
     end
-    return data
+    close(f)
+    return hits
 end
 
 function read_tracks(filename::AbstractString)
-    f = h5open(filename, "r")
-    read(f, "mc_tracks")
     tracks = Dict{Int, Array{Track, 1}}()
+    f = h5open(filename, "r")
+    data = read(f, "mc_tracks")
     for d in data
         event_id = d.data[15]
         if !haskey(tracks, event_id)
