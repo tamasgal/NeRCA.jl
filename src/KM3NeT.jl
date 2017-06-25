@@ -2,7 +2,7 @@ module KM3NeT
 
 using HDF5
 
-export RawHit, TimesliceHit, rows
+export RawHit, TimesliceHit, rows, read_hits
 
 
 # Basic types
@@ -40,13 +40,14 @@ abstract Hit
 
 immutable RawHit <: Hit
     channel_id::UInt8
+    dom_id::UInt32
     time::Int32
     tot::UInt8
-    dom_id::UInt32
+    triggered::Bool
 end
 
-RawHit(hit::HDF5.HDF5Compound{15}) = begin
-    RawHit(hit.data[1], hit.data[12], hit.data[13], hit.data[5])
+RawHit(hit::HDF5.HDF5Compound{5}) = begin
+    RawHit(hit.data...)
 end
 
 immutable TimesliceHit <: Hit
@@ -58,7 +59,16 @@ end
 
 Base.show(io::IO, h::RawHit) = begin
     print(io, "$(typeof(h)): channel_id($(h.channel_id)), time($(h.time)), " *
-              "tot($(h.tot)), dom_id($(h.dom_id))")
+          "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
+end
+
+
+# I/O
+function read_hits(filename::AbstractString, event_id::Integer)
+    data = h5open(filename, "r") do file
+        read(file, "hits/$event_id")
+    end
+    return RawHit.(data)
 end
 
 
