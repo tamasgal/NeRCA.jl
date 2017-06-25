@@ -36,7 +36,7 @@ end
 
 
 # Signal
-abstract Hit
+abstract type Hit
 
 immutable RawHit <: Hit
     channel_id::UInt8
@@ -69,6 +69,14 @@ function read_hits(filename::AbstractString, event_id::Integer)
         read(file, "hits/$event_id")
     end
     return RawHit.(data)
+end
+
+function read_hits(filename::AbstractString,
+                   event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
+    data = h5open(filename, "r") do file
+        [RawHit.(read(file, "hits/$i")) for i ∈ event_ids]
+    end
+    return data
 end
 
 
