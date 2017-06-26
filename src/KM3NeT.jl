@@ -72,6 +72,17 @@ struct RawHit <: Hit
     triggered::Bool
 end
 
+struct CalibratedHit <: Hit
+    channel_id::UInt8
+    dom_id::UInt32
+    t::Int32
+    tot::UInt8
+    triggered::Bool
+    pos::Position
+    dir::Direction
+    t0::Int32
+end
+
 RawHit(hit::HDF5.HDF5Compound{5}) = begin
     RawHit(hit.data...)
 end
@@ -152,13 +163,30 @@ function read_calibration(filename::AbstractString)
             x, y, z, dx, dy, dz = map(x->parse(Float64, x), l[2:7])
             t0 = parse(Int,first(l[8]))
             push!(pos[dom_id], Position(x, y, z))
-            push!(dir[dom_id], Direction(x, y, z))
+            push!(dir[dom_id], Direction(dx, dy, dz))
             push!(t0s[dom_id], t0)
         end
         idx += n_pmts + 1
     end
 
     Calibration(det_id, pos, dir, t0s)
+end
+
+function calibrate(hits::Vector{RawHit}, calibration::Calibration)
+    calibrated_hits = Vector{CalibratedHit}()
+    for hit in hits
+        dom_id = hit.dom_id
+        t = hit.t
+        channel_id = hit.channel_id
+        triggered = hit.triggered
+        tot = hit.tot
+        pos = calibration.pos[dom_id][channel_id+1]
+        dir = calibration.dir[dom_id][channel_id+1]
+        t0 = calibration.t0[dom_id][channel_id+1]
+        c_hit = CalibratedHit(channel_id, dom_id, t, tot, triggered, pos, dir, t0)
+        push!(calibrated_hits, c_hit)
+    end
+    calibrated_hits
 end
 
 
