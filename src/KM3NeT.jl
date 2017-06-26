@@ -2,7 +2,7 @@ module KM3NeT
 
 using HDF5
 
-export Track, RawHit, TimesliceHit, rows, read_hits
+export Track, RawHit, TimesliceHit, rows, read_hits, Position, Direction
 
 
 # Basic types
@@ -51,6 +51,13 @@ struct DOM
     floor::UInt8
     du::UInt8
     pmts::Array{PMT}
+end
+
+struct Calibration
+    det_id::Int32
+    pos::Dict{Int32,Vector{KM3NeT.Position}}
+    dir::Dict{Int32,Vector{KM3NeT.Direction}}
+    t0::Dict{Int32,Vector{Integer}}
 end
 
 
@@ -114,6 +121,44 @@ function read_tracks(filename::AbstractString)
     end
     close(f)
     return tracks
+end
+
+function read_calibration(filename::AbstractString)
+    lines = readlines(detx_v2_filename)
+    
+    if 'v' ∈ first(lines)
+        det_id, version = map(x->parse(Int,x), split(first(lines), 'v'))
+        n_doms = parse(Int, lines[4])
+        idx = 5
+    else
+        det_id, n_doms = map(x->parse(Int,x), split(first(lines)))
+        version = 1
+        idx = 2
+    end
+
+    pos = Dict{Int32,Vector{KM3NeT.Position}}()
+    dir = Dict{Int32,Vector{KM3NeT.Direction}}()
+    t0s = Dict{Int32,Vector{Int32}}()
+
+    for dom ∈ 1:n_doms
+        dom_id, du, floor, n_pmts = map(x->parse(Int,x), split(lines[idx]))
+        pos[dom_id] = Vector{KM3NeT.Position}()
+        dir[dom_id] = Vector{KM3NeT.Direction}()
+        t0s[dom_id] = Vector{Int32}()
+
+        for pmt in 1:n_pmts
+            l = split(lines[idx+pmt])
+            pmt_id = parse(Int,first(l))
+            x, y, z, dx, dy, dz = map(x->parse(Float64, x), l[2:7])
+            t0 = parse(Int,first(l[8]))
+            push!(pos[dom_id], Position(x, y, z))
+            push!(dir[dom_id], Direction(x, y, z))
+            push!(t0s[dom_id], t0)
+        end
+        idx += n_pmts + 1
+    end
+
+    Calibration(det_id, pos, dir, t0s)
 end
 
 
