@@ -37,6 +37,27 @@ Track(track::HDF5.HDF5Compound{15}) = begin
           d[5], d[7], d[8], d[9], d[13], d[14])
 end
 
+struct EventInfo
+    det_id::Int32
+    frame_index::UInt32
+    livetime_sec::UInt64
+    mc_id::Int32
+    mc_t::Float64
+    n_events_gen::UInt32
+    n_files_gen::UInt32
+    overlays::UInt32
+    trigger_counter::UInt64
+    trigger_mask::UInt64
+    utc_nanoseconds::UInt64
+    utc_seconds::UInt64
+    weight_w1::Float64
+    weight_w2::Float64
+    weight_w3::Float64
+    event_id::UInt32
+end
+
+EventInfo(event_info::HDF5.HDF5Compound{16}) = EventInfo(event_info.data...)
+
 
 # Hardware
 struct PMT
@@ -136,7 +157,7 @@ end
 
 function read_calibration(filename::AbstractString)
     lines = readlines(filename)
-    
+
     if 'v' ∈ first(lines)
         det_id, version = map(x->parse(Int,x), split(first(lines), 'v'))
         n_doms = parse(Int, lines[4])
@@ -187,6 +208,19 @@ function calibrate(hits::Vector{RawHit}, calibration::Calibration)
         push!(calibrated_hits, c_hit)
     end
     calibrated_hits
+end
+
+
+function read_event_info(filename::AbstractString)
+    event_info = Dict{Int32,EventInfo}()
+    entries = h5open(filename) do file
+        read(file, "event_info")
+    end
+    for entry in entries
+        e = EventInfo(entry.data...)
+        event_info[e.event_id] = e
+    end
+    event_info
 end
 
 
