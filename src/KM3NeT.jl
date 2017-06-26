@@ -49,7 +49,7 @@ end
 struct DOM
     id::UInt32
     floor::UInt8
-    line::UInt8
+    du::UInt8
     pmts::Array{PMT}
 end
 
