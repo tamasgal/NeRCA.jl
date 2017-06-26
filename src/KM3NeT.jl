@@ -124,7 +124,7 @@ function read_tracks(filename::AbstractString)
 end
 
 function read_calibration(filename::AbstractString)
-    lines = readlines(detx_v2_filename)
+    lines = readlines(filename)
     
     if 'v' ∈ first(lines)
         det_id, version = map(x->parse(Int,x), split(first(lines), 'v'))
