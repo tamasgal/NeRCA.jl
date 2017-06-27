@@ -1,22 +1,37 @@
+__precompile__()
+
 module KM3NeT
 
+using StaticArrays
 using HDF5
 
-export Track, RawHit, TimesliceHit, rows, read_hits, Position, Direction
+import Base:
+    +, -, *,
+    isless,
+    angle,
+    show
+
+export
+    Position, Direction,
+    Track, CalibratedHit, RawHit, TimesliceHit,
+    read_hits, read_tracks, read_calibration, read_event_info,
+    rows
 
 
 # Basic types
-struct Position{T<:AbstractFloat}
-    x::T
-    y::T
-    z::T
+struct Position <: FieldVector{3, Float64}
+    x::Float64
+    y::Float64
+    z::Float64
 end
 
-struct Direction{T<:AbstractFloat}
-    x::T
-    y::T
-    z::T
+struct Direction <: FieldVector{3, Float64}
+    x::Float64
+    y::Float64
+    z::Float64
 end
+
+
 
 # MC
 struct Track
@@ -108,15 +123,17 @@ RawHit(hit::HDF5.HDF5Compound{5}) = begin
     RawHit(hit.data...)
 end
 
+isless(lhs::Hit, rhs::Hit) = lhs.t < rhs.t
+
 struct TimesliceHit <: Hit
     channel_id::Int8
-    time::Int32
+    t::Int32
     tot::Int16
 end
 
 
 Base.show(io::IO, h::RawHit) = begin
-    print(io, "$(typeof(h)): channel_id($(h.channel_id)), time($(h.t)), " *
+    print(io, "$(typeof(h)): channel_id($(h.channel_id)), t($(h.t)), " *
           "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
 end
 
@@ -227,5 +244,11 @@ end
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
 
+
+# Math
+angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
+angle(a::T, b::T) where {T<:Union{Hit, PMT, Track}} = angle(a.dir, b.dir)
+angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = angle(a, b.dir)
+angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = angle(a.dir, b)
 
 end # module
