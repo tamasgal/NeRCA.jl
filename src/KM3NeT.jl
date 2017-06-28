@@ -14,8 +14,9 @@ import Base:
 export
     Position, Direction,
     Track, CalibratedHit, RawHit, TimesliceHit,
+    calibrate,
     read_hits, read_tracks, read_calibration, read_event_info,
-    rows
+    svdfit, matrix, rows
 
 
 # Basic types
@@ -250,5 +251,28 @@ angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
 angle(a::T, b::T) where {T<:Union{Hit, PMT, Track}} = angle(a.dir, b.dir)
 angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = angle(a, b.dir)
 angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = angle(a.dir, b)
+
+function matrix(v::Vector)
+    m = length(v)
+    n = length(v[1])
+
+    M = zeros(m, n)
+    i = 1
+    for j ∈ 1:n
+        for k ∈ 1:m
+            M[i] = v[k][j]
+            i += 1
+        end
+    end
+    M
+end
+
+
+function svdfit(M)
+    com = mean(M, 1)
+    subtr = M .- com
+    U, S, V = svd(subtr)
+    V[:, 1]
+end
 
 end # module
