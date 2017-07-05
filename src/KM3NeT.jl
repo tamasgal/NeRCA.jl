@@ -140,23 +140,50 @@ end
 
 
 # I/O
-function read_hits(filename::AbstractString, event_id::Integer)
-    data = h5open(filename, "r") do file
-        read(file, "hits/$event_id")
+function read_hits(fobj::HDF5.HDF5File, event_id::Int, idx::Int, n_hits::Int)
+    hits = Array{RawHit, 1}()
+    channel_id = fobj["hits/channel_id"][idx+1:idx+n_hits]
+    dom_id = fobj["hits/dom_id"][idx+1:idx+n_hits]
+    t = fobj["hits/time"][idx+1:idx+n_hits]
+    tot = fobj["hits/tot"][idx+1:idx+n_hits]
+    triggered = fobj["hits/triggered"][idx+1:idx+n_hits]
+    for i ∈ 1:n_hits
+        hit =  RawHit(channel_id[i], dom_id[i], t[i], tot[i], triggered[1])
+        push!(hits, hit)
     end
-    return RawHit.(data)
+    return hits
 end
 
-function read_hits(filename::AbstractString,
-                   event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
-    hits = Dict{Int, Array{RawHit, 1}}()
+
+function read_hits(filename::AbstractString, event_id::Int)
     f = h5open(filename, "r")
-    for event_id ∈ event_ids
-        hits[event_id] = RawHit.(read(f, "hits/$event_id"))
-    end
+    hit_idc = read(f, "_hit_indices")
+    hit_indices = [i.data for i ∈ hit_idc]::Array{Tuple{Int64,Int64},1}
+    idx = hit_indices[event_id+1][1]
+    n_hits = hit_indices[event_id+1][2]
+    hits = read_hits(f, event_id, idx, n_hits)::Vector{RawHit}
     close(f)
     return hits
 end
+
+
+function read_hits(filename::AbstractString,
+                    event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
+    f = h5open(filename, "r")
+    hit_idc = read(f, "_hit_indices")
+    hit_indices = [i.data for i ∈ hit_idc]::Array{Tuple{Int64,Int64},1}
+
+    hits_collection = Dict{Int, Array{RawHit, 1}}()
+    for event_id ∈ event_ids
+        idx = hit_indices[event_id+1][1]
+        n_hits = hit_indices[event_id+1][2]
+        hits = read_hits(f, event_id, idx, n_hits)::Vector{RawHit}
+        hits_collection[event_id] = hits
+    end
+    close(f)
+    return hits_collection
+end
+
 
 function read_tracks(filename::AbstractString)
     tracks = Dict{Int, Array{Track, 1}}()
