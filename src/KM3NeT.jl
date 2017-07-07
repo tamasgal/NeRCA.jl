@@ -183,6 +183,13 @@ function read_hits(filename::AbstractString,
     return hits_collection
 end
 
+function read_indices(filename::AbstractString, from::AbstractString)
+    f = h5open(filename, "r")
+    indices = read_indices(f, from)
+    close(f)
+    return indices
+end
+
 function read_indices(fobj::HDF5.HDF5File, from::AbstractString)
     idc = read(fobj, from * "/_indices")
     indices = [i.data for i ∈ idc]::Array{Tuple{Int64,Int64},1}
