@@ -59,8 +59,8 @@ struct EventInfo
     livetime_sec::UInt64
     mc_id::Int32
     mc_t::Float64
-    n_events_gen::UInt32
-    n_files_gen::UInt32
+    n_events_gen::UInt64
+    n_files_gen::UInt64
     overlays::UInt32
     trigger_counter::UInt64
     trigger_mask::UInt64
@@ -69,10 +69,11 @@ struct EventInfo
     weight_w1::Float64
     weight_w2::Float64
     weight_w3::Float64
+    run_id::UInt32
     event_id::UInt32
 end
 
-EventInfo(event_info::HDF5.HDF5Compound{16}) = EventInfo(event_info.data...)
+EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
 
 
 # Hardware
@@ -157,8 +158,7 @@ end
 
 function read_hits(filename::AbstractString, event_id::Int)
     f = h5open(filename, "r")
-    hit_idc = read(f, "_hit_indices")
-    hit_indices = [i.data for i ∈ hit_idc]::Array{Tuple{Int64,Int64},1}
+    hit_indices = read_indices(f, "/hits")
     idx = hit_indices[event_id+1][1]
     n_hits = hit_indices[event_id+1][2]
     hits = read_hits(f, event_id, idx, n_hits)::Vector{RawHit}
@@ -170,8 +170,7 @@ end
 function read_hits(filename::AbstractString,
                     event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
     f = h5open(filename, "r")
-    hit_idc = read(f, "_hit_indices")
-    hit_indices = [i.data for i ∈ hit_idc]::Array{Tuple{Int64,Int64},1}
+    hit_indices = read_indices(f, "/hits")
 
     hits_collection = Dict{Int, Array{RawHit, 1}}()
     for event_id ∈ event_ids
@@ -182,6 +181,12 @@ function read_hits(filename::AbstractString,
     end
     close(f)
     return hits_collection
+end
+
+function read_indices(fobj::HDF5.HDF5File, from::AbstractString)
+    idc = read(fobj, from * "/_indices")
+    indices = [i.data for i ∈ idc]::Array{Tuple{Int64,Int64},1}
+    return indices
 end
 
 
