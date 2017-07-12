@@ -26,12 +26,23 @@ struct Position <: FieldVector{3, Float64}
     z::Float64
 end
 
+# Base.*(x::Vector3D, y::Vector3D ) = Vector3D(SVector(y)* SVector(x))
+
 struct Direction <: FieldVector{3, Float64}
     x::Float64
     y::Float64
     z::Float64
 end
 
+Base.show(io::IO, p::Position) = begin
+    s = @sprintf "%.1f %.1f %.1f" p.x p.y p.z
+    print(io, s)
+end
+
+Base.show(io::IO, d::Direction) = begin
+    s = @sprintf "%.1f %.1f %.1f" d.x d.y d.z
+    print(io, s)
+end
 
 
 # MC
@@ -51,6 +62,13 @@ Track(track::HDF5.HDF5Compound{15}) = begin
     d = track.data
     Track(d[1], Direction(d[2:4]...), Position(d[10:12]...),
           d[5], d[7], d[8], d[9], d[13], d[14])
+end
+
+Base.show(io::IO, t::Track) = begin
+    E = @sprintf "%0.1f" t.E
+    bjorken_y = @sprintf "%0.2f" t.bjorken_y
+    print(io, "Track: bjorken_y($(bjorken_y)), t($(t.t)), " *
+          "pos($(t.pos)), dir($(t.dir)), E($(E)), type($(t.particle_type))")
 end
 
 struct EventInfo
