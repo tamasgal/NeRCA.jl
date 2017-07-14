@@ -139,17 +139,18 @@ struct CalibratedHit <: Hit
     t0::Int32
 end
 
+struct TimesliceHit <: Hit
+    channel_id::Int8
+    t::Int32
+    tot::Int16
+end
+
 RawHit(hit::HDF5.HDF5Compound{5}) = begin
     RawHit(hit.data...)
 end
 
 isless(lhs::Hit, rhs::Hit) = lhs.t < rhs.t
 
-struct TimesliceHit <: Hit
-    channel_id::Int8
-    t::Int32
-    tot::Int16
-end
 
 
 Base.show(io::IO, h::RawHit) = begin
@@ -331,5 +332,6 @@ function svdfit(M)
     U, S, V = svd(subtr)
     V[:, 1]
 end
+
 
 end # module
