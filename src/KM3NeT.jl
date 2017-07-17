@@ -10,7 +10,7 @@ import Base:
     isless,
     angle,
     show,
-    start, next, done
+    start, next, done, eltype
 
 export
     Position, Direction,
@@ -45,41 +45,27 @@ Base.show(io::IO, d::Direction) = begin
     print(io, s)
 end
 
-# Event Loop
-struct Event
-    id::Integer
-    info::EventInfo
-    hits::Vector{RawHit}
-    mc_hits::Vector{McHit}
-    mc_tracks::Vector{Track}
+struct EventInfo
+    det_id::Int32
+    frame_index::UInt32
+    livetime_sec::UInt64
+    mc_id::Int32
+    mc_t::Float64
+    n_events_gen::UInt64
+    n_files_gen::UInt64
+    overlays::UInt32
+    trigger_counter::UInt64
+    trigger_mask::UInt64
+    utc_nanoseconds::UInt64
+    utc_seconds::UInt64
+    weight_w1::Float64
+    weight_w2::Float64
+    weight_w3::Float64
+    run_id::UInt32
+    event_id::UInt32
 end
 
-struct EventReader
-    filename::AbstractString
-end 
-
-start(e::EventReader) = begin
-    fobj = h5open(e.filename)
-    event_id = 1
-    hit_indices = read_indices(fobj, "/hits")
-    return (fobj, event_id, hit_indices)
-end
-
-next(::EventReader, s) = begin
-    fobj, event_id, hit_indices = s
-    idx = hit_indices[event_id][1]
-    n_hits = hit_indices[event_id][2]
-    (read_hits(fobj, idx, n_hits), (fobj, event_id + 1, hit_indices))
-end
-
-done(::EventReader, s) = begin
-    fobj, event_id, hit_indices = s
-    if(event_id > length(hit_indices))
-        close(fobj)
-        return true
-    end
-    return false
-end
+EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
 
 # MC
 struct Track
@@ -106,28 +92,6 @@ Base.show(io::IO, t::Track) = begin
     print(io, "Track: bjorken_y($(bjorken_y)), t($(t.t)), " *
           "pos($(t.pos)), dir($(t.dir)), E($(E)), type($(t.particle_type))")
 end
-
-struct EventInfo
-    det_id::Int32
-    frame_index::UInt32
-    livetime_sec::UInt64
-    mc_id::Int32
-    mc_t::Float64
-    n_events_gen::UInt64
-    n_files_gen::UInt64
-    overlays::UInt32
-    trigger_counter::UInt64
-    trigger_mask::UInt64
-    utc_nanoseconds::UInt64
-    utc_seconds::UInt64
-    weight_w1::Float64
-    weight_w2::Float64
-    weight_w3::Float64
-    run_id::UInt32
-    event_id::UInt32
-end
-
-EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
 
 
 # Hardware
@@ -265,7 +229,7 @@ end
 
 function read_tracks(fobj::HDF5.HDF5File)
     tracks = Dict{Int, Array{Track, 1}}()
-    data = read(f, "mc_tracks")
+    data = read(fobj, "mc_tracks")
     for d in data
         event_id = d.data[15]
         if !haskey(tracks, event_id)
@@ -359,6 +323,59 @@ function read_event_info(filename::AbstractString)
     event_info
 end
 
+# Event Loop
+struct Event
+    id::Integer
+    info::EventInfo
+    hits::Vector{RawHit}
+#    mc_hits::Vector{McHit}
+    mc_tracks::Vector{Track}
+end
+
+struct EventReader
+    filename::AbstractString
+end
+
+mutable struct EventReaderState
+    fobj::HDF5.HDF5File
+    event_id::Unsigned
+    event_info::Dict{Int32,KM3NeT.EventInfo}
+    hit_indices::Array{Tuple{Int64,Int64},1}
+#    mc_hit_indices::Array{Tuple{Int64,Int64},1}
+    tracks::Dict{Int32,Vector{Track}}
+    n_events::Unsigned
+end
+
+start(e::EventReader) = begin
+    fobj = h5open(e.filename)
+    event_id = 0
+    event_info = read_event_info(fobj)
+    hit_indices = read_indices(fobj, "/hits")
+#    mc_hit_indices = read_indices(fobj, "/mc_hits")
+    tracks = read_tracks(fobj)
+    return EventReaderState(fobj, event_id, event_info, hit_indices, tracks, length(event_info))
+end
+
+next(::EventReader, s) = begin
+    event_id = s.event_id
+    idx = s.hit_indices[s.event_id+1][1]
+    n_hits = s.hit_indices[s.event_id+1][2]
+    s.event_id += 1
+    event = Event(event_id, s.event_info[event_id],
+                  read_hits(s.fobj, idx, n_hits),
+                  s.tracks[event_id])
+    (event, s)
+end
+
+done(::EventReader, s) = begin
+    if(s.event_id >= s.n_events)
+        close(s.fobj)
+        return true
+    end
+    return false
+end
+
+eltype(::Type{EventReader}) = Event
 
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
