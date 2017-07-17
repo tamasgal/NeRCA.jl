@@ -10,7 +10,7 @@ import Base:
     isless,
     angle,
     show,
-    start, next, done, eltype
+    start, next, done, eltype, getindex
 
 export
     Position, Direction,
@@ -332,6 +332,11 @@ struct Event
     mc_tracks::Vector{Track}
 end
 
+
+Base.show(io::IO, e::Event) = begin
+    print(io, "Event $(e.id): $(length(e.hits)) hits, $(length(e.mc_tracks)) MC tracks")
+end
+
 struct EventReader
     filename::AbstractString
 end
@@ -373,6 +378,17 @@ done(::EventReader, s) = begin
         return true
     end
     return false
+end
+
+getindex(er::EventReader, event_id::Int64) = begin
+    initial_state = start(er)
+    idx = initial_state.hit_indices[event_id+1][1]
+    n_hits = initial_state.hit_indices[event_id+1][2]
+    event = KM3NeT.Event(event_id, initial_state.event_info[event_id],
+                  read_hits(initial_state.fobj, idx, n_hits),
+                  initial_state.tracks[event_id])
+    close(initial_state.fobj)
+    return event
 end
 
 eltype(::Type{EventReader}) = Event
