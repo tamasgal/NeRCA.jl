@@ -9,13 +9,14 @@ import Base:
     +, -, *,
     isless,
     angle,
-    show
+    show,
+    start, next, done
 
 export
     Position, Direction,
-    Track, Hit, CalibratedHit, RawHit, TimesliceHit,
+    EventInfo, Track, Hit, CalibratedHit, RawHit, McHit, TimesliceHit,
     calibrate,
-    read_hits, read_tracks, read_calibration, read_event_info,
+    read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     svdfit, matrix, rows
 
 
@@ -44,6 +45,41 @@ Base.show(io::IO, d::Direction) = begin
     print(io, s)
 end
 
+# Event Loop
+struct Event
+    id::Integer
+    info::EventInfo
+    hits::Vector{RawHit}
+    mc_hits::Vector{McHit}
+    mc_tracks::Vector{Track}
+end
+
+struct EventReader
+    filename::AbstractString
+end 
+
+start(e::EventReader) = begin
+    fobj = h5open(e.filename)
+    event_id = 1
+    hit_indices = read_indices(fobj, "/hits")
+    return (fobj, event_id, hit_indices)
+end
+
+next(::EventReader, s) = begin
+    fobj, event_id, hit_indices = s
+    idx = hit_indices[event_id][1]
+    n_hits = hit_indices[event_id][2]
+    (read_hits(fobj, idx, n_hits), (fobj, event_id + 1, hit_indices))
+end
+
+done(::EventReader, s) = begin
+    fobj, event_id, hit_indices = s
+    if(event_id > length(hit_indices))
+        close(fobj)
+        return true
+    end
+    return false
+end
 
 # MC
 struct Track
@@ -116,6 +152,10 @@ struct Calibration
     t0::Dict{Int32,Vector{Integer}}
 end
 
+Base.show(io::IO, c::Calibration) = begin
+    print(io, "Calibration data for detector '$(c.det_id)' " *
+              "with $(length(c.pos)) modules.")
+end
 
 # Signal
 abstract type Hit end
@@ -126,6 +166,13 @@ struct RawHit <: Hit
     t::Int32
     tot::UInt8
     triggered::Bool
+end
+
+struct McHit <: Hit
+    a::Float32
+    origin::UInt32
+    pmt_id::UInt32
+    t::Int32
 end
 
 struct CalibratedHit <: Hit
@@ -160,7 +207,7 @@ end
 
 
 # I/O
-function read_hits(fobj::HDF5.HDF5File, event_id::Int, idx::Int, n_hits::Int)
+function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
     hits = Array{RawHit, 1}()
     channel_id = fobj["hits/channel_id"][idx+1:idx+n_hits]
     dom_id = fobj["hits/dom_id"][idx+1:idx+n_hits]
@@ -180,7 +227,7 @@ function read_hits(filename::AbstractString, event_id::Int)
     hit_indices = read_indices(f, "/hits")
     idx = hit_indices[event_id+1][1]
     n_hits = hit_indices[event_id+1][2]
-    hits = read_hits(f, event_id, idx, n_hits)::Vector{RawHit}
+    hits = read_hits(f, idx, n_hits)::Vector{RawHit}
     close(f)
     return hits
 end
@@ -195,7 +242,7 @@ function read_hits(filename::AbstractString,
     for event_id ∈ event_ids
         idx = hit_indices[event_id+1][1]
         n_hits = hit_indices[event_id+1][2]
-        hits = read_hits(f, event_id, idx, n_hits)::Vector{RawHit}
+        hits = read_hits(f, idx, n_hits)::Vector{RawHit}
         hits_collection[event_id] = hits
     end
     close(f)
@@ -216,9 +263,8 @@ function read_indices(fobj::HDF5.HDF5File, from::AbstractString)
 end
 
 
-function read_tracks(filename::AbstractString)
+function read_tracks(fobj::HDF5.HDF5File)
     tracks = Dict{Int, Array{Track, 1}}()
-    f = h5open(filename, "r")
     data = read(f, "mc_tracks")
     for d in data
         event_id = d.data[15]
@@ -227,9 +273,17 @@ function read_tracks(filename::AbstractString)
         end
         push!(tracks[event_id], Track(d))
     end
-    close(f)
     return tracks
 end
+
+
+function read_tracks(filename::AbstractString)
+    f = h5open(filename, "r")
+    tracks = read_tracks(f)
+    close(f)
+    tracks
+end
+
 
 function read_calibration(filename::AbstractString)
     lines = readlines(filename)
@@ -287,14 +341,20 @@ function calibrate(hits::Vector{RawHit}, calibration::Calibration)
 end
 
 
-function read_event_info(filename::AbstractString)
+function read_event_info(fobj::HDF5.HDF5File)
     event_info = Dict{Int32,EventInfo}()
-    entries = h5open(filename) do file
-        read(file, "event_info")
-    end
+    entries = read(fobj, "event_info")
     for entry in entries
         e = EventInfo(entry.data...)
         event_info[e.event_id] = e
+    end
+    event_info
+end
+
+
+function read_event_info(filename::AbstractString)
+    event_info = h5open(filename) do file
+        read_event_info(file)
     end
     event_info
 end
