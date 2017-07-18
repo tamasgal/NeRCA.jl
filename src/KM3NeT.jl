@@ -10,7 +10,7 @@ import Base:
     isless,
     angle,
     show,
-    start, next, done, eltype, getindex
+    start, next, done, eltype, getindex, length
 
 export
     Position, Direction,
@@ -337,9 +337,6 @@ Base.show(io::IO, e::Event) = begin
     print(io, "Event $(e.id): $(length(e.hits)) hits, $(length(e.mc_tracks)) MC tracks")
 end
 
-struct EventReader
-    filename::AbstractString
-end
 
 mutable struct EventReaderState
     fobj::HDF5.HDF5File
@@ -351,47 +348,76 @@ mutable struct EventReaderState
     n_events::Unsigned
 end
 
-start(e::EventReader) = begin
-    fobj = h5open(e.filename)
+
+struct EventReader
+    filename::AbstractString
+    n_events::Unsigned
+    load_tracks::Bool
+
+    EventReader(filename; load_tracks=false) = begin
+        n = h5open(filename) do file
+            length(read_event_info(file))
+        end
+        new(filename, n, load_tracks)
+    end
+end
+
+
+start(E::EventReader) = begin
+    fobj = h5open(E.filename)
     event_id = 0
     event_info = read_event_info(fobj)
     hit_indices = read_indices(fobj, "/hits")
 #    mc_hit_indices = read_indices(fobj, "/mc_hits")
-    tracks = read_tracks(fobj)
+    if E.load_tracks
+        tracks = read_tracks(fobj)
+    else
+        tracks = Dict{Int32,Vector{Track}}()
+    end
     return EventReaderState(fobj, event_id, event_info, hit_indices, tracks, length(event_info))
 end
 
-next(::EventReader, s) = begin
+next(E::EventReader, s) = begin
     event_id = s.event_id
     idx = s.hit_indices[s.event_id+1][1]
     n_hits = s.hit_indices[s.event_id+1][2]
     s.event_id += 1
+    if E.load_tracks
+        tracks = s.tracks[event_id]
+    else
+        tracks = Vector{Track}()
+    end
     event = Event(event_id, s.event_info[event_id],
-                  read_hits(s.fobj, idx, n_hits),
-                  s.tracks[event_id])
+                  read_hits(s.fobj, idx, n_hits), tracks)
     (event, s)
 end
 
-done(::EventReader, s) = begin
-    if(s.event_id >= s.n_events)
+done(E::EventReader, s) = begin
+    if(s.event_id >= E.n_events)
         close(s.fobj)
         return true
     end
     return false
 end
 
-getindex(er::EventReader, event_id::Int64) = begin
-    initial_state = start(er)
+getindex(E::EventReader, event_id::Int64) = begin
+    initial_state = start(E)
+#    initial_state = E.initial_state
     idx = initial_state.hit_indices[event_id+1][1]
     n_hits = initial_state.hit_indices[event_id+1][2]
+    if E.load_tracks
+        tracks = initial_state.tracks[event_id]
+    else
+        tracks = Vector{Track}()
+    end
     event = KM3NeT.Event(event_id, initial_state.event_info[event_id],
-                  read_hits(initial_state.fobj, idx, n_hits),
-                  initial_state.tracks[event_id])
+                  read_hits(initial_state.fobj, idx, n_hits), tracks)
     close(initial_state.fobj)
     return event
 end
 
 eltype(::Type{EventReader}) = Event
+length(E::EventReader) = E.n_events
 
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
