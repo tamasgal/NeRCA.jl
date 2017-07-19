@@ -448,6 +448,33 @@ Base.eltype(::Type{EventReader}) = Event
 Base.length(E::EventReader) = E.n_events
 Base.endof(E::EventReader) = E.n_events - 1
 
+# Hits
+
+function nfoldhits(hits::Vector{CalibratedHit}, Δt, n)
+    hit_map = DefaultDict{Integer}{Vector{CalibratedHit}}(() -> CalibratedHit[])
+    for hit ∈ sort(hits)
+        push!(hit_map[hit.dom_id], hit)
+    end
+    chits = Vector{CalibratedHit}()
+    for (dom_id, dom_hits) ∈ hit_map
+        t0 = 0
+        bag = Vector{CalibratedHit}()
+        for hit in dom_hits
+            if hit.t - t0 <= Δt
+                push!(bag, hit)
+            else
+                if length(bag) >= n
+                    append!(chits, bag)
+                end
+                bag = Vector{CalibratedHit}()
+            end
+            t0 = hit.t
+        end
+    end
+    return chits
+end
+
+
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
 
@@ -457,6 +484,13 @@ Base.angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
 Base.angle(a::T, b::T) where {T<:Union{Hit, PMT, Track}} = Base.angle(a.dir, b.dir)
 Base.angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = Base.angle(a, b.dir)
 Base.angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = Base.angle(a.dir, b)
+
+"""
+Calculate the distance between a point (p1) and a line (given by p2 and d2).
+"""
+function pld3(p1, p2, d2)
+    norm(cross(d2, (p2 - p1))) / norm(d2)
+end
 
 function matrix(v::Vector)
     m = length(v)
