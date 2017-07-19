@@ -5,12 +5,7 @@ module KM3NeT
 using StaticArrays
 using HDF5
 
-import Base:
-    +, -, *,
-    isless,
-    angle,
-    show,
-    start, next, done, eltype, getindex, length
+import Base: +, -, *
 
 export
     Position, Direction,
@@ -106,7 +101,7 @@ struct DOM
     id::UInt32
     floor::UInt8
     du::UInt8
-    pmts::Array{PMT}
+    pmts::Vector{PMT}
 end
 
 struct Calibration
@@ -114,6 +109,8 @@ struct Calibration
     pos::Dict{Int32,Vector{KM3NeT.Position}}
     dir::Dict{Int32,Vector{KM3NeT.Direction}}
     t0::Dict{Int32,Vector{Integer}}
+    du::Dict{Int32,UInt8}
+    floor::Dict{Int32,UInt8}
 end
 
 Base.show(io::IO, c::Calibration) = begin
@@ -142,6 +139,8 @@ end
 struct CalibratedHit <: Hit
     channel_id::UInt8
     dom_id::UInt32
+    du::UInt8
+    floor::UInt8
     t::Int32
     tot::UInt8
     triggered::Bool
@@ -160,7 +159,7 @@ RawHit(hit::HDF5.HDF5Compound{5}) = begin
     RawHit(hit.data...)
 end
 
-isless(lhs::Hit, rhs::Hit) = lhs.t < rhs.t
+Base.isless(lhs::Hit, rhs::Hit) = lhs.t < rhs.t
 
 
 
@@ -172,14 +171,14 @@ end
 
 # I/O
 function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
-    hits = Array{RawHit, 1}()
+    hits = Vector{RawHit}()
     channel_id = fobj["hits/channel_id"][idx+1:idx+n_hits]
     dom_id = fobj["hits/dom_id"][idx+1:idx+n_hits]
     t = fobj["hits/time"][idx+1:idx+n_hits]
     tot = fobj["hits/tot"][idx+1:idx+n_hits]
     triggered = fobj["hits/triggered"][idx+1:idx+n_hits]
     for i ∈ 1:n_hits
-        hit =  RawHit(channel_id[i], dom_id[i], t[i], tot[i], triggered[1])
+        hit =  RawHit(channel_id[i], dom_id[i], t[i], tot[i], triggered[i])
         push!(hits, hit)
     end
     return hits
@@ -202,7 +201,7 @@ function read_hits(filename::AbstractString,
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/hits")
 
-    hits_collection = Dict{Int, Array{RawHit, 1}}()
+    hits_collection = Dict{Int, Vector{RawHit}}()
     for event_id ∈ event_ids
         idx = hit_indices[event_id+1][1]
         n_hits = hit_indices[event_id+1][2]
@@ -222,18 +221,18 @@ end
 
 function read_indices(fobj::HDF5.HDF5File, from::AbstractString)
     idc = read(fobj, from * "/_indices")
-    indices = [i.data for i ∈ idc]::Array{Tuple{Int64,Int64},1}
+    indices = [i.data for i ∈ idc]::Vector{Tuple{Int64,Int64}}
     return indices
 end
 
 
 function read_tracks(fobj::HDF5.HDF5File)
-    tracks = Dict{Int, Array{Track, 1}}()
+    tracks = Dict{Int, Vector{Track}}()
     data = read(fobj, "mc_tracks")
     for d in data
         event_id = d.data[15]
         if !haskey(tracks, event_id)
-            tracks[event_id] = Array{Track, 1}()
+            tracks[event_id] = Vector{Track}()
         end
         push!(tracks[event_id], Track(d))
     end
@@ -265,12 +264,16 @@ function read_calibration(filename::AbstractString)
     pos = Dict{Int32,Vector{KM3NeT.Position}}()
     dir = Dict{Int32,Vector{KM3NeT.Direction}}()
     t0s = Dict{Int32,Vector{Int32}}()
+    dus = Dict{Int32,UInt8}()
+    floors = Dict{Int32,UInt8}()
 
     for dom ∈ 1:n_doms
         dom_id, du, floor, n_pmts = map(x->parse(Int,x), split(lines[idx]))
         pos[dom_id] = Vector{KM3NeT.Position}()
         dir[dom_id] = Vector{KM3NeT.Direction}()
         t0s[dom_id] = Vector{Int32}()
+        dus[dom_id] = du
+        floors[dom_id] = floor
 
         for pmt in 1:n_pmts
             l = split(lines[idx+pmt])
@@ -284,7 +287,7 @@ function read_calibration(filename::AbstractString)
         idx += n_pmts + 1
     end
 
-    Calibration(det_id, pos, dir, t0s)
+    Calibration(det_id, pos, dir, t0s, dus, floors)
 end
 
 function calibrate(hits::Vector{RawHit}, calibration::Calibration)
@@ -298,7 +301,10 @@ function calibrate(hits::Vector{RawHit}, calibration::Calibration)
         pos = calibration.pos[dom_id][channel_id+1]
         dir = calibration.dir[dom_id][channel_id+1]
         t0 = calibration.t0[dom_id][channel_id+1]
-        c_hit = CalibratedHit(channel_id, dom_id, t, tot, triggered, pos, dir, t0)
+        du = calibration.du[dom_id]
+        floor = calibration.floor[dom_id]
+        c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
+                              triggered, pos, dir, t0)
         push!(calibrated_hits, c_hit)
     end
     calibrated_hits
@@ -341,58 +347,60 @@ end
 mutable struct EventReaderState
     fobj::HDF5.HDF5File
     event_id::Unsigned
-    event_info::Dict{Int32,KM3NeT.EventInfo}
-    hit_indices::Array{Tuple{Int64,Int64},1}
-#    mc_hit_indices::Array{Tuple{Int64,Int64},1}
-    tracks::Dict{Int32,Vector{Track}}
-    n_events::Unsigned
 end
 
 
 struct EventReader
     filename::AbstractString
     n_events::Unsigned
+    event_info::Dict{Int32,KM3NeT.EventInfo}
+    hit_indices::Vector{Tuple{Int64,Int64}}
+    tracks::Dict{Int32,Vector{Track}}
     load_tracks::Bool
 
     EventReader(filename; load_tracks=false) = begin
-        n = h5open(filename) do file
-            length(read_event_info(file))
+        fobj = h5open(filename)
+        n = length(read_event_info(fobj))
+        event_info = read_event_info(fobj)
+        hit_indices = read_indices(fobj, "/hits")
+#       mc_hit_indices = read_indices(fobj, "/mc_hits")
+        if load_tracks
+            tracks = read_tracks(fobj)
+        else
+            tracks = Dict{Int32,Vector{Track}}()
         end
-        new(filename, n, load_tracks)
+        close(fobj)
+        new(filename, n, event_info, hit_indices, tracks, load_tracks)
     end
 end
 
 
-start(E::EventReader) = begin
+Base.start(E::EventReader) = begin
     fobj = h5open(E.filename)
     event_id = 0
-    event_info = read_event_info(fobj)
-    hit_indices = read_indices(fobj, "/hits")
-#    mc_hit_indices = read_indices(fobj, "/mc_hits")
-    if E.load_tracks
-        tracks = read_tracks(fobj)
-    else
-        tracks = Dict{Int32,Vector{Track}}()
-    end
-    return EventReaderState(fobj, event_id, event_info, hit_indices, tracks, length(event_info))
+    return EventReaderState(fobj, event_id)
 end
 
-next(E::EventReader, s) = begin
+Base.next(E::EventReader, s) = begin
     event_id = s.event_id
-    idx = s.hit_indices[s.event_id+1][1]
-    n_hits = s.hit_indices[s.event_id+1][2]
+    idx = E.hit_indices[s.event_id+1][1]
+    n_hits = E.hit_indices[s.event_id+1][2]
     s.event_id += 1
     if E.load_tracks
-        tracks = s.tracks[event_id]
+        tracks = E.tracks[event_id]
     else
         tracks = Vector{Track}()
     end
-    event = Event(event_id, s.event_info[event_id],
+    event = Event(event_id, E.event_info[event_id],
                   read_hits(s.fobj, idx, n_hits), tracks)
     (event, s)
 end
 
-done(E::EventReader, s) = begin
+Base.show(io::IO, e::EventReader) = begin
+    print(io, "EventReader from file: $(e.filename) with $(e.n_events) events.")
+end
+
+Base.done(E::EventReader, s) = begin
     if(s.event_id >= E.n_events)
         close(s.fobj)
         return true
@@ -400,34 +408,53 @@ done(E::EventReader, s) = begin
     return false
 end
 
-getindex(E::EventReader, event_id::Int64) = begin
-    initial_state = start(E)
-#    initial_state = E.initial_state
-    idx = initial_state.hit_indices[event_id+1][1]
-    n_hits = initial_state.hit_indices[event_id+1][2]
+Base.getindex(E::EventReader, event_id::Int64) = begin
+    idx = E.hit_indices[event_id+1][1]
+    n_hits = E.hit_indices[event_id+1][2]
     if E.load_tracks
-        tracks = initial_state.tracks[event_id]
+        tracks = E.tracks[event_id]
     else
         tracks = Vector{Track}()
     end
-    event = KM3NeT.Event(event_id, initial_state.event_info[event_id],
-                  read_hits(initial_state.fobj, idx, n_hits), tracks)
-    close(initial_state.fobj)
+    fobj = h5open(E.filename)
+    event = KM3NeT.Event(event_id, E.event_info[event_id],
+                         read_hits(fobj, idx, n_hits), tracks)
+    close(fobj)
     return event
 end
 
-eltype(::Type{EventReader}) = Event
-length(E::EventReader) = E.n_events
+Base.getindex(E::EventReader, event_id) = begin
+    fobj = h5open(E.filename)
+    events = Vector{Event}()
+    for i in event_id
+        idx = E.hit_indices[i+1][1]
+        n_hits = E.hit_indices[i+1][2]
+        if E.load_tracks
+            tracks = E.tracks[i]
+        else
+            tracks = Vector{Track}()
+        end
+        event = KM3NeT.Event(i, E.event_info[i],
+                             read_hits(fobj, idx, n_hits), tracks)
+        push!(events, event)
+    end
+    close(fobj)
+    return events
+end
+
+Base.eltype(::Type{EventReader}) = Event
+Base.length(E::EventReader) = E.n_events
+Base.endof(E::EventReader) = E.n_events - 1
 
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
 
 
 # Math
-angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
-angle(a::T, b::T) where {T<:Union{Hit, PMT, Track}} = angle(a.dir, b.dir)
-angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = angle(a, b.dir)
-angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = angle(a.dir, b)
+Base.angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
+Base.angle(a::T, b::T) where {T<:Union{Hit, PMT, Track}} = Base.angle(a.dir, b.dir)
+Base.angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = Base.angle(a, b.dir)
+Base.angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = Base.angle(a.dir, b)
 
 function matrix(v::Vector)
     m = length(v)
