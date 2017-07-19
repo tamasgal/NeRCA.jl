@@ -88,6 +88,8 @@ Base.show(io::IO, t::Track) = begin
           "pos($(t.pos)), dir($(t.dir)), E($(E)), type($(t.particle_type))")
 end
 
+Base.isless(t1::Track, t2::Track) = t1.E < t2.E
+
 
 # Hardware
 struct PMT
