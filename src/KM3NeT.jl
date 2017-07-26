@@ -450,6 +450,9 @@ Base.endof(E::EventReader) = E.n_events - 1
 
 # Hits
 
+triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
+
+
 function nfoldhits(hits::Vector{CalibratedHit}, Δt, n)
     hit_map = DefaultDict{Integer}{Vector{CalibratedHit}}(() -> CalibratedHit[])
     for hit ∈ sort(hits)
