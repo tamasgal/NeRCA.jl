@@ -455,14 +455,14 @@ triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
 
 
 function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
-    hit_map = DefaultDict{Integer}{Vector{CalibratedHit}}(() -> CalibratedHit[])
+    hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
     for hit ∈ sort(hits)
         push!(hit_map[hit.dom_id], hit)
     end
-    chits = Vector{CalibratedHit}()
+    chits = Vector{T}()
     for (dom_id, dom_hits) ∈ hit_map
         t0 = 0
-        bag = Vector{CalibratedHit}()
+        bag = Vector{T}()
         for hit in dom_hits
             if hit.t - t0 <= Δt
                 push!(bag, hit)
@@ -470,7 +470,7 @@ function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
                 if length(bag) >= n
                     append!(chits, bag)
                 end
-                bag = Vector{CalibratedHit}()
+                bag = Vector{T}()
             end
             t0 = hit.t
         end
