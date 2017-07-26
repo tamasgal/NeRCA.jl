@@ -10,7 +10,7 @@ import Base: +, -, *
 export
     Position, Direction,
     EventInfo, Track, Hit, CalibratedHit, RawHit, McHit, TimesliceHit,
-    calibrate,
+    calibrate, triggered, svdfit, nfoldhits,
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     svdfit, matrix, rows
 
