@@ -454,6 +454,12 @@ Base.endof(E::EventReader) = E.n_events - 1
 triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
 
 
+"""
+    function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
+
+Create a `Vector` with hits contributing to `n`-fold coincidences within a time
+window of Δt.
+"""
 function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
     hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
     for hit ∈ sort(hits)
