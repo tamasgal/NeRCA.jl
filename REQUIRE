@@ -2,3 +2,6 @@ julia 0.6
 
 StaticArrays
 HDF5
+DataStructures
+JSON
+https://github.com/tamasgal/WebSocketClient.jl
