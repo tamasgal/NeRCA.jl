@@ -18,6 +18,7 @@ export
 
 include("types.jl")
 include("io.jl")
+include("rba.jl")
 
 
 function calibrate(hits::Vector{RawHit}, calibration::Calibration)
