@@ -4,3 +4,5 @@ StaticArrays
 HDF5
 DataStructures
 JSON
+Requests
+BufferedStreams

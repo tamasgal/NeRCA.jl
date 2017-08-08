@@ -16,6 +16,8 @@ export
     svdfit, matrix, rows
 
 
+include("WebSocketClient.jl")
+
 include("types.jl")
 include("io.jl")
 include("rba.jl")
