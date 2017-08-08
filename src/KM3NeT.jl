@@ -21,6 +21,11 @@ include("io.jl")
 include("rba.jl")
 
 
+"""
+    function calibrate(hits::Vector{RawHit}, calibration::Calibration)
+
+Apply geometry and time calibration to given hits.
+"""
 function calibrate(hits::Vector{RawHit}, calibration::Calibration)
     calibrated_hits = Vector{CalibratedHit}()
     for hit in hits
@@ -43,7 +48,11 @@ end
 
 
 # Hits
+"""
+    function triggered(hits::Vector{T}) where {T<:Hit}
 
+Return a `Vector` of triggered hits.
+"""
 triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
 
 
@@ -89,6 +98,8 @@ Base.angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = Base.angle(a, b.dir)
 Base.angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = Base.angle(a.dir, b)
 
 """
+    function pld3(p1, p2, d2)
+
 Calculate the distance between a point (p1) and a line (given by p2 and d2).
 """
 function pld3(p1, p2, d2)
