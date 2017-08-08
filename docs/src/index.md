@@ -1,9 +1,15 @@
-#Documentation Title
+# KM3NeT.jl Package
 
-Some text describing the package.
+...
 
-## Subtitle
+## Functions
 
-More text $$LaTeX$$
+```@autodocs
+Modules = [KM3NeT]
+Pages   = ["io.jl", "rba.jl"]
+```
 
-$$\int_a^b f(x) dx$$
+```@autodocs
+Modules = [KM3NeT]
+Order   = [:function, :type]
+```
