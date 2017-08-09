@@ -11,8 +11,9 @@ import Base: +, -, *
 export
     Position, Direction,
     EventInfo, Track, Hit, CalibratedHit, RawHit, McHit, TimesliceHit,
-    calibrate, triggered, svdfit, nfoldhits,
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
+    calibrate, 
+    duhits, domhits, nfoldhits, triggered,
     svdfit, matrix, rows
 
 
@@ -20,6 +21,7 @@ include("WebSocketClient.jl")
 
 include("types.jl")
 include("io.jl")
+include("hits.jl")
 include("rba.jl")
 
 
@@ -49,46 +51,6 @@ function calibrate(hits::Vector{RawHit}, calibration::Calibration)
 end
 
 
-# Hits
-"""
-    function triggered(hits::Vector{T}) where {T<:Hit}
-
-Return a `Vector` of triggered hits.
-"""
-triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
-
-
-"""
-    function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
-
-Create a `Vector` with hits contributing to `n`-fold coincidences within a time
-window of Δt.
-"""
-function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
-    hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
-    for hit ∈ sort(hits)
-        push!(hit_map[hit.dom_id], hit)
-    end
-    chits = Vector{T}()
-    for (dom_id, dom_hits) ∈ hit_map
-        t0 = 0
-        bag = Vector{T}()
-        for hit in dom_hits
-            if hit.t - t0 <= Δt
-                push!(bag, hit)
-            else
-                if length(bag) >= n
-                    append!(chits, bag)
-                end
-                bag = Vector{T}()
-            end
-            t0 = hit.t
-        end
-    end
-    return chits
-end
-
-
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
 
@@ -107,6 +69,7 @@ Calculate the distance between a point (p1) and a line (given by p2 and d2).
 function pld3(p1, p2, d2)
     norm(cross(d2, (p2 - p1))) / norm(d2)
 end
+
 
 function matrix(v::Vector)
     m = length(v)
