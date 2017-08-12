@@ -25,6 +25,22 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "index.html#KM3NeT.domhits-Union{Tuple{Array{T,1}}, Tuple{T}} where T<:KM3NeT.Hit",
+    "page": "KM3NeT.jl Package",
+    "title": "KM3NeT.domhits",
+    "category": "Method",
+    "text": "function domhits(hits::Vector{T}) where {T<:Hit}\n\nSort hits by DOM ID and put them into a dictionary.\n\n\n\n"
+},
+
+{
+    "location": "index.html#KM3NeT.duhits-Union{Tuple{Array{T,1}}, Tuple{T}} where T<:KM3NeT.CalibratedHit",
+    "page": "KM3NeT.jl Package",
+    "title": "KM3NeT.duhits",
+    "category": "Method",
+    "text": "function duhits(hits::Vector{T}) where {T<:CalibratedHit}\n\nSort hits by DU and put them into a dictionary.\n\n\n\n"
+},
+
+{
     "location": "index.html#KM3NeT.nfoldhits-Union{Tuple{Array{T,1},Any,Any}, Tuple{T}} where T<:KM3NeT.Hit",
     "page": "KM3NeT.jl Package",
     "title": "KM3NeT.nfoldhits",
