@@ -4,11 +4,19 @@
 
 ## Functions
 
+### I/O
 ```@autodocs
 Modules = [KM3NeT]
-Pages   = ["io.jl", "rba.jl"]
+Pages   = ["io.jl"]
 ```
 
+### RainbowAlga
+```@autodocs
+Modules = [KM3NeT]
+Pages   = ["rba.jl"]
+```
+
+### Other
 ```@autodocs
 Modules = [KM3NeT]
 Order   = [:function, :type]
