@@ -3,10 +3,10 @@ using Documenter, KM3NeT
 makedocs(modules=[KM3NeT],
          doctest=true,
          format=:html,
-         sitename = "Package name",
+         sitename = "KM3NeT.jl",
          pages = [
              "index.md",
-             #= "Page title" => "page2.md", =#
+             "Calibration" => "calibration.md",
              #= "Subsection" => [ =#
              #=     ... =#
              #= ] =#
