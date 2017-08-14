@@ -17,6 +17,30 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "index.html#Functions-1",
+    "page": "KM3NeT.jl Package",
+    "title": "Functions",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "index.html#I/O-1",
+    "page": "KM3NeT.jl Package",
+    "title": "I/O",
+    "category": "section",
+    "text": "Modules = [KM3NeT]\nPages   = [\"io.jl\"]"
+},
+
+{
+    "location": "index.html#RainbowAlga-1",
+    "page": "KM3NeT.jl Package",
+    "title": "RainbowAlga",
+    "category": "section",
+    "text": "Modules = [KM3NeT]\nPages   = [\"rba.jl\"]"
+},
+
+{
     "location": "index.html#KM3NeT.calibrate-Tuple{Array{KM3NeT.RawHit,1},KM3NeT.Calibration}",
     "page": "KM3NeT.jl Package",
     "title": "KM3NeT.calibrate",
@@ -65,11 +89,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "index.html#Functions-1",
+    "location": "index.html#Other-1",
     "page": "KM3NeT.jl Package",
-    "title": "Functions",
+    "title": "Other",
     "category": "section",
-    "text": "Modules = [KM3NeT]\nPages   = [\"io.jl\", \"rba.jl\"]Modules = [KM3NeT]\nOrder   = [:function, :type]"
+    "text": "Modules = [KM3NeT]\nOrder   = [:function, :type]"
 },
 
 ]}
