@@ -91,7 +91,7 @@ function svdfit(M)
     com = mean(M, 1)
     subtr = M .- com
     U, S, V = svd(subtr)
-    V[:, 1]
+    return com[:], V[:, 1]
 end
 
 
