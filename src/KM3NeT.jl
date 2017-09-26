@@ -19,7 +19,7 @@ export
 
 
 include("WebSocketClient.jl")
-include("SocketIO.jl")
+include("Struct.jl")
 
 include("types.jl")
 include("io.jl")
