@@ -41,6 +41,48 @@ function read_hits(filename::AbstractString,
 end
 
 
+function read_mchits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
+    hits = Vector{McHit}()
+    a = fobj["mc_hits/a"][idx+1:idx+n_hits]
+    origin = fobj["mc_hits/origin"][idx+1:idx+n_hits]
+    pmt_id = fobj["mc_hits/pmt_id"][idx+1:idx+n_hits]
+    t = fobj["mc_hits/time"][idx+1:idx+n_hits]
+    for i ∈ 1:n_hits
+        hit =  McHit(a[i], origin[i], pmt_id[i], t[i])
+        push!(hits, hit)
+    end
+    return hits
+end
+
+
+function read_mchits(filename::AbstractString, event_id::Int)
+    f = h5open(filename, "r")
+    hit_indices = read_indices(f, "/mc_hits")
+    idx = hit_indices[event_id+1][1]
+    n_hits = hit_indices[event_id+1][2]
+    hits = read_mchits(f, idx, n_hits)::Vector{McHit}
+    close(f)
+    return hits
+end
+
+
+function read_mchits(filename::AbstractString,
+                    event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
+    f = h5open(filename, "r")
+    hit_indices = read_indices(f, "/mc_hits")
+
+    hits_collection = Dict{Int, Vector{McHit}}()
+    for event_id ∈ event_ids
+        idx = hit_indices[event_id+1][1]
+        n_hits = hit_indices[event_id+1][2]
+        hits = read_hits(f, idx, n_hits)::Vector{McHit}
+        hits_collection[event_id] = hits
+    end
+    close(f)
+    return hits_collection
+end
+
+
 function read_indices(filename::AbstractString, from::AbstractString)
     f = h5open(filename, "r")
     indices = read_indices(f, from)
