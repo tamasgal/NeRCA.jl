@@ -108,7 +108,7 @@ abstract type Hit end
 struct RawHit <: Hit
     channel_id::UInt8
     dom_id::UInt32
-    t::Int32
+    t::Float32
     tot::UInt8
     triggered::Bool
 end
@@ -125,12 +125,12 @@ struct CalibratedHit <: Hit
     dom_id::UInt32
     du::UInt8
     floor::UInt8
-    t::Int32
+    t::Float32
     tot::UInt8
     triggered::Bool
     pos::Position
     dir::Direction
-    t0::Int32
+    t0::Float32
 end
 
 struct TimesliceHit <: Hit
