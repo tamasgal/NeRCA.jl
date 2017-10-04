@@ -14,14 +14,17 @@ export
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     calibrate, 
     duhits, domhits, nfoldhits, triggered,
-    svdfit, matrix, rows
+    svdfit, matrix, rows,
+    CHClient, CHTag, CHPrefix, CHMessage, subscribe
 
 
 include("WebSocketClient.jl")
+include("StructIO.jl")
 
 include("types.jl")
 include("io.jl")
 include("hits.jl")
+include("controlhost.jl")
 include("rba.jl")
 
 
