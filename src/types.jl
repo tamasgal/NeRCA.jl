@@ -1,3 +1,10 @@
+const ToT = UInt8
+const ChannelID = UInt8
+const DOMID = UInt32
+const Floor = UInt8
+const DU = UInt8
+const HitTime = Float32
+
 struct Position <: FieldVector{3, Float64}
     x::Float64
     y::Float64
@@ -44,6 +51,18 @@ end
 
 EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
 
+
+# Fit
+abstract type AbstractRecoTrack end
+
+struct RecoTrack<:AbstractRecoTrack
+    dir::Direction
+    pos::Position
+    time::Int32
+end
+
+struct NoRecoTrack<:AbstractRecoTrack end
+
 # MC
 struct Track
     bjorken_y::Float32
@@ -75,7 +94,7 @@ Base.isless(t1::Track, t2::Track) = t1.E < t2.E
 
 # Hardware
 struct PMT
-    channel_id::UInt8
+    channel_id::ChannelID
     pos::Position
     dir::Direction
 end
@@ -83,8 +102,8 @@ end
 
 struct DOM
     id::UInt32
-    floor::UInt8
-    du::UInt8
+    floor::Floor
+    du::DU
     pmts::Vector{PMT}
 end
 
@@ -93,8 +112,8 @@ struct Calibration
     pos::Dict{Int32,Vector{KM3NeT.Position}}
     dir::Dict{Int32,Vector{KM3NeT.Direction}}
     t0::Dict{Int32,Vector{Integer}}
-    du::Dict{Int32,UInt8}
-    floor::Dict{Int32,UInt8}
+    du::Dict{Int32,DU}
+    floor::Dict{Int32,Floor}
 end
 
 Base.show(io::IO, c::Calibration) = begin
@@ -103,51 +122,53 @@ Base.show(io::IO, c::Calibration) = begin
 end
 
 # Signal
-abstract type Hit end
+abstract type AbstractHit end
+abstract type DAQHit<:AbstractHit end
 
-struct RawHit <: Hit
-    channel_id::UInt8
-    dom_id::UInt32
-    t::Float32
-    tot::UInt8
+struct Hit <: DAQHit
+    channel_id::ChannelID
+    dom_id::DOMID
+    t::HitTime
+    tot::ToT
     triggered::Bool
 end
 
-struct McHit <: Hit
+struct McHit <: AbstractHit
     a::Float32
     origin::UInt32
     pmt_id::UInt32
-    t::Int32
+    t::HitTime
 end
 
-struct CalibratedHit <: Hit
-    channel_id::UInt8
+struct CalibratedHit <: DAQHit
+    channel_id::ChannelID
     dom_id::UInt32
-    du::UInt8
-    floor::UInt8
-    t::Float32
-    tot::UInt8
+    du::DU
+    floor::Floor
+    t::HitTime
+    tot::ToT
     triggered::Bool
     pos::Position
     dir::Direction
-    t0::Float32
+    t0::HitTime
 end
 
-struct TimesliceHit <: Hit
+struct TimesliceHit <: DAQHit
     channel_id::Int8
+    dom_id::UInt32
     t::Int32
     tot::Int16
 end
 
-RawHit(hit::HDF5.HDF5Compound{5}) = begin
-    RawHit(hit.data...)
+Hit(hit::HDF5.HDF5Compound{5}) = begin
+    Hit(hit.data...)
 end
 
-Base.isless(lhs::Hit, rhs::Hit) = lhs.t < rhs.t
+Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 
 
-Base.show(io::IO, h::RawHit) = begin
+Base.show(io::IO, h::DAQHit) = begin
     print(io, "$(typeof(h)): channel_id($(h.channel_id)), t($(h.t)), " *
           "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
 end
@@ -157,7 +178,7 @@ end
 struct Event
     id::Integer
     info::EventInfo
-    hits::Vector{RawHit}
+    hits::Vector{Hit}
 #    mc_hits::Vector{McHit}
     mc_tracks::Vector{Track}
 end

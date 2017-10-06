@@ -10,9 +10,11 @@ import Base: +, -, *
 
 export
     Position, Direction,
-    EventInfo, Track, Hit, CalibratedHit, RawHit, McHit, TimesliceHit,
+    ChannelID, DOMID, ToT, Floor, DU, HitTime,
+    EventInfo, Track, Hit, CalibratedHit, McHit, TimesliceHit,
+    RecoTrack, NoRecoTrack,
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
-    calibrate, 
+    Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,
     svdfit, matrix, rows,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe
@@ -23,27 +25,28 @@ include("StructIO.jl")
 
 include("types.jl")
 include("io.jl")
+include("daq.jl")
 include("hits.jl")
 include("controlhost.jl")
 include("rba.jl")
 
 
 """
-    function calibrate(hits::Vector{RawHit}, calibration::Calibration)
+    function calibrate(hits::Vector{Hit}, calibration::Calibra
 
 Apply geometry and time calibration to given hits.
 """
-function calibrate(hits::Vector{RawHit}, calibration::Calibration)
+function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
     calibrated_hits = Vector{CalibratedHit}()
     for hit in hits
         dom_id = hit.dom_id
-        t = hit.t
         channel_id = hit.channel_id
         triggered = hit.triggered
         tot = hit.tot
         pos = calibration.pos[dom_id][channel_id+1]
         dir = calibration.dir[dom_id][channel_id+1]
         t0 = calibration.t0[dom_id][channel_id+1]
+        t = hit.t + t0
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
@@ -60,9 +63,9 @@ rows(x) = (x[i, :] for i in indices(x,1))
 
 # Math
 Base.angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
-Base.angle(a::T, b::T) where {T<:Union{Hit, PMT, Track}} = Base.angle(a.dir, b.dir)
-Base.angle(a::FieldVector{3}, b::Union{Hit, PMT, Track}) = Base.angle(a, b.dir)
-Base.angle(a::Union{Hit, PMT, Track}, b::FieldVector{3}) = Base.angle(a.dir, b)
+Base.angle(a::T, b::T) where {T<:Union{CalibratedHit, PMT, Track}} = Base.angle(a.dir, b.dir)
+Base.angle(a::FieldVector{3}, b::Union{CalibratedHit, PMT, Track}) = Base.angle(a, b.dir)
+Base.angle(a::Union{CalibratedHit, PMT, Track}, b::FieldVector{3}) = Base.angle(a.dir, b)
 
 """
     function pld3(p1, p2, d2)

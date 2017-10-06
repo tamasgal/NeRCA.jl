@@ -3,7 +3,7 @@
 
 Return a `Vector` of triggered hits.
 """
-triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
+triggered(hits::Vector{T}) where {T<:DAQHit} = filter(h->h.triggered, hits)
 
 
 """
@@ -12,7 +12,7 @@ triggered(hits::Vector{T}) where {T<:Hit} = filter(h->h.triggered, hits)
 Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
 """
-function nfoldhits(hits::Vector{T}, Δt, n) where {T<:Hit}
+function nfoldhits(hits::Vector{T}, Δt, n) where {T<:DAQHit}
     hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
     for hit ∈ sort(hits)
         push!(hit_map[hit.dom_id], hit)
@@ -42,7 +42,7 @@ end
 
 Sort hits by DOM ID and put them into a dictionary.
 """
-function domhits(hits::Vector{T}) where {T<:Hit}
+function domhits(hits::Vector{T}) where {T<:DAQHit}
     hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
     for hit ∈ hits
         push!(hit_map[hit.dom_id], hit)
