@@ -20,7 +20,7 @@ export
     CHClient, CHTag, CHPrefix, CHMessage, subscribe
 
 
-include("WebSocketClient.jl")
+#= include("WebSocketClient.jl") =#
 include("StructIO.jl")
 
 include("types.jl")
@@ -28,7 +28,7 @@ include("io.jl")
 include("daq.jl")
 include("hits.jl")
 include("controlhost.jl")
-include("rba.jl")
+#= include("rba.jl") =#
 
 
 """
