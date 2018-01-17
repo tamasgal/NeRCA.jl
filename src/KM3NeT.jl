@@ -1,10 +1,9 @@
-__precompile__()
-
 module KM3NeT
 
 using DataStructures
 using StaticArrays
 using HDF5
+using Plots
 
 import Base: +, -, *
 

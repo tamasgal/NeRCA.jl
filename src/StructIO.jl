@@ -20,7 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-VERSION >= v"0.4.0-dev+6641" && __precompile__()
 module StructIO
 
     using Base: @pure
