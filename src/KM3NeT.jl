@@ -17,7 +17,8 @@ export
     Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,
     svdfit, matrix, rows,
-    CHClient, CHTag, CHPrefix, CHMessage, subscribe
+    CHClient, CHTag, CHPrefix, CHMessage, subscribe,
+    savefigs
 
 
 #= include("WebSocketClient.jl") =#
@@ -28,6 +29,7 @@ include("io.jl")
 include("daq.jl")
 include("hits.jl")
 include("controlhost.jl")
+include("plot.jl")
 #= include("rba.jl") =#
 
 
