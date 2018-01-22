@@ -1,10 +1,8 @@
 julia 0.6
 
+Requires
 StaticArrays
 HDF5
 DataStructures
 JSON
-Requests
 BufferedStreams
-Nettle
-Documenter

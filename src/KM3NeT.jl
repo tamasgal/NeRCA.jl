@@ -1,9 +1,9 @@
 module KM3NeT
 
+using Requires
 using DataStructures
 using StaticArrays
 using HDF5
-using Plots
 
 import Base: +, -, *
 
@@ -30,7 +30,7 @@ include("daq.jl")
 include("hits.jl")
 include("mc.jl")
 include("controlhost.jl")
-include("plot.jl")
+@require Plots include("plot.jl")
 #= include("rba.jl") =#
 
 
