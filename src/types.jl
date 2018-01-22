@@ -58,7 +58,7 @@ abstract type AbstractRecoTrack end
 struct RecoTrack<:AbstractRecoTrack
     dir::Direction
     pos::Position
-    time::Int32
+    time::Float64
 end
 
 struct NoRecoTrack<:AbstractRecoTrack end
