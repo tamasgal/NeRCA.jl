@@ -15,6 +15,7 @@ export
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,
+    mc_run_id,
     svdfit, matrix, rows,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
     savefigs
@@ -27,6 +28,7 @@ include("types.jl")
 include("io.jl")
 include("daq.jl")
 include("hits.jl")
+include("mc.jl")
 include("controlhost.jl")
 include("plot.jl")
 #= include("rba.jl") =#
