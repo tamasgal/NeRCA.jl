@@ -10,5 +10,9 @@ function mc_run_id(fname::AbstractString)
         energy_cut, run = split(s, "T")
         return parse(Int, energy_cut) * 10000 + parse(Int, run)
     end
+    if contains(bname, "_numuCC_")
+        run = split(split(bname, "_numuCC_")[2], ".")[1]
+        return parse(Int, run)
+    end
     error("Don't know how to generate a proper run ID for '$bname'.")
 end
