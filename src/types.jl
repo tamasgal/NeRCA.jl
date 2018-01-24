@@ -65,14 +65,14 @@ struct NoRecoTrack<:AbstractRecoTrack end
 
 # MC
 struct Track
-    bjorken_y::Float32
+    bjorken_y::Float64
     dir::Direction
     pos::Position
     E::Float64
-    interaction_channel::UInt8
+    interaction_channel::UInt32
     is_cc::Bool
     length::Float64
-    t::Int32
+    t::Float64
     particle_type::Int32
 end
 
