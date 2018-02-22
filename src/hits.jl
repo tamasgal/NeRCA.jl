@@ -63,3 +63,13 @@ function duhits(hits::Vector{T}) where {T<:CalibratedHit}
     end
     hit_map
 end
+
+
+"""
+    function totcut(hits::Vector{T}, tot) where {T<:DAQHit}
+
+Return a vector of hits with ToT >= `tot`.
+"""
+function totcut(hits::Vector{T}, tot) where {T<:DAQHit}
+    return filter(h->h.tot >= tot, hits)
+end
