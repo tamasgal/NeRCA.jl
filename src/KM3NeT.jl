@@ -35,7 +35,7 @@ include("controlhost.jl")
 
 
 """
-    function calibrate(hits::Vector{Hit}, calibration::Calibra
+    function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
 
 Apply geometry and time calibration to given hits.
 """
