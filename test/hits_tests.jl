@@ -1,6 +1,7 @@
 using KM3NeT
 using Base.Test
 
+
 hits = [Hit(1, 8, 100, 20, false),
         Hit(2, 9, 101, 21, true),
         Hit(3, 8, 112, 22, true),
@@ -10,13 +11,22 @@ hits = [Hit(1, 8, 100, 20, false),
         Hit(7, 8, 133, 26, true),
         Hit(8, 8, 145, 26, false)]
 
-println("triggered()")
+
+# triggered()
 thits = triggered(hits)
 @test 4 == length(thits)
 @test 9 == thits[1].dom_id
 
-println("nfoldhits()")
+
+# nfoldhits()
 twofoldhits = nfoldhits(hits, 10, 2)
 @test 4 == length(twofoldhits)
 threefoldhits = nfoldhits(hits, 15, 3)
 @test 3 == length(threefoldhits)
+
+
+# domhits()
+dhits = domhits(hits)
+@test 7 == length(dhits[8])
+@test 20 == dhits[8][1].tot
+@test dhits[8][6].triggered

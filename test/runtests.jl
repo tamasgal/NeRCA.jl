@@ -1,5 +1,5 @@
 tic()
 
-include("io.jl")
+include("hits_tests.jl")
 
 toc()
