@@ -20,12 +20,12 @@ struct Direction <: FieldVector{3, Float64}
 end
 
 Base.show(io::IO, p::Position) = begin
-    s = @sprintf "%.1f %.1f %.1f" p.x p.y p.z
+    s = @sprintf "%.2f %.2f %.2f" p.x p.y p.z
     print(io, s)
 end
 
 Base.show(io::IO, d::Direction) = begin
-    s = @sprintf "%.1f %.1f %.1f" d.x d.y d.z
+    s = @sprintf "%.2f %.2f %.2f" d.x d.y d.z
     print(io, s)
 end
 
