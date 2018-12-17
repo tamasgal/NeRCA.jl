@@ -181,6 +181,24 @@ function read_event_info(filename::AbstractString)
     event_info
 end
 
+function read_timeslice_info(fobj::HDF5.HDF5File)
+    timeslice_info = Dict{Int32,TimesliceInfo}()
+    entries = read(fobj, "event_info")
+    for entry in entries
+        e = TimesliceInfo(entry.data...)
+        timeslice_info[e.event_id] = e
+    end
+    timeslice_info
+end
+
+
+function read_timeslice_info(filename::AbstractString)
+    timeslice_info = h5open(filename) do file
+        read_timeslice_info(file)
+    end
+    timeslice_info
+end
+
 
 mutable struct EventReaderState
     fobj::HDF5.HDF5File
