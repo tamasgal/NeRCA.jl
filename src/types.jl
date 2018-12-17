@@ -51,6 +51,17 @@ end
 
 EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
 
+struct TimesliceInfo
+    frame_index::UInt32
+    slice_id::UInt32
+    timestamp::UInt32
+    nanoseconds::UInt32
+    n_frames::UInt32
+    group_id::UInt32
+end
+
+TimesliceInfo(event_info::HDF5.HDF5Compound{6}) = EventInfo(event_info.data...)
+
 
 # Fit
 abstract type AbstractRecoTrack end
