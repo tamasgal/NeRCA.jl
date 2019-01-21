@@ -21,17 +21,12 @@ export
     savefigs
 
 
-#= include("WebSocketClient.jl") =#
-include("StructIO.jl")
-
 include("types.jl")
 include("io.jl")
-include("daq.jl")
 include("hits.jl")
 include("mc.jl")
 include("controlhost.jl")
 @require Plots include("plot.jl")
-#= include("rba.jl") =#
 
 
 """
