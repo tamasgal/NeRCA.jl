@@ -1,8 +1,9 @@
 module KM3NeT
 
+using Printf
+using Sockets
 using StaticArrays
 using HDF5
-using Printf
 
 import Base: +, -, *
 
