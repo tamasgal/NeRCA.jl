@@ -305,4 +305,4 @@ end
 
 Base.eltype(::Type{EventReader}) = Event
 Base.length(E::EventReader) = E.n_events
-Base.endof(E::EventReader) = E.n_events - 1
+#= Base.endof(E::EventReader) = E.n_events - 1 =#
