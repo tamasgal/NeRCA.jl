@@ -1,7 +1,5 @@
 module KM3NeT
 
-using Requires
-using DataStructures
 using StaticArrays
 using HDF5
 
@@ -26,7 +24,6 @@ include("io.jl")
 include("hits.jl")
 include("mc.jl")
 include("controlhost.jl")
-@require Plots include("plot.jl")
 
 
 """
