@@ -7,7 +7,7 @@ end
 
 
 struct CHClient
-    ip::IPv4
+    ip::Sockets.IPv4
     port::UInt16
     socket::TCPSocket
     CHClient(ip, port) = begin
