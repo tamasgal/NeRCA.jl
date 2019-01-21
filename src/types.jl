@@ -20,12 +20,12 @@ struct Direction <: FieldVector{3, Float64}
 end
 
 Base.show(io::IO, p::Position) = begin
-    s = @sprintf "%.2f %.2f %.2f" p.x p.y p.z
+    s = Printf.@sprintf "%.2f %.2f %.2f" p.x p.y p.z
     print(io, s)
 end
 
 Base.show(io::IO, d::Direction) = begin
-    s = @sprintf "%.2f %.2f %.2f" d.x d.y d.z
+    s = Printf.@sprintf "%.2f %.2f %.2f" d.x d.y d.z
     print(io, s)
 end
 
@@ -94,8 +94,8 @@ Track(track::HDF5.HDF5Compound{15}) = begin
 end
 
 Base.show(io::IO, t::Track) = begin
-    E = @sprintf "%0.1f" t.E
-    bjorken_y = @sprintf "%0.2f" t.bjorken_y
+    E = Printf.@sprintf "%0.1f" t.E
+    bjorken_y = Printf.@sprintf "%0.2f" t.bjorken_y
     print(io, "Track: bjorken_y($(bjorken_y)), t($(t.t)), " *
           "pos($(t.pos)), dir($(t.dir)), E($(E)), type($(t.particle_type))")
 end

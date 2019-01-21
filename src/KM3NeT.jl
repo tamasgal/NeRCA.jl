@@ -2,6 +2,7 @@ module KM3NeT
 
 using StaticArrays
 using HDF5
+using Printf
 
 import Base: +, -, *
 

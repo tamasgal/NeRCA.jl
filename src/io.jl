@@ -231,27 +231,27 @@ struct EventReader
 end
 
 
-Base.start(E::EventReader) = begin
-    fobj = h5open(E.filename)
-    event_id = 0
-    return EventReaderState(fobj, event_id)
-end
-
-
-Base.next(E::EventReader, s) = begin
-    event_id = s.event_id
-    idx = E.hit_indices[s.event_id+1][1]
-    n_hits = E.hit_indices[s.event_id+1][2]
-    s.event_id += 1
-    if E.load_tracks
-        tracks = E.tracks[event_id]
-    else
-        tracks = Vector{Track}()
-    end
-    event = Event(event_id, E.event_info[event_id],
-                  read_hits(s.fobj, idx, n_hits), tracks)
-    (event, s)
-end
+#= Base.start(E::EventReader) = begin =#
+#=     fobj = h5open(E.filename) =#
+#=     event_id = 0 =#
+#=     return EventReaderState(fobj, event_id) =#
+#= end =#
+#=  =#
+#=  =#
+#= Base.next(E::EventReader, s) = begin =#
+#=     event_id = s.event_id =#
+#=     idx = E.hit_indices[s.event_id+1][1] =#
+#=     n_hits = E.hit_indices[s.event_id+1][2] =#
+#=     s.event_id += 1 =#
+#=     if E.load_tracks =#
+#=         tracks = E.tracks[event_id] =#
+#=     else =#
+#=         tracks = Vector{Track}() =#
+#=     end =#
+#=     event = Event(event_id, E.event_info[event_id], =#
+#=                   read_hits(s.fobj, idx, n_hits), tracks) =#
+#=     (event, s) =#
+#= end =#
 
 
 Base.show(io::IO, e::EventReader) = begin
@@ -259,13 +259,13 @@ Base.show(io::IO, e::EventReader) = begin
 end
 
 
-Base.done(E::EventReader, s) = begin
-    if(s.event_id >= E.n_events)
-        close(s.fobj)
-        return true
-    end
-    return false
-end
+#= Base.done(E::EventReader, s) = begin =#
+#=     if(s.event_id >= E.n_events) =#
+#=         close(s.fobj) =#
+#=         return true =#
+#=     end =#
+#=     return false =#
+#= end =#
 
 
 Base.getindex(E::EventReader, event_id::Int64) = begin
