@@ -16,3 +16,23 @@ function mc_run_id(fname::AbstractString)
     end
     error("Don't know how to generate a proper run ID for '$bname'.")
 end
+
+
+"""
+    function make_cherenkov_calculator(track_pos, track_dir)
+
+Returns a function which calculates the arrival time of a Cherenkov photon
+emitted at a given position.
+"""
+function make_cherenkov_calculator(track_pos, track_dir, theta=0.759296, c_water=2.174458)
+    function cherenkov_time(pos)
+        v = pos - track_pos
+        l = dot(v, track_dir)
+        k = dot(v, v) - l^2
+        a_1 = k / tan(theta)
+        a_2 = k / sin(theta)
+        t_c = 1 / 2.99792458e8 * (l - a_1) + 1 / c_water * a_2
+        return t_c * 1e9
+    end
+    return cherenkov_time
+end

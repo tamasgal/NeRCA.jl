@@ -75,32 +75,33 @@ end
 struct NoRecoTrack<:AbstractRecoTrack end
 
 # MC
-struct Track
+struct MCTrack
     bjorken_y::Float64
-    dir::Direction
-    pos::Position
+    dir_x::Float64
+    dir_y::Float64
+    dir_z::Float64
     E::Float64
-    interaction_channel::UInt32
+    group_id::Int64
+    id::Int64
+    interaction_channel::Int64
     is_cc::Bool
     length::Float64
+    pos_x::Float64
+    pos_y::Float64
+    pos_z::Float64
     t::Float64
-    particle_type::Int32
+    particle_type::Int64
 end
 
-Track(track::HDF5.HDF5Compound{15}) = begin
-    d = track.data
-    Track(d[1], Direction(d[2:4]...), Position(d[10:12]...),
-          d[5], d[7], d[8], d[9], d[13], d[14])
-end
 
-Base.show(io::IO, t::Track) = begin
+Base.show(io::IO, t::MCTrack) = begin
     E = Printf.@sprintf "%0.1f" t.E
     bjorken_y = Printf.@sprintf "%0.2f" t.bjorken_y
-    print(io, "Track: bjorken_y($(bjorken_y)), t($(t.t)), " *
-          "pos($(t.pos)), dir($(t.dir)), E($(E)), type($(t.particle_type))")
+    print(io, "MCTrack: bjorken_y($(bjorken_y)), t($(t.t)), " *
+              "pos($(t.pos_x), $(t.pos_y), $(t.pos_z)), " *
+              "dir($(t.dir_x), $(t.dir_y), $(t.dir_z)), " *
+              "E($(E)), type($(t.particle_type))")
 end
-
-Base.isless(t1::Track, t2::Track) = t1.E < t2.E
 
 
 # Hardware
@@ -191,7 +192,7 @@ struct Event
     info::EventInfo
     hits::Vector{Hit}
 #    mc_hits::Vector{McHit}
-    mc_tracks::Vector{Track}
+    mc_tracks::Vector{MCTrack}
 end
 
 

@@ -1,5 +1,6 @@
 module KM3NeT
 
+using LinearAlgebra
 using Printf
 using Sockets
 using StaticArrays
@@ -10,7 +11,7 @@ import Base: +, -, *
 export
     Position, Direction,
     ChannelID, DOMID, ToT, Floor, DU, HitTime,
-    EventInfo, Track, Hit, CalibratedHit, McHit, TimesliceHit,
+    EventInfo, MCTrack, Hit, CalibratedHit, McHit, TimesliceHit,
     RecoTrack, NoRecoTrack,
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     Calibration, calibrate,
@@ -60,9 +61,9 @@ rows(x) = (x[i, :] for i in indices(x,1))
 
 # Math
 Base.angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
-Base.angle(a::T, b::T) where {T<:Union{CalibratedHit, PMT, Track}} = Base.angle(a.dir, b.dir)
-Base.angle(a::FieldVector{3}, b::Union{CalibratedHit, PMT, Track}) = Base.angle(a, b.dir)
-Base.angle(a::Union{CalibratedHit, PMT, Track}, b::FieldVector{3}) = Base.angle(a.dir, b)
+Base.angle(a::T, b::T) where {T<:Union{CalibratedHit, PMT, MCTrack}} = Base.angle(a.dir, b.dir)
+Base.angle(a::FieldVector{3}, b::Union{CalibratedHit, PMT, MCTrack}) = Base.angle(a, b.dir)
+Base.angle(a::Union{CalibratedHit, PMT, MCTrack}, b::FieldVector{3}) = Base.angle(a.dir, b)
 
 """
     function pld3(p1, p2, d2)

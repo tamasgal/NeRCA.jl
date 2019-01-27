@@ -1,3 +1,24 @@
+function read_compound(dset::HDF5.HDF5Dataset, T::DataType)
+    filetype = HDF5.datatype(dset) # packed layout on disk
+    memtype_id = HDF5.h5t_get_native_type(filetype.id) # padded layout in memory
+    @assert sizeof(T) == HDF5.h5t_get_size(memtype_id) "Type sizes don't match!"
+    out = Vector{T}(undef, length(dset))
+    HDF5.h5d_read(dset.id, memtype_id, HDF5.H5S_ALL, HDF5.H5S_ALL, HDF5.H5P_DEFAULT, out)
+    HDF5.h5t_close(memtype_id)
+    out
+end
+
+
+function read_compound(filename::AbstractString,
+                       h5loc::AbstractString,
+                       T::DataType)
+    fobj = HDF5.h5open(filename)
+    data = read_compound(fobj[h5loc], T)
+    close(fobj)
+    data
+end
+
+
 function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
     hits = Vector{Hit}()
     channel_id = fobj["hits/channel_id"][idx+1:idx+n_hits]
@@ -98,28 +119,6 @@ function read_indices(fobj::HDF5.HDF5File, from::AbstractString)
 end
 
 
-function read_tracks(fobj::HDF5.HDF5File)
-    tracks = Dict{Int, Vector{Track}}()
-    data = read(fobj, "mc_tracks")
-    for d in data
-        event_id = d.data[15]
-        if !haskey(tracks, event_id)
-            tracks[event_id] = Vector{Track}()
-        end
-        push!(tracks[event_id], Track(d))
-    end
-    return tracks
-end
-
-
-function read_tracks(filename::AbstractString)
-    f = h5open(filename, "r")
-    tracks = read_tracks(f)
-    close(f)
-    tracks
-end
-
-
 function read_calibration(filename::AbstractString)
     lines = readlines(filename)
 
@@ -200,35 +199,29 @@ function read_timeslice_info(filename::AbstractString)
 end
 
 
-mutable struct EventReaderState
-    fobj::HDF5.HDF5File
-    event_id::Unsigned
-end
-
-
-struct EventReader
-    filename::AbstractString
-    n_events::Unsigned
-    event_info::Dict{Int32,KM3NeT.EventInfo}
-    hit_indices::Vector{Tuple{Int64,Int64}}
-    tracks::Dict{Int32,Vector{Track}}
-    load_tracks::Bool
-
-    EventReader(filename; load_tracks=false) = begin
-        fobj = h5open(filename)
-        n = length(read_event_info(fobj))
-        event_info = read_event_info(fobj)
-        hit_indices = read_indices(fobj, "/hits")
-#       mc_hit_indices = read_indices(fobj, "/mc_hits")
-        if load_tracks
-            tracks = read_tracks(fobj)
-        else
-            tracks = Dict{Int32,Vector{Track}}()
-        end
-        close(fobj)
-        new(filename, n, event_info, hit_indices, tracks, load_tracks)
-    end
-end
+#= struct EventReader =#
+#=     filename::AbstractString =#
+#=     n_events::Unsigned =#
+#=     event_info::Dict{Int32,KM3NeT.EventInfo} =#
+#=     hit_indices::Vector{Tuple{Int64,Int64}} =#
+#=     tracks::Dict{Int32,Vector{MCTrack}} =#
+#=     load_tracks::Bool =#
+#=  =#
+#=     EventReader(filename; load_tracks=false) = begin =#
+#=         fobj = h5open(filename) =#
+#=         n = length(read_event_info(fobj)) =#
+#=         event_info = read_event_info(fobj) =#
+#=         hit_indices = read_indices(fobj, "/hits") =#
+#= #       mc_hit_indices = read_indices(fobj, "/mc_hits") =#
+#=         if load_tracks =#
+#=             tracks = read_tracks(fobj) =#
+#=         else =#
+#=             tracks = Dict{Int32,Vector{MCTrack}}() =#
+#=         end =#
+#=         close(fobj) =#
+#=         new(filename, n, event_info, hit_indices, tracks, load_tracks) =#
+#=     end =#
+#= end =#
 
 
 #= Base.start(E::EventReader) = begin =#
@@ -252,57 +245,3 @@ end
 #=                   read_hits(s.fobj, idx, n_hits), tracks) =#
 #=     (event, s) =#
 #= end =#
-
-
-Base.show(io::IO, e::EventReader) = begin
-    print(io, "EventReader from file: $(e.filename) with $(e.n_events) events.")
-end
-
-
-#= Base.done(E::EventReader, s) = begin =#
-#=     if(s.event_id >= E.n_events) =#
-#=         close(s.fobj) =#
-#=         return true =#
-#=     end =#
-#=     return false =#
-#= end =#
-
-
-Base.getindex(E::EventReader, event_id::Int64) = begin
-    idx = E.hit_indices[event_id+1][1]
-    n_hits = E.hit_indices[event_id+1][2]
-    if E.load_tracks
-        tracks = E.tracks[event_id]
-    else
-        tracks = Vector{Track}()
-    end
-    fobj = h5open(E.filename)
-    event = KM3NeT.Event(event_id, E.event_info[event_id],
-                         read_hits(fobj, idx, n_hits), tracks)
-    close(fobj)
-    return event
-end
-
-
-Base.getindex(E::EventReader, event_id) = begin
-    fobj = h5open(E.filename)
-    events = Vector{Event}()
-    for i in event_id
-        idx = E.hit_indices[i+1][1]
-        n_hits = E.hit_indices[i+1][2]
-        if E.load_tracks
-            tracks = E.tracks[i]
-        else
-            tracks = Vector{Track}()
-        end
-        event = KM3NeT.Event(i, E.event_info[i],
-                             read_hits(fobj, idx, n_hits), tracks)
-        push!(events, event)
-    end
-    close(fobj)
-    return events
-end
-
-Base.eltype(::Type{EventReader}) = Event
-Base.length(E::EventReader) = E.n_events
-#= Base.endof(E::EventReader) = E.n_events - 1 =#
