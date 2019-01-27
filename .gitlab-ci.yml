@@ -10,8 +10,7 @@
 cache:
   paths:
     - .julia/packages
-  key:
-    - "$CI_COMMIT_REF_SLUG"
+  key: "$CI_COMMIT_REF_SLUG"
 
 test:0.7:
   image: julia:0.7
