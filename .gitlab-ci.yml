@@ -4,6 +4,6 @@ stages:
 
 install:1.1:
     image: julia:1.1
-    stage: install
+    stage: test
     script:
-        - julia --version
+        - julia test/runtests.jl
