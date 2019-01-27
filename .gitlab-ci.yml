@@ -3,6 +3,7 @@ stages:
     - test
 
 install:1.1:
+    image: julia:1.1
     stage: install
     script:
         - julia --version
