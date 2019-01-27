@@ -2,7 +2,8 @@ using Documenter, KM3NeT
 
 makedocs(modules=[KM3NeT],
          doctest=true,
-         format=:html,
+         format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+         authors = "Tamas Gal",
          sitename = "KM3NeT.jl",
          pages = [
              "index.md",
@@ -12,8 +13,8 @@ makedocs(modules=[KM3NeT],
              #= ] =#
          ]
          )
-
-deploydocs(deps   = Deps.pip("mkdocs", "python-markdown-math"),
-    repo = "github.com/tamasgal/KM3NeT.jl.git",
-    julia  = "0.6.0",
-    osname = "linux")
+#=  =#
+#= deploydocs(deps   = Deps.pip("mkdocs", "python-markdown-math"), =#
+#=     repo = "github.com/tamasgal/KM3NeT.jl.git", =#
+#=     julia  = "0.7.0", =#
+#=     osname = "linux") =#
