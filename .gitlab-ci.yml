@@ -1,6 +1,6 @@
 .test_template: &test_definition
   script:
-    - apt update && apt install gcc make
+    - apt update && apt install -y gcc make
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT"); Pkg.test("KM3NeT"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import KM3NeT; cd(joinpath(dirname(pathof(KM3NeT)), ".."));
