@@ -1,9 +1,35 @@
-stages:
-    - install
-    - test
+.test_template: &test_definition
+  script:
+    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT"); Pkg.test("KM3NeT"; coverage = true)'
+    - julia -e 'using Pkg; Pkg.add("Coverage"); 
+      import KM3NeT; cd(joinpath(dirname(pathof(KM3NeT)), ".."));
+      using Coverage; cl, tl = get_summary(process_folder());
+      println("(", cl/tl*100, "%) covered")'
 
-install:1.1:
-    image: julia:1.1
-    stage: test
-    script:
-        - julia test/runtests.jl
+test:0.7:
+  image: julia:0.7
+  <<: *test_definition
+  
+test:1.0:
+  image: julia:1.0
+  <<: *test_definition
+
+test:1.1:
+  image: julia:1.0
+  <<: *test_definition
+
+
+pages:
+  image: julia:0.7
+  stage: deploy
+  script:
+    - apt-get update -qq && apt-get install -y git # needed by Documenter
+    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT");' # rebuild Julia (can be put somewhere else I'm sure
+    - julia -e 'using Pkg; import KM3NeT; Pkg.add("Documenter")' # install Documenter
+    - julia --color=yes docs/make.jl # make documentation
+    - mv docs/build public # move to the directory picked up by Gitlab pages
+  artifacts:
+    paths:
+      - public
+  only:
+  - master
