@@ -1,6 +1,6 @@
 .test_template: &test_definition
   script:
-    - apt update && apt install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2
+    - apt-get update -qq && apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT"); Pkg.test("KM3NeT"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import KM3NeT; cd(joinpath(dirname(pathof(KM3NeT)), ".."));
