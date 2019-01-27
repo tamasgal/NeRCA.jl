@@ -1,6 +1,5 @@
-tic()
-
 include("main_tests.jl")
 include("hits_tests.jl")
+include("mc_tests.jl")
 
-toc()
+println("All tests complete")

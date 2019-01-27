@@ -1,5 +1,5 @@
 using KM3NeT
-using Base.Test
+using Test
 
 
 hits = [Hit(1, 8, 100, 20, false),
