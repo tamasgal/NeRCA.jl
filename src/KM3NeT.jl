@@ -3,6 +3,7 @@ module KM3NeT
 using LinearAlgebra
 using Printf
 using Sockets
+using DataStructures
 using StaticArrays
 using HDF5
 
