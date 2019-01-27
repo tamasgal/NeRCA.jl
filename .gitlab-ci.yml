@@ -7,6 +7,12 @@
       using Coverage; cl, tl = get_summary(process_folder());
       println("(", cl/tl*100, "%) covered")'
 
+cache:
+  paths:
+    - .julia/packages
+  key:
+    - "$CI_COMMIT_REF_SLUG"
+
 test:0.7:
   image: julia:0.7
   <<: *test_definition
