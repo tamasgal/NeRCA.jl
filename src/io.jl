@@ -34,11 +34,11 @@ function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
 end
 
 
-function read_hits(filename::AbstractString, event_id::Int)
+function read_hits(filename::AbstractString, group_id::Int)
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/hits")
-    idx = hit_indices[event_id+1][1]
-    n_hits = hit_indices[event_id+1][2]
+    idx = hit_indices[group_id+1][1]
+    n_hits = hit_indices[group_id+1][2]
     hits = read_hits(f, idx, n_hits)::Vector{Hit}
     close(f)
     return hits
@@ -46,16 +46,16 @@ end
 
 
 function read_hits(filename::AbstractString,
-                    event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
+                    group_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/hits")
 
     hits_collection = Dict{Int, Vector{Hit}}()
-    for event_id ∈ event_ids
-        idx = hit_indices[event_id+1][1]
-        n_hits = hit_indices[event_id+1][2]
+    for group_id ∈ group_ids
+        idx = hit_indices[group_id+1][1]
+        n_hits = hit_indices[group_id+1][2]
         hits = read_hits(f, idx, n_hits)::Vector{Hit}
-        hits_collection[event_id] = hits
+        hits_collection[group_id] = hits
     end
     close(f)
     return hits_collection
@@ -76,11 +76,11 @@ function read_mchits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
 end
 
 
-function read_mchits(filename::AbstractString, event_id::Int)
+function read_mchits(filename::AbstractString, group_id::Int)
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/mc_hits")
-    idx = hit_indices[event_id+1][1]
-    n_hits = hit_indices[event_id+1][2]
+    idx = hit_indices[group_id+1][1]
+    n_hits = hit_indices[group_id+1][2]
     hits = read_mchits(f, idx, n_hits)::Vector{McHit}
     close(f)
     return hits
@@ -88,16 +88,16 @@ end
 
 
 function read_mchits(filename::AbstractString,
-                    event_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
+                    group_ids::Union{Array{T}, UnitRange{T}}) where {T<:Integer}
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/mc_hits")
 
     hits_collection = Dict{Int, Vector{McHit}}()
-    for event_id ∈ event_ids
-        idx = hit_indices[event_id+1][1]
-        n_hits = hit_indices[event_id+1][2]
+    for group_id ∈ group_ids
+        idx = hit_indices[group_id+1][1]
+        n_hits = hit_indices[group_id+1][2]
         hits = read_hits(f, idx, n_hits)::Vector{McHit}
-        hits_collection[event_id] = hits
+        hits_collection[group_id] = hits
     end
     close(f)
     return hits_collection
