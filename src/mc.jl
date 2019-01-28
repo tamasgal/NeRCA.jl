@@ -54,3 +54,12 @@ function make_mc_time_converter(timestamp, mc_time)
     end
     return time_converter
 end
+
+
+function make_mc_time_converter(event_info::MCEventInfo)
+    #= time_offset = event_info.timestamp * 1e9 + event_info.nanoseconds =#
+    function time_converter(time)
+        return time - (event_info.timestamp * 1e9 + event_info.nanoseconds) + event_info.mc_time
+    end
+    return time_converter
+end

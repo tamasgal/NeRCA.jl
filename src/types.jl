@@ -43,8 +43,6 @@ struct MCEventInfo
     weight_w4::Float64
 end
 
-EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
-
 struct TimesliceInfo
     frame_index::UInt32
     slice_id::UInt32
@@ -53,8 +51,6 @@ struct TimesliceInfo
     n_frames::UInt32
     group_id::UInt32
 end
-
-TimesliceInfo(event_info::HDF5.HDF5Compound{6}) = EventInfo(event_info.data...)
 
 
 # Fit
@@ -172,24 +168,7 @@ end
 
 Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
-
-
 Base.show(io::IO, h::DAQHit) = begin
     print(io, "$(typeof(h)): channel_id($(h.channel_id)), t($(h.t)), " *
           "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
-end
-
-
-# Event Loop
-struct Event
-    id::Integer
-    info::EventInfo
-    hits::Vector{Hit}
-#    mc_hits::Vector{McHit}
-    mc_tracks::Vector{MCTrack}
-end
-
-
-Base.show(io::IO, e::Event) = begin
-    print(io, "Event $(e.id): $(length(e.hits)) hits, $(length(e.mc_tracks)) MC tracks")
 end

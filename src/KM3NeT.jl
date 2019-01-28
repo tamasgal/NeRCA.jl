@@ -12,7 +12,7 @@ import Base: +, -, *
 export
     Position, Direction,
     ChannelID, DOMID, ToT, Floor, DU, HitTime,
-    EventInfo, MCTrack, Hit, CalibratedHit, McHit, TimesliceHit,
+    MCEventInfo, MCTrack, Hit, CalibratedHit, McHit, TimesliceHit,
     RecoTrack, NoRecoTrack,
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     Calibration, calibrate,
