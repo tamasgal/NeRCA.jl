@@ -24,7 +24,7 @@ end
 Returns a function which calculates the arrival time of a Cherenkov photon
 emitted at a given position.
 """
-function make_cherenkov_calculator(track_pos, track_dir, theta=0.759296, c_water=217445751.79)
+function make_cherenkov_calculator(track_pos, track_dir; theta=0.759296, c_water=217445751.79)
     tan_theta = tan(theta)
     sin_theta = sin(theta)
     one_over_c_water = 1 / c_water
