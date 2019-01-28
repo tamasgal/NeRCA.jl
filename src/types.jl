@@ -29,24 +29,18 @@ Base.show(io::IO, d::Direction) = begin
     print(io, s)
 end
 
-struct EventInfo
-    det_id::Int32
-    frame_index::UInt32
-    livetime_sec::UInt64
-    mc_id::Int32
-    mc_t::Float64
-    n_events_gen::UInt64
-    n_files_gen::UInt64
-    overlays::UInt32
-    trigger_counter::UInt64
-    trigger_mask::UInt64
-    utc_nanoseconds::UInt64
-    utc_seconds::UInt64
+struct MCEventInfo
+    event_id::Int64
+    group_id::Int64
+    mc_id::Int64
+    mc_time::Float64
+    nanoseconds::Int64
+    run_id::Int64
+    timestamp::Int64
     weight_w1::Float64
     weight_w2::Float64
     weight_w3::Float64
-    run_id::UInt32
-    event_id::UInt32
+    weight_w4::Float64
 end
 
 EventInfo(event_info::HDF5.HDF5Compound{17}) = EventInfo(event_info.data...)
