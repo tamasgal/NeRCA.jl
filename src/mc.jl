@@ -43,23 +43,14 @@ end
 
 
 """
-    function make_mc_time_converter(timestamp, mc_time)
+    function make_mc_time_converter(event_info::MCEventInfo)
 
-Returns a function which converts MC time to JTE time. The timestamp has
-to be in [ns].
+Returns a function which converts MC time to JTE time.
 """
-function make_mc_time_converter(timestamp, mc_time)
-    function time_converter(time)
-        return time - timestamp * 1e9 + mc_time
-    end
-    return time_converter
-end
-
-
 function make_mc_time_converter(event_info::MCEventInfo)
-    #= time_offset = event_info.timestamp * 1e9 + event_info.nanoseconds =#
     function time_converter(time)
-        return time - (event_info.timestamp * 1e9 + event_info.nanoseconds) + event_info.mc_time
+        return time - (event_info.timestamp * 1e9 + event_info.nanoseconds)  \
+               + event_info.mc_time
     end
     return time_converter
 end
