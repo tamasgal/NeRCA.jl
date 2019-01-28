@@ -40,3 +40,17 @@ function make_cherenkov_calculator(track_pos, track_dir; theta=0.759296, c_water
     end
     return cherenkov_time
 end
+
+
+"""
+    function make_mc_time_converter(timestamp, mc_time)
+
+Returns a function which converts MC time to JTE time. The timestamp has
+to be in [ns].
+"""
+function make_mc_time_converter(timestamp, mc_time)
+    function time_converter(time)
+        return time - timestamp * 1e9 + mc_time
+    end
+    return time_converter
+end
