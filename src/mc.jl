@@ -32,7 +32,11 @@ function make_cherenkov_calculator(track_pos, track_dir; theta=0.759296, c_water
     function cherenkov_time(pos)
         v = pos - track_pos
         l = dot(v, track_dir)
-        k = dot(v, v) - l^2
+        p = dot(v, v) - l^2
+        if p < 0
+            return NaN
+        end
+        k = sqrt(p)
         a_1 = k / tan_theta
         a_2 = k / sin_theta
         t_c = one_over_c * (l - a_1) + one_over_c_water * a_2
