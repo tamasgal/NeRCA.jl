@@ -52,6 +52,10 @@ struct TimesliceInfo
     group_id::UInt32
 end
 
+struct Track
+    dir::Direction
+    pos::Position
+end
 
 # Fit
 abstract type AbstractRecoTrack end
