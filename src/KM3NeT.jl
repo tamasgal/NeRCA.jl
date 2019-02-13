@@ -6,6 +6,7 @@ using Sockets
 using DataStructures
 using StaticArrays
 using HDF5
+using RecipesBase
 
 import Base: +, -, *
 
@@ -28,6 +29,7 @@ include("io.jl")
 include("hits.jl")
 include("mc.jl")
 include("controlhost.jl")
+include("plot.jl")
 
 
 """
