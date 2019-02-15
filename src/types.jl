@@ -186,7 +186,7 @@ struct DAQEvent
     timeslice_id::UInt32
     timestamp::UInt32
     nanosecond_ticks::UInt32
-    trigger_counter::UInt64
+    trigger_counter::UInt32
     trigger_mask::UInt64
     overlays::UInt32
     n_triggered_hits::UInt32
