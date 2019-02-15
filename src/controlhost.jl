@@ -9,10 +9,15 @@ end
 struct CHClient
     ip::Sockets.IPv4
     port::UInt16
+    tags
     socket::TCPSocket
-    CHClient(ip, port) = begin
+    CHClient(ip, port, tags) = begin
         socket = connect(ip, port)
-        new(ip, port, socket)
+        chclient = new(ip, port, tags, socket)
+        for tag in tags
+            subscribe(chclient, tag)
+        end
+        chclient
     end
 end
 
@@ -93,3 +98,7 @@ function subscribe(c::CHClient, tag::AbstractString; mode::AbstractString="wait"
 end
 
 Base.close(c::CHClient) = close(c.socket)
+
+
+Base.iterate(iter::CHClient) = (CHMessage(iter), iter)
+Base.iterate(iter::CHClient, state) = (CHMessage(iter), iter)
