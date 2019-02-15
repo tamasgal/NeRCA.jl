@@ -179,16 +179,21 @@ end
 
 
 struct DAQEvent
-    event_length::UInt32
+    event_length::Int32
     datatype::Int32
     det_id::Int32
-    run_id::UInt32
-    timeslice_id::UInt32
-    timestamp::UInt32
-    nanosecond_ticks::UInt32
-    trigger_counter::UInt32
+    run_id::Int32
+    timeslice_id::Int32
+    timestamp::Int32
+    nanosecond_ticks::Int32
+    trigger_counter::Int64
     trigger_mask::UInt64
-    overlays::UInt32
-    n_triggered_hits::UInt32
-    dom_id::UInt32
+    overlays::Int32
+
+    n_triggered_hits::Int32
+
+    dom_id::Int32
+    channel_id::Int8
+    time::Int32
+    tot::Int8
 end
