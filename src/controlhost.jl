@@ -88,10 +88,10 @@ end
 
 
 
-function subscribe(c::CHClient, tag::AbstractString; mode::AbstractString="wait")
+function subscribe(c::CHClient, tag::AbstractString; mode::Char='w')
     chtag = CHTag("_Subscri")
     prefix = CHPrefix(chtag, UInt32(length(tag)+3))
-    message = CHMessage(prefix, Vector{UInt8}(" $(mode[1]) $tag"))
+    message = CHMessage(prefix, Vector{UInt8}(" $mode $tag"))
     data = vcat(prefix.data, message.data)
     write(c.socket, data)
     write(c.socket, CHPrefix(CHTag("_Always"), UInt32(0x00)).data)
