@@ -176,3 +176,19 @@ Base.show(io::IO, h::DAQHit) = begin
     print(io, "$(typeof(h)): channel_id($(h.channel_id)), t($(h.t)), " *
           "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
 end
+
+
+struct DAQEvent
+    event_length::UInt32
+    datatype::Int32
+    det_id::Int32
+    run_id::UInt32
+    timeslice_id::UInt32
+    timestamp::UInt32
+    nanosecond_ticks::UInt32
+    trigger_counter::UInt64
+    trigger_mask::UInt64
+    overlays::UInt32
+    n_triggered_hits::UInt32
+    dom_id::UInt32
+end
