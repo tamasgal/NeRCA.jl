@@ -172,28 +172,76 @@ end
 
 Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
-Base.show(io::IO, h::DAQHit) = begin
-    print(io, "$(typeof(h)): channel_id($(h.channel_id)), t($(h.t)), " *
-          "tot($(h.tot)), dom_id($(h.dom_id)), triggered($(h.triggered))")
-end
 
-
-struct DAQEvent
-    event_length::Int32
-    datatype::Int32
-    det_id::Int32
-    run_id::Int32
-    timeslice_id::Int32
-    timestamp::Int32
-    nanosecond_ticks::Int32
-    trigger_counter::Int64
-    trigger_mask::UInt64
-    overlays::Int32
-
-    n_triggered_hits::Int32
-
+struct DAQSnapshotHit <: DAQHit
     dom_id::Int32
     channel_id::Int8
     time::Int32
     tot::Int8
+end
+
+struct DAQTriggeredHit <: DAQHit
+    dom_id::Int32
+    channel_id::Int8
+    time::Int32
+    tot::Int8
+    trigger_mask::Int64
+end
+
+struct DAQEvent
+    det_id::Int32
+    run_id::Int32
+    timeslice_id::Int32
+    timestamp::Int32
+    ticks::Int32
+    trigger_counter::Int64
+    trigger_mask::Int64
+    overlays::Int32
+    n_triggered_hits::Int32
+    triggered_hits::Vector{DAQTriggeredHit}
+    n_snapshot_hits::Int32
+    snapshot_hits::Vector{DAQSnapshotHit}
+end
+
+Base.show(io::IO, d::DAQEvent) = begin
+    print(io, "DAQEvent: $(d.n_triggered_hits) triggered hits, " *
+              "$(d.n_snapshot_hits) snapshot hits")
+end
+
+function read_io(io::IOStream, t::T) where T
+    length = read(io, Int32)
+    type = read(io, Int32)
+    det_id = read(io, Int32)
+    run_id = read(io, Int32)
+    timeslice_id = read(io, Int32)
+    timestamp = read(io, Int32)
+    ticks = read(io, Int32)
+    trigger_counter = read(io, Int64)
+    trigger_mask = read(io, Int64)
+    overlays = read(io, Int32)
+
+    n_triggered_hits = read(io, Int32)
+    triggered_hits = Vector{DAQTriggeredHit}()
+    sizehint!(triggered_hits, n_triggered_hits)
+    @inbounds for i ∈ 1:n_triggered_hits
+        dom_id = read(io, Int32)
+        channel_id = read(io, Int8)
+        time = bswap(read(io, Int32))
+        tot = read(io, Int8)
+        trigger_mask = read(io, Int64)
+        push!(triggered_hits, DAQTriggeredHit(dom_id, channel_id, time, tot, trigger_mask))
+    end
+
+    n_snapshot_hits = read(io, Int32)
+    snapshot_hits = Vector{DAQSnapshotHit}()
+    sizehint!(snapshot_hits, n_snapshot_hits)
+    @inbounds for i ∈ 1:n_snapshot_hits
+        dom_id = read(io, Int32)
+        channel_id = read(io, Int8)
+        time = bswap(read(io, Int32))
+        tot = read(io, Int8)
+        push!(snapshot_hits, DAQSnapshotHit(dom_id, channel_id, time, tot))
+    end
+
+    DAQEvent(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_snapshot_hits, snapshot_hits)
 end
