@@ -208,7 +208,7 @@ Base.show(io::IO, d::DAQEvent) = begin
               "$(d.n_snapshot_hits) snapshot hits")
 end
 
-function read_io(io::IOStream, t::T) where T
+function read_io(io::IOBuffer, t::T) where T
     length = read(io, Int32)
     type = read(io, Int32)
     det_id = read(io, Int32)
