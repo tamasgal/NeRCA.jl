@@ -118,9 +118,9 @@ function read_indices(fobj::HDF5.HDF5File, from::AbstractString)
     return indices
 end
 
-
 function read_calibration(filename::AbstractString)
     lines = readlines(filename)
+    filter!(e->!startswith(e, "#") && !isempty(strip(e)), lines)
 
     if 'v' ∈ first(lines)
         det_id, version = map(x->parse(Int,x), split(first(lines), 'v'))
@@ -131,6 +131,8 @@ function read_calibration(filename::AbstractString)
         version = 1
         idx = 2
     end
+
+    println("Parsing DETX version $version")
 
     pos = Dict{Int32,Vector{KM3NeT.Position}}()
     dir = Dict{Int32,Vector{KM3NeT.Direction}}()
@@ -157,6 +159,5 @@ function read_calibration(filename::AbstractString)
         end
         idx += n_pmts + 1
     end
-
     Calibration(det_id, pos, dir, t0s, dus, floors)
 end

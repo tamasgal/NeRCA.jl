@@ -42,16 +42,15 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
     for hit in hits
         dom_id = hit.dom_id
         channel_id = hit.channel_id
-        triggered = hit.triggered
         tot = hit.tot
         pos = calibration.pos[dom_id][channel_id+1]
         dir = calibration.dir[dom_id][channel_id+1]
         t0 = calibration.t0[dom_id][channel_id+1]
-        t = hit.t + t0
+        time = hit.time + t0
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
-        c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
-                              triggered, pos, dir, t0)
+        c_hit = CalibratedHit(channel_id, dom_id, du, floor, time, tot,
+                              pos, dir, t0)
         push!(calibrated_hits, c_hit)
     end
     calibrated_hits

@@ -153,7 +153,6 @@ struct CalibratedHit <: DAQHit
     floor::Floor
     t::HitTime
     tot::ToT
-    triggered::Bool
     pos::Position
     dir::Direction
     t0::HitTime
@@ -175,16 +174,16 @@ Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 struct DAQSnapshotHit <: DAQHit
     dom_id::Int32
-    channel_id::Int8
+    channel_id::UInt8
     time::Int32
-    tot::Int8
+    tot::UInt8
 end
 
 struct DAQTriggeredHit <: DAQHit
     dom_id::Int32
-    channel_id::Int8
+    channel_id::UInt8
     time::Int32
-    tot::Int8
+    tot::UInt8
     trigger_mask::Int64
 end
 
@@ -225,9 +224,9 @@ function read_io(io::IOBuffer, t::T) where T
     sizehint!(triggered_hits, n_triggered_hits)
     @inbounds for i ∈ 1:n_triggered_hits
         dom_id = read(io, Int32)
-        channel_id = read(io, Int8)
+        channel_id = read(io, UInt8)
         time = bswap(read(io, Int32))
-        tot = read(io, Int8)
+        tot = read(io, UInt8)
         trigger_mask = read(io, Int64)
         push!(triggered_hits, DAQTriggeredHit(dom_id, channel_id, time, tot, trigger_mask))
     end
@@ -237,9 +236,9 @@ function read_io(io::IOBuffer, t::T) where T
     sizehint!(snapshot_hits, n_snapshot_hits)
     @inbounds for i ∈ 1:n_snapshot_hits
         dom_id = read(io, Int32)
-        channel_id = read(io, Int8)
+        channel_id = read(io, UInt8)
         time = bswap(read(io, Int32))
-        tot = read(io, Int8)
+        tot = read(io, UInt8)
         push!(snapshot_hits, DAQSnapshotHit(dom_id, channel_id, time, tot))
     end
 
