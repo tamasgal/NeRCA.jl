@@ -169,6 +169,7 @@ Hit(hit::HDF5.HDF5Compound{5}) = begin
     Hit(hit.data...)
 end
 
+Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 struct DAQSnapshotHit <: DAQHit
     dom_id::Int32
