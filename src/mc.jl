@@ -31,7 +31,7 @@ function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=2174457
     one_over_c = 1 / 2.99792458e8
     pos -> begin
         v = pos - track.pos
-        l = dot(v, track.dir)
+        l = dot(v, normalize(track.dir))
         p = dot(v, v) - l^2
         if p < 0
             return NaN
