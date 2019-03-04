@@ -7,8 +7,9 @@ using BenchmarkTools
 dom_positions = [KM3NeT.Position(0, 0, z)
                  for z in range(120, length=18, stop=800)]
 
+track = KM3NeT.Track([0, 1, 0], [0, 500, 500], 0)
 
-plot(dom_positions, KM3NeT.Track([0,0,-1], [0,0,220]))
+plot(dom_positions, track)
 plot!(dom_positions, KM3NeT.Track([0,0,-1], [0,0,800]))
 plot!(dom_positions, KM3NeT.Track([0,-1,0], [0,1000,400]))
 
@@ -25,4 +26,4 @@ function eventplot(dom_positions, track::KM3NeT.Track)
         )
 end
 
-eventplot(dom_positions, KM3NeT.Track([0, 0, 1], [0, 0, 0]))
+eventplot(dom_positions, track)
