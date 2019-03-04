@@ -55,6 +55,7 @@ end
 struct Track
     dir::Direction
     pos::Position
+    time::Float64
 end
 
 # Fit
