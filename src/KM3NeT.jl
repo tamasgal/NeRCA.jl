@@ -24,6 +24,7 @@ export
     savefigs
 
 
+include("constants.jl")
 include("types.jl")
 include("io.jl")
 include("hits.jl")
