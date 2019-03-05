@@ -46,7 +46,7 @@ end
 
 
 """
-    function make_cherenkov_calc(d_closest, t_closest, z_closest, dir_z, t₀)
+    function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
