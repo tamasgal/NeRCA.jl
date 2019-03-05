@@ -12,10 +12,6 @@ cache:
     - .julia/packages
   key: "$CI_COMMIT_REF_SLUG"
 
-test:0.7:
-  image: julia:0.7
-  <<: *test_definition
-  
 test:1.0:
   image: julia:1.0
   <<: *test_definition
@@ -26,12 +22,12 @@ test:1.1:
 
 
 pages:
-  image: julia:0.7
+  image: julia:1.1
   stage: deploy
   script:
     - apt-get update -qq && apt-get install -y git # needed by Documenter
     - apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2  # for HDF5.jl
-    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT");' # rebuild Julia (can be put somewhere else I'm sure
+    - julia -e 'using Pkg; Pkg.add(pwd()); Pkg.build("KM3NeT");' # rebuild Julia (can be put somewhere else I'm sure
     - julia -e 'using Pkg; import KM3NeT; Pkg.add("Documenter")' # install Documenter
     - julia --color=yes docs/make.jl # make documentation
     - mv docs/build public # move to the directory picked up by Gitlab pages
