@@ -23,7 +23,7 @@ end
 Generates a function to be used in an optimiser. The generated function has
 the following signature:
 
-    make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+    quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
 """
 function make_quality_function(positions, times)
     function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
