@@ -15,3 +15,21 @@ function single_du_params(track::KM3NeT.Track)
 
     d_closest, t_closest, z_closest, dir.z, t₀
 end
+
+
+"""
+    function make_quality_function(positions, times)
+
+Generates a function to be used in an optimiser. The generated function has
+the following signature:
+
+    make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+"""
+function make_quality_function(positions, times)
+    function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
+        ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+        expected_times = ccalc.(positions)
+        return sum((times - expected_times).^2)
+    end
+    return quality_function
+end
