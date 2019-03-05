@@ -52,9 +52,9 @@ Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
 function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
-    d_γ(z) = n/√(n^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
+    d_γ(z) = n_water/√(n_water^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
     z -> begin
-        (t_closest - t₀) + 1/c * ((z - z_closest)*dir_z + (n^2 - 1)/n * d_γ(z))
+        (t_closest - t₀) + 1/c * ((z - z_closest)*dir_z + (n_water^2 - 1)/n_water * d_γ(z))
     end
 end
 
