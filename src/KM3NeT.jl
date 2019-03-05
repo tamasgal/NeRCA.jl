@@ -28,6 +28,7 @@ include("types.jl")
 include("io.jl")
 include("hits.jl")
 include("mc.jl")
+include("fit.jl")
 include("controlhost.jl")
 include("plot.jl")
 
