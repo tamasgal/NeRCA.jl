@@ -135,7 +135,7 @@ abstract type DAQHit<:AbstractHit end
 struct Hit <: DAQHit
     channel_id::ChannelID
     dom_id::DOMID
-    t::HitTime
+    time::HitTime
     tot::ToT
     triggered::Bool
 end
