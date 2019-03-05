@@ -4,7 +4,7 @@
 Calculates five parameters to describe a track for a single DU case.
 """
 function single_du_params(track::KM3NeT.Track)
-    const c_ns = c / 1e9
+    c_ns = c / 1e9
     pos = track.pos
     dir = Direction(normalize(track.dir))
     t₀ = track.time
