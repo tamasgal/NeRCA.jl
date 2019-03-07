@@ -7,6 +7,8 @@ using DataStructures
 using StaticArrays
 using HDF5
 using RecipesBase
+using JuMP
+using Ipopt
 
 import Base: +, -, *
 
