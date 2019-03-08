@@ -19,6 +19,16 @@ end
 
 
 """
+    function single_du_params(t::KM3NeT.MCTrack)
+
+Calculates five parameters to describe a MC track for a single DU case.
+"""
+function single_du_params(t::KM3NeT.MCTrack, time)
+    single_du_params(KM3NeT.Track([t.dir_x, t.dir_y, t.dir_z], [t.pos_x, t.pos_y, t.pos_z], time))
+end
+
+
+"""
     function make_quality_function(positions, times)
 
 Generates a function to be used in an optimiser. The generated function has
