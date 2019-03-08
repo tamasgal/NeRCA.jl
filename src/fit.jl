@@ -46,6 +46,33 @@ function make_quality_function(positions, times)
 end
 
 
+function reco(hits::Vector{KM3NeT.CalibratedHit})
+    dthits = filter(h -> h.triggered, hits);
+    sort!(dthits, by = h -> h.t);
+    shits = unique(h -> h.dom_id, dthits);
+
+    qfunc = KM3NeT.make_quality_function([h.pos.z for h in shits], [h.t for h in shits])
+
+    model = Model(with_optimizer(Ipopt.Optimizer))
+
+    register(model, :qfunc, 5, qfunc, autodiff=true)
+
+    hit_time = shits[1].t
+
+    @variable(model, 10 <= d_closest <= 1000, start=100.0)
+    @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=hit_time)
+    @variable(model, 0 <= z_closest <= 1000, start=shits[1].pos.z)
+    @variable(model, -1 <= dir_z <= 1, start=-0.9)
+    @variable(model, t₀, start=hit_time)
+
+    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, t₀))
+
+    optimize!(model);
+
+    return value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀)
+end
+
+
 function reco(hits, du, calib)
     chits = KM3NeT.calibrate(hits, calib);
     dhits = filter(h -> h.du == du, chits);
