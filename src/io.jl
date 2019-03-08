@@ -136,7 +136,7 @@ function read_calibration(filename::AbstractString)
 
     pos = Dict{Int32,Vector{KM3NeT.Position}}()
     dir = Dict{Int32,Vector{KM3NeT.Direction}}()
-    t0s = Dict{Int32,Vector{Int32}}()
+    t0s = Dict{Int32,Vector{Float64}}()
     dus = Dict{Int32,UInt8}()
     floors = Dict{Int32,UInt8}()
 
@@ -144,7 +144,7 @@ function read_calibration(filename::AbstractString)
         dom_id, du, floor, n_pmts = map(x->parse(Int,x), split(lines[idx]))
         pos[dom_id] = Vector{KM3NeT.Position}()
         dir[dom_id] = Vector{KM3NeT.Direction}()
-        t0s[dom_id] = Vector{Int32}()
+        t0s[dom_id] = Vector{Float64}()
         dus[dom_id] = du
         floors[dom_id] = floor
 
@@ -152,7 +152,7 @@ function read_calibration(filename::AbstractString)
             l = split(lines[idx+pmt])
             pmt_id = parse(Int,first(l))
             x, y, z, dx, dy, dz = map(x->parse(Float64, x), l[2:7])
-            t0 = parse(Int,first(l[8]))
+            t0 = parse(Float64,l[8])
             push!(pos[dom_id], Position(x, y, z))
             push!(dir[dom_id], Direction(dx, dy, dz))
             push!(t0s[dom_id], t0)

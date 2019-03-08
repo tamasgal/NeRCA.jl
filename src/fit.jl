@@ -29,17 +29,17 @@ end
 
 
 """
-    function make_quality_function(positions, times)
+    function make_quality_function(z_positions, times)
 
 Generates a function to be used in an optimiser. The generated function has
 the following signature:
 
     quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
 """
-function make_quality_function(positions, times)
+function make_quality_function(z_positions, times)
     function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
         ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
-        expected_times = ccalc.(positions)
+        expected_times = ccalc.(z_positions)
         return sum((times - expected_times).^2)
     end
     return quality_function
@@ -59,7 +59,7 @@ function reco(hits::Vector{KM3NeT.CalibratedHit})
 
     hit_time = shits[1].t
 
-    @variable(model, 10 <= d_closest <= 1000, start=100.0)
+    @variable(model, 5 <= d_closest <= 1000, start=100.0)
     @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=hit_time)
     @variable(model, 0 <= z_closest <= 1000, start=shits[1].pos.z)
     @variable(model, -1 <= dir_z <= 1, start=-0.9)

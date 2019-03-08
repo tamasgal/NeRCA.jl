@@ -3,7 +3,7 @@ const ChannelID = UInt8
 const DOMID = UInt32
 const Floor = UInt8
 const DU = UInt8
-const HitTime = Float32
+const HitTime = Float64
 
 struct Position <: FieldVector{3, Float64}
     x::Float64
@@ -120,7 +120,7 @@ struct Calibration
     det_id::Int32
     pos::Dict{Int32,Vector{KM3NeT.Position}}
     dir::Dict{Int32,Vector{KM3NeT.Direction}}
-    t0::Dict{Int32,Vector{Integer}}
+    t0::Dict{Int32,Vector{Float64}}
     du::Dict{Int32,DU}
     floor::Dict{Int32,Floor}
 end
