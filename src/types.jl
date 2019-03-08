@@ -88,6 +88,8 @@ struct MCTrack
     particle_type::Int64
 end
 
+Track(t::MCTrack) = Track([t.dir_x, t.dir_y, t.dir_z], [t.pos_x, t.pos_y, t.pos_z], t.t)
+
 
 Base.show(io::IO, t::MCTrack) = begin
     E = Printf.@sprintf "%0.1f" t.E
