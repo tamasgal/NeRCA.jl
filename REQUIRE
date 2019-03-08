@@ -4,3 +4,5 @@ DataStructures
 StaticArrays
 HDF5
 RecipesBase
+JuMP
+Ipopt

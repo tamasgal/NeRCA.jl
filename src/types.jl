@@ -157,6 +157,7 @@ struct CalibratedHit <: DAQHit
     pos::Position
     dir::Direction
     t0::HitTime
+    triggered::Bool
 end
 
 struct TimesliceHit <: DAQHit
