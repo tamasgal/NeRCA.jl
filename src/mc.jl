@@ -67,8 +67,7 @@ Returns a function which converts MC time to JTE time.
 """
 function make_mc_time_converter(event_info::MCEventInfo)
     function time_converter(time)
-        return time - (event_info.timestamp * 1e9 + event_info.nanoseconds)  \
-               + event_info.mc_time
+        return time - (event_info.timestamp * 1e9 + event_info.nanoseconds) + event_info.mc_time
     end
     return time_converter
 end
