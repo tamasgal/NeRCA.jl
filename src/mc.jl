@@ -55,7 +55,7 @@ function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
     c_ns = c / 1e9
     d_γ(z) = n_water/√(n_water^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
     z -> begin
-        (t_closest - t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n_water^2 - 1)/n_water * d_γ(z))
+        (t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n_water^2 - 1)/n_water * d_γ(z))
     end
 end
 

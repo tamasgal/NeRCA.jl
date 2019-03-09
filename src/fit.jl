@@ -36,7 +36,8 @@ the following signature:
 
     quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
 """
-function make_quality_function(z_positions, times)
+function make_quality_function(hits::Vector{KM3NeT.CalibratedHit})
+    z_positions, times = [h.pos.z for h in hits], [h.t for h in hits]
     function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
         ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
         expected_times = ccalc.(z_positions)
@@ -51,7 +52,7 @@ function reco(hits::Vector{KM3NeT.CalibratedHit})
     sort!(dthits, by = h -> h.t);
     shits = unique(h -> h.dom_id, dthits);
 
-    qfunc = KM3NeT.make_quality_function([h.pos.z for h in shits], [h.t for h in shits])
+    qfunc = KM3NeT.make_quality_function(shits)
 
     model = Model(with_optimizer(Ipopt.Optimizer))
 
@@ -59,17 +60,31 @@ function reco(hits::Vector{KM3NeT.CalibratedHit})
 
     hit_time = shits[1].t
 
-    @variable(model, 5 <= d_closest <= 1000, start=100.0)
-    @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=hit_time)
-    @variable(model, 0 <= z_closest <= 1000, start=shits[1].pos.z)
-    @variable(model, -1 <= dir_z <= 1, start=-0.9)
-    @variable(model, t₀, start=hit_time)
+    d_closest_start = 100.0
+    t_closest_start = hit_time
+    z_closest_start = shits[1].pos.z
+    dir_z_start = -0.9
+    t₀_start = hit_time
+
+    #= d_closest_start = 0.0 =#
+    #= t_closest_start = 0 =#
+    #= z_closest_start = 10 =#
+    #= dir_z_start = 0 =#
+    #= t₀_start = 0 =#
+
+    @variable(model, 1 <= d_closest <= 1000, start=d_closest_start)
+    @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=t_closest_start)
+    @variable(model, 0 <= z_closest <= 1000, start=z_closest_start)
+    @variable(model, -1 <= dir_z <= 1, start=dir_z_start)
+    @variable(model, t₀, start=t₀_start)
 
     @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, t₀))
 
     optimize!(model);
 
-    return value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀)
+    values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀))
+
+    return values, qfunc(values...)/4
 end
 
 
