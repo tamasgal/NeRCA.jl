@@ -47,14 +47,14 @@ function make_quality_function(hits::Vector{KM3NeT.CalibratedHit})
 end
 
 
-function reco(hits::Vector{KM3NeT.CalibratedHit})
+function reco(hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     dthits = filter(h -> h.triggered, hits);
     sort!(dthits, by = h -> h.t);
     shits = unique(h -> h.dom_id, dthits);
 
     qfunc = KM3NeT.make_quality_function(shits)
 
-    model = Model(with_optimizer(Ipopt.Optimizer))
+    model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
 
     register(model, :qfunc, 5, qfunc, autodiff=true)
 
@@ -84,7 +84,7 @@ function reco(hits::Vector{KM3NeT.CalibratedHit})
 
     values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀))
 
-    return values, qfunc(values...)/4
+    return values, qfunc(values...)/4, model
 end
 
 
