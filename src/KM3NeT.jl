@@ -9,6 +9,7 @@ using HDF5
 using RecipesBase
 using JuMP
 using Ipopt
+using Statistics
 
 import Base: +, -, *
 

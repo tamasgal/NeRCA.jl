@@ -38,10 +38,18 @@ the following signature:
 """
 function make_quality_function(hits::Vector{KM3NeT.CalibratedHit})
     z_positions, times = [h.pos.z for h in hits], [h.t for h in hits]
+    tots = [h.tot for h in hits]
+    charges = map(t -> t <= 26 ? 0 : floor((t - 26) / 7) + 1, tots)
+    mean_charge = mean(charges)
+    mean_tot = mean(tots)
+    print(map(signed, tots))
     function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
-        ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+        d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
         expected_times = ccalc.(z_positions)
-        return sum((times - expected_times).^2)
+        #= delta_zs = abs.(z_positions .- z_closest) =#
+        #= delta_ts = delta_zs ./ maximum(delta_zs) .* 2 =#
+        Δts = abs.(times - expected_times)
+        return sum(Δts .^2 + tots ./ mean_tot)
     end
     return quality_function
 end
