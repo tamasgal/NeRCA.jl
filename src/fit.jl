@@ -98,7 +98,7 @@ function reco(hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
 
     values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀))
 
-    return values, qfunc(values...)/4, model
+    return values, qfunc(values...)/length(shits), model
 end
 
 
