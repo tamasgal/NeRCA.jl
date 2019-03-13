@@ -74,6 +74,12 @@ function reco(hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     dir_z_start = -0.9
     t₀_start = hit_time
 
+    max_z = maximum([h.pos.z for h in shits]) - 2*38
+    min_z = minimum([h.pos.z for h in shits]) + 2*38
+    if min_z > max_z
+        min_z = abs(max_z - min_z) / 2
+    end
+
     #= d_closest_start = 0.0 =#
     #= t_closest_start = 0 =#
     #= z_closest_start = 10 =#
@@ -82,7 +88,7 @@ function reco(hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
 
     @variable(model, 1 <= d_closest <= 1000, start=d_closest_start)
     @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=t_closest_start)
-    @variable(model, 0 <= z_closest <= 1000, start=z_closest_start)
+    @variable(model, min_z <= z_closest <= max_z, start=z_closest_start)
     @variable(model, -1 <= dir_z <= 1, start=dir_z_start)
     @variable(model, t₀, start=t₀_start)
 
