@@ -43,6 +43,38 @@ struct MCEventInfo
     weight_w4::Float64
 end
 
+struct JMuon
+    JENERGY_CHI2::Float64
+    JENERGY_ENERGY::Float64
+    JGANDALF_BETA0_RAD::Float64
+    JGANDALF_BETA1_RAD::Float64
+    JGANDALF_CHI2::Float64
+    JGANDALF_LAMBDA::Float64
+    JGANDALF_NUMBER_OF_HITS::Float64
+    JGANDALF_NUMBER_OF_ITERATIONS::Float64
+    JMUONENERGY::Bool
+    JMUONGANDALF::Bool
+    JMUONPREFIT::Bool
+    JMUONSIMPLEX::Bool
+    JMUONSTART::Bool
+    JSTART_LENGTH_METRES::Float64
+    JSTART_NPE_MIP::Float64
+    JSTART_NPE_MIP_TOTAL::Float64
+    dir_x::Float64
+    dir_y::Float64
+    dir_z::Float64
+    energy::Float64
+    group_id::Int64
+    id::Int64
+    length::Float64
+    likelihood::Float64
+    pos_x::Float64
+    pos_y::Float64
+    pos_z::Float64
+    rec_type::Int64
+    time::Float64
+end
+
 struct TimesliceInfo
     frame_index::UInt32
     slice_id::UInt32
