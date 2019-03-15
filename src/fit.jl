@@ -132,14 +132,19 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
         end
     end
     println("Brightest floor: $(brightest_floor)")
-    closest_hit = filter(h -> h.triggered && h.floor == brightest_floor, du_hits)[1]
-    println("Closest hit: $(closest_hit)")
-
-    hit_time = closest_hit.t
+    hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
+    thits_on_brightest_floor = filter(h -> h.triggered, hits_on_brightest_floor)
+    if length(thits_on_brightest_floor) == 0
+        z_closest_start = hits_on_brightest_floor[1].pos.z
+        hit_time = mean([h.t for h in hits_on_brightest_floor])
+    else
+        closest_hit = thits_on_brightest_floor[1]
+        z_closest_start = closest_hit.pos.z
+        hit_time = closest_hit.t
+    end
 
     d_closest_start = 50.0
     t_closest_start = hit_time
-    z_closest_start = closest_hit.pos.z
     dir_z_start = -0.9
     t₀_start = hit_time
 
