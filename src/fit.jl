@@ -42,7 +42,6 @@ function make_quality_function(hits::Vector{KM3NeT.CalibratedHit})
     charges = map(t -> t <= 26 ? 0 : floor((t - 26) / 7) + 1, tots)
     mean_charge = mean(charges)
     mean_tot = mean(tots)
-    print(map(signed, tots))
     function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
         d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
         expected_times = ccalc.(z_positions)
@@ -84,9 +83,7 @@ function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=2) whe
 end
 
 
-function select_hits(hits::T) where T<:Vector{KM3NeT.CalibratedHit}
-    sort!(hits, by = h -> h.t)
-
+function create_hit_pool(hits::T) where T<:Vector{KM3NeT.CalibratedHit}
     hit_pool = Dict{Int, T}()
     for hit in hits
         if !haskey(hit_pool, hit.floor)
@@ -95,10 +92,17 @@ function select_hits(hits::T) where T<:Vector{KM3NeT.CalibratedHit}
         end
         push!(hit_pool[hit.floor], hit)
     end
+    hit_pool
+end
+
+
+function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{KM3NeT.CalibratedHit}
+    sort!(hits, by = h -> h.t)
 
     thits = filter(h -> h.triggered, hits)
     shits = unique(h -> h.dom_id, thits)
 
+    expand_hits!(shits, hit_pool)
     expand_hits!(shits, hit_pool)
 
     shits = unique(h -> h.dom_id, shits)
@@ -107,23 +111,26 @@ function select_hits(hits::T) where T<:Vector{KM3NeT.CalibratedHit}
 end
 
 
-function reco(hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
-    qfunc = KM3NeT.make_quality_function(hits)
+function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
+    hit_pool = create_hit_pool(du_hits)
+    shits = select_hits(hits, hit_pool)
+
+    qfunc = KM3NeT.make_quality_function(shits)
 
     model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
 
     register(model, :qfunc, 5, qfunc, autodiff=true)
 
-    hit_time = hits[1].t
+    hit_time = shits[1].t
 
     d_closest_start = 100.0
     t_closest_start = hit_time
-    z_closest_start = hits[1].pos.z
+    z_closest_start = shits[1].pos.z
     dir_z_start = -0.9
     t₀_start = hit_time
 
-    max_z = maximum([h.pos.z for h in hits]) - 1*38
-    min_z = minimum([h.pos.z for h in hits]) + 1*38
+    max_z = maximum([h.pos.z for h in shits]) - 2*38
+    min_z = minimum([h.pos.z for h in shits]) + 2*38
     if min_z > max_z
         min_z = abs(max_z - min_z) / 2
     end
@@ -146,7 +153,7 @@ function reco(hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
 
     values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀))
 
-    return values, qfunc(values...)/length(hits), model
+    return values, qfunc(values...)/length(shits), model
 end
 
 
