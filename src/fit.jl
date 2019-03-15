@@ -97,7 +97,6 @@ end
 
 
 function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{KM3NeT.CalibratedHit}
-    sort!(hits, by = h -> h.t)
 
     thits = filter(h -> h.triggered, hits)
     shits = unique(h -> h.dom_id, thits)
@@ -112,6 +111,8 @@ end
 
 
 function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
+    sort!(du_hits, by = h -> h.t)
+
     hit_pool = create_hit_pool(du_hits)
     shits = select_hits(du_hits, hit_pool)
 
@@ -121,11 +122,24 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
 
     register(model, :qfunc, 5, qfunc, autodiff=true)
 
-    hit_time = shits[1].t
+    brightest_floor = 0
+    floor_hits = 0
+    for floor in keys(hit_pool)
+        _floor_hits = length(hit_pool[floor])
+        if _floor_hits > floor_hits
+            floor_hits = _floor_hits
+            brightest_floor = floor
+        end
+    end
+    println("Brightest floor: $(brightest_floor)")
+    closest_hit = filter(h -> h.triggered && h.floor == brightest_floor, du_hits)[1]
+    println("Closest hit: $(closest_hit)")
 
-    d_closest_start = 100.0
+    hit_time = closest_hit.t
+
+    d_closest_start = 50.0
     t_closest_start = hit_time
-    z_closest_start = shits[1].pos.z
+    z_closest_start = closest_hit.pos.z
     dir_z_start = -0.9
     t₀_start = hit_time
 
@@ -152,8 +166,9 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     optimize!(model);
 
     values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀))
+    start_values = (d_closest_start, t_closest_start, z_closest_start, dir_z_start, t₀_start)
 
-    return values, qfunc(values...)/length(shits), shits, model
+    return values, start_values, qfunc(values...)/length(shits), shits, model
 end
 
 
