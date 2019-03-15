@@ -113,7 +113,7 @@ end
 
 function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     hit_pool = create_hit_pool(du_hits)
-    shits = select_hits(hits, hit_pool)
+    shits = select_hits(du_hits, hit_pool)
 
     qfunc = KM3NeT.make_quality_function(shits)
 
