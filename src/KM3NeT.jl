@@ -18,6 +18,8 @@ export
     ChannelID, DOMID, ToT, Floor, DU, HitTime,
     MCEventInfo, MCTrack, Hit, CalibratedHit, McHit, TimesliceHit,
     RecoTrack, NoRecoTrack,
+    DAQEvent, read_io,
+    is_mxshower, is_3dmuon, is_3dshower,
     read_indices, read_hits, read_tracks, read_calibration, read_event_info,
     Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,

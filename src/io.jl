@@ -161,3 +161,8 @@ function read_calibration(filename::AbstractString)
     end
     Calibration(det_id, pos, dir, t0s, dus, floors)
 end
+
+# Triggers
+is_3dmuon(e::DAQEvent) = Bool(e.trigger_mask & 16 > 0)
+is_3dshower(e::DAQEvent) = Bool(e.trigger_mask & 2 > 0)
+is_mxshower(e::DAQEvent) = Bool(e.trigger_mask & 4 > 0)
