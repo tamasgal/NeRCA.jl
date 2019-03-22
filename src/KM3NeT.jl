@@ -12,7 +12,6 @@ using Ipopt
 using Statistics
 
 import Base: +, -, *
-#= import Sockets: @ip_str =#
 
 export
     Position, Direction,
