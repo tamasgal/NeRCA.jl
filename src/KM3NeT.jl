@@ -12,6 +12,7 @@ using Ipopt
 using Statistics
 
 import Base: +, -, *
+#= import Sockets: @ip_str =#
 
 export
     Position, Direction,
@@ -24,7 +25,8 @@ export
     mc_run_id,
     svdfit, matrix, rows,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
-    savefigs
+    savefigs,
+    @ip_str
 
 
 include("constants.jl")
