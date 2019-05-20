@@ -32,6 +32,7 @@ export
 
 include("constants.jl")
 include("types.jl")
+include("tools.jl")
 include("io.jl")
 include("math.jl")
 include("hits.jl")
