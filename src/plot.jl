@@ -38,3 +38,37 @@ Plot recipe for z-t-plots.
         subplot := 3
     end
 end
+
+
+"""
+    f(hits::Vector{CalibratedHit}; triggered_only=false, du=0)
+
+Plot recipe to plot simple z-t-plots.
+"""
+@recipe function f(hits::Vector{CalibratedHit}; triggered_only=false, du=0)
+    seriestype := :scatter
+
+    xlabel := "time [ns]"
+    ylabel := "z [m]"
+    markerstrokewidth := 0
+
+    if du > 0
+        hits = filter(h -> h.du == du, hits)
+    end
+
+    thits = filter(h -> h.triggered, hits)
+    t₀ = minimum([h.t for h in thits])
+
+    if !triggered_only
+        @series begin
+            label := "hits"
+            [h.t - t₀ for h in hits], [h.pos.z for h in hits]
+        end
+    end
+
+    @series begin
+        label := "triggered hits"
+        [h.t - t₀ for h in thits], [h.pos.z for h in thits]
+    end
+
+end
