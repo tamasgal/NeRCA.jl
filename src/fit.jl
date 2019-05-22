@@ -1,3 +1,76 @@
+struct SingleDUParams
+    d::Float64
+    t::Float64
+    z::Float64
+    dz::Float64
+    ϕ::Float64
+    t₀::Float64
+end
+
+struct ROyFit
+    sdp::SingleDUParams
+    sdp_initial::SingleDUParams
+    Q::Float64
+    selected_hits::Vector{CalibratedHit}
+    model::Model
+end
+
+
+"""
+    function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
+
+Returns a function which calculates the arrival time of a Cherenkov photon
+at a given position.
+"""
+function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
+    tan_theta = tan(theta)
+    sin_theta = sin(theta)
+    one_over_c_water = 1 / c_water
+    one_over_c = 1 / 2.99792458e8
+    pos::Position -> begin
+        v = pos - track.pos
+        l = dot(v, normalize(track.dir))
+        p = dot(v, v) - l^2
+        if p < 0
+            return NaN
+        end
+        k = sqrt(p)
+        a_1 = k / tan_theta
+        a_2 = k / sin_theta
+        t_c = one_over_c * (l - a_1) + one_over_c_water * a_2
+        return t_c * 1e9 + track.time
+    end
+end
+
+
+"""
+    function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+
+Returns a function which calculates the arrival time of a Cherenkov photon
+at a given position.
+"""
+function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+    c_ns = c / 1e9
+    d_γ(z) = n_water/√(n_water^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
+    t(z) = (t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n_water^2 - 1)/n_water * d_γ(z))
+    d_γ, t
+end
+
+"""
+    function make_cherenkov_calculator(sdp::SingleDUParams)
+
+Returns a function which calculates the arrival time of a Cherenkov photon
+at a given position.
+"""
+function make_cherenkov_calculator(sdp::SingleDUParams)
+    c_ns = c / 1e9
+    d_γ(z) = n_water/√(n_water^2 - 1) * √(sdp.d^2 + (z-sdp.z)^2 * (1 - sdp.dz^2))
+    t(z) = (sdp.t₀) + 1/c_ns * ((z - sdp.z)*sdp.dz + (n_water^2 - 1)/n_water * d_γ(z))
+    d_γ, t
+end
+
+
+
 """
     function single_du_params(track::KM3NeT.Track)
 
@@ -110,17 +183,52 @@ function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{KM3NeT.Cal
 end
 
 
+struct SingleDUMinimiser <: Function
+    z_positions::Vector{Float64}
+    times::Vector{Float64}
+    pmt_directions::Vector{Direction}
+end
+
+
+function SingleDUMinimiser(hits::Vector{CalibratedHit})
+    n = length(hits)
+    z_positions = Vector{Float64}()
+    times = Vector{Float64}()
+    pmt_directions = Vector{Direction}()
+    sizehint!(z_positions, n)
+    sizehint!(times, n)
+    sizehint!(pmt_directions, n)
+    for i ∈ 1:n
+        hit = hits[i]
+        push!(z_positions, hit.pos.z)
+        push!(times, hit.t)
+        push!(pmt_directions, hit.dir)
+    end
+    SingleDUMinimiser(z_positions, times, pmt_directions)
+end
+
+
+function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
+    d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+    expected_times = ccalc.(s.z_positions)
+    Δts = abs.(s.times - expected_times) 
+    Δϕs = filter(!isnan, azimuth.(s.pmt_directions)) .- ϕ
+    return sum(Δts .^2) + sum(Δϕs.^2)/length(Δϕs)
+    # return sum(Δts .^2)
+end
+
+
 function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     sort!(du_hits, by = h -> h.t)
 
     hit_pool = create_hit_pool(du_hits)
     shits = select_hits(du_hits, hit_pool)
 
-    qfunc = KM3NeT.make_quality_function(shits)
+    qfunc = SingleDUMinimiser(shits)
 
     model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
 
-    register(model, :qfunc, 5, qfunc, autodiff=true)
+    register(model, :qfunc, 6, qfunc, autodiff=true)
 
     brightest_floor = 0
     floor_hits = 0
@@ -146,6 +254,7 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     d_closest_start = 50.0
     t_closest_start = hit_time
     dir_z_start = -0.9
+    ϕ_start = π
     t₀_start = hit_time
 
     max_z = maximum([h.pos.z for h in shits]) - 2*38
@@ -154,51 +263,20 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
         min_z = abs(max_z - min_z) / 2
     end
 
-    #= d_closest_start = 0.0 =#
-    #= t_closest_start = 0 =#
-    #= z_closest_start = 10 =#
-    #= dir_z_start = 0 =#
-    #= t₀_start = 0 =#
-
     @variable(model, 1 <= d_closest <= 1000, start=d_closest_start)
     @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=t_closest_start)
     @variable(model, min_z <= z_closest <= max_z, start=z_closest_start)
     @variable(model, -1 <= dir_z <= 1, start=dir_z_start)
+    @variable(model, 0 <= ϕ <= 2π, start=ϕ_start)
     @variable(model, t₀, start=t₀_start)
 
-    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, t₀))
+    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, ϕ, t₀))
 
     optimize!(model);
 
-    values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀))
-    start_values = (d_closest_start, t_closest_start, z_closest_start, dir_z_start, t₀_start)
+    values = value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(ϕ), value(t₀)
+    sdp = SingleDUParams(values...)
+    sdp_initial = SingleDUParams(d_closest_start, t_closest_start, z_closest_start, dir_z_start, ϕ_start, t₀_start)
 
-    return values, start_values, qfunc(values...)/length(shits), shits, model
-end
-
-
-function reco(hits, du, calib)
-    chits = KM3NeT.calibrate(hits, calib);
-    dhits = filter(h -> h.du == du, chits);
-    dthits = filter(h -> h.triggered, dhits);
-    sort!(dthits, by = h -> h.t);
-    shits = unique(h -> h.dom_id, dthits);
-
-    qfunc = KM3NeT.make_quality_function([h.pos.z for h in shits], [h.t for h in shits])
-
-    model = Model(with_optimizer(Ipopt.Optimizer))
-
-    register(model, :qfunc, 5, qfunc, autodiff=true)
-
-    @variable(model, -1000 <= d_closest <= 1000, start=100.0)
-    @variable(model, t_closest, start=shits[1].t)
-    @variable(model, -1000 <= z_closest <= 1000, start=shits[1].pos.z)
-    @variable(model, -1 <= dir_z <= 1, start=-0.9)
-    @variable(model, t₀, start=shits[1].t)
-
-    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, t₀))
-
-    optimize!(model);
-
-    return value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(t₀)
+    return ROyFit(sdp, sdp_initial, qfunc(values...)/length(shits), shits, model)
 end
