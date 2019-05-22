@@ -19,47 +19,6 @@ end
 
 
 """
-    function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
-
-Returns a function which calculates the arrival time of a Cherenkov photon
-at a given position.
-"""
-function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
-    tan_theta = tan(theta)
-    sin_theta = sin(theta)
-    one_over_c_water = 1 / c_water
-    one_over_c = 1 / 2.99792458e8
-    pos::Position -> begin
-        v = pos - track.pos
-        l = dot(v, normalize(track.dir))
-        p = dot(v, v) - l^2
-        if p < 0
-            return NaN
-        end
-        k = sqrt(p)
-        a_1 = k / tan_theta
-        a_2 = k / sin_theta
-        t_c = one_over_c * (l - a_1) + one_over_c_water * a_2
-        return t_c * 1e9 + track.time
-    end
-end
-
-
-"""
-    function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
-
-Returns a function which calculates the arrival time of a Cherenkov photon
-at a given position.
-"""
-function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
-    c_ns = c / 1e9
-    d_γ(z) = n_water/√(n_water^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
-    t(z) = (t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n_water^2 - 1)/n_water * d_γ(z))
-    d_γ, t
-end
-
-
-"""
     function make_mc_time_converter(event_info::MCEventInfo)
 
 Returns a function which converts MC time to JTE time.
