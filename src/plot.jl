@@ -41,11 +41,11 @@ end
 
 
 """
-    f(hits::Vector{CalibratedHit}; triggered_only=false, du=0)
+    f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, du=0, t₀=0)
 
 Plot recipe to plot simple z-t-plots.
 """
-@recipe function f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, du=0)
+@recipe function f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, du=0, t₀=0)
     seriestype := :scatter
 
     xlabel := "time [ns]"
@@ -57,7 +57,6 @@ Plot recipe to plot simple z-t-plots.
     end
 
     thits = filter(h -> h.triggered, hits)
-    t₀ = minimum([h.t for h in thits])
 
     @series begin
         label := label
