@@ -101,32 +101,6 @@ function single_du_params(t::KM3NeT.MCTrack, time)
 end
 
 
-"""
-    function make_quality_function(z_positions, times)
-
-Generates a function to be used in an optimiser. The generated function has
-the following signature:
-
-    quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
-"""
-function make_quality_function(hits::Vector{KM3NeT.CalibratedHit})
-    z_positions, times = [h.pos.z for h in hits], [h.t for h in hits]
-    tots = [h.tot for h in hits]
-    charges = map(t -> t <= 26 ? 0 : floor((t - 26) / 7) + 1, tots)
-    mean_charge = mean(charges)
-    mean_tot = mean(tots)
-    function quality_function(d_closest, t_closest, z_closest, dir_z, t₀)
-        d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
-        expected_times = ccalc.(z_positions)
-        #= delta_zs = abs.(z_positions .- z_closest) =#
-        #= delta_ts = delta_zs ./ maximum(delta_zs) .* 2 =#
-        Δts = abs.(times - expected_times)
-        return sum(Δts .^2 + tots ./ mean_tot)
-    end
-    return quality_function
-end
-
-
 function cherenkov_plausible(Δt, Δz, time_extra=10)
     Δt < Δz * KM3NeT.n_water / KM3NeT.c*1e9 + time_extra
 end
@@ -175,7 +149,7 @@ function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{KM3NeT.Cal
     shits = unique(h -> h.dom_id, thits)
 
     expand_hits!(shits, hit_pool)
-    expand_hits!(shits, hit_pool)
+    # expand_hits!(shits, hit_pool)
 
     shits = unique(h -> h.dom_id, shits)
 
@@ -216,6 +190,7 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
     expected_times = ccalc.(s.z_positions)
     Δts = abs.(s.times - expected_times) 
     Δϕs = filter(!isnan, azimuth.(s.pmt_directions)) .- ϕ
+
     return sum(Δts .^2) + sum(Δϕs.^2)/length(Δϕs)
     # return sum(Δts .^2)
 end
@@ -233,18 +208,11 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
 
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
-    brightest_floor = 0
-    floor_hits = 0
-    for floor in keys(hit_pool)
-        _floor_hits = length(hit_pool[floor])
-        if _floor_hits > floor_hits
-            floor_hits = _floor_hits
-            brightest_floor = floor
-        end
-    end
-    println("Brightest floor: $(brightest_floor)")
+    brightest_floor = KM3NeT.most_frequent(h -> h.floor, du_hits)
+
     hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
     thits_on_brightest_floor = filter(h -> h.triggered, hits_on_brightest_floor)
+
     if length(thits_on_brightest_floor) == 0
         z_closest_start = hits_on_brightest_floor[1].pos.z
         hit_time = mean([h.t for h in hits_on_brightest_floor])
