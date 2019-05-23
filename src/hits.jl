@@ -38,13 +38,14 @@ end
 
 
 """
-    function multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
+    function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
 
 Calculate the multiplicities for a given time window. Two arrays are
 are returned, one contains the multiplicities, the second one the IDs
 of the coincidence groups.
+The hits should be sorted by time and then by dom_id.
 """
-function multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
+function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
     n = length(hits)
     mtp = ones(Int32, n)
     cid = zeros(Int32, n)
@@ -52,15 +53,24 @@ function multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
     _mtp = 1
     _cid = idx0
     t0 = hits[idx0].t
+    dom_id = hits[idx0].dom_id
     for i in 2:n
-        Δt = hits[i].t - t0
+        hit = hits[i]
+        if hit.dom_id != dom_id
+            dom_id = hit.dom_id
+            t0 = hit.t
+            _mtp = 1
+            _cid += 1
+            continue
+        end
+        Δt = hit.t - t0
         if Δt > tmax
             mtp[idx0:i] .= _mtp
             cid[idx0:i] .= _cid
             _mtp = 0
             _cid += 1
             idx0 = i
-            t0 = hits[i].t
+            t0 = hit.t
         end
         _mtp += 1
         if i == n - 1
