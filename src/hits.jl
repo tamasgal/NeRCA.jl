@@ -82,6 +82,65 @@ function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
     mtp, cid
 end
 
+"""
+    function count_multiplicities!(hits::Vector{CalibratedHit}, tmax=20)
+
+Counts the multiplicities and modifies the .multiplicity field of the hits.
+Important: the hits have to be sorted by time and then by DOM ID first.
+"""
+function count_multiplicities!(hits::Vector{CalibratedHit}, tmax=20)
+    _mtp = 0
+    _cid = 0
+    t0 = 0
+    dom_id = 0
+    hit_buffer = Vector{CalibratedHit}()
+
+    function process_buffer()
+        while !isempty(hit_buffer)
+            _hit = pop!(hit_buffer)
+            _hit.multiplicity.count = _mtp
+            _hit.multiplicity.id = _cid
+        end
+    end
+
+    function reset()
+        _mtp = 1
+        _cid += 1
+    end
+
+    for hit ∈ hits
+        if length(hit_buffer) == 0
+            reset()
+            push!(hit_buffer, hit)
+            t0 = hit.t
+            dom_id = hit.dom_id
+            continue
+        end
+        if hit.dom_id != dom_id
+            process_buffer()
+            push!(hit_buffer, hit)
+            t0 = hit.t
+            dom_id = hit.dom_id
+            reset()
+            continue
+        end
+        Δt = hit.t - t0
+        if Δt > tmax
+            process_buffer()
+            push!(hit_buffer, hit)
+            t0 = hit.t
+            reset()
+        else
+            push!(hit_buffer, hit)
+            _mtp += 1
+        end
+    end
+    if length(hit_buffer) > 0
+        process_buffer()
+    end
+    return
+end
+
 
 """
     function domhits(hits::Vector{T}) where {T<:Hit}

@@ -181,6 +181,11 @@ struct McHit <: AbstractHit
     t::HitTime
 end
 
+mutable struct Multiplicity
+    count::Int32
+    id::Int64
+end
+
 struct CalibratedHit <: DAQHit
     channel_id::ChannelID
     dom_id::UInt32
@@ -192,7 +197,9 @@ struct CalibratedHit <: DAQHit
     dir::Direction
     t0::HitTime
     triggered::Bool
+    multiplicity::Multiplicity
 end
+
 
 struct TimesliceHit <: DAQHit
     channel_id::Int8

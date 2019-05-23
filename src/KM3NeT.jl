@@ -67,7 +67,7 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
             triggered = hit.trigger_mask > 0
         end
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, time, tot,
-                              pos, dir, t0, triggered)
+                              pos, dir, t0, triggered, Multiplicity(0,0))
         push!(calibrated_hits, c_hit)
     end
     calibrated_hits
