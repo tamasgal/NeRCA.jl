@@ -33,13 +33,18 @@ function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
     return hits
 end
 
+function read_hits(fobj::HDF5.HDF5File, group_id::Int)
+    hit_indices = read_indices(fobj, "/hits")
+    idx = hit_indices[group_id+1][1]
+    n_hits = hit_indices[group_id+1][2]
+    hits = read_hits(fobj, idx, n_hits)::Vector{Hit}
+    hits
+end
+
 
 function read_hits(filename::AbstractString, group_id::Int)
     f = h5open(filename, "r")
-    hit_indices = read_indices(f, "/hits")
-    idx = hit_indices[group_id+1][1]
-    n_hits = hit_indices[group_id+1][2]
-    hits = read_hits(f, idx, n_hits)::Vector{Hit}
+    hits = read_hits(f, group_id)
     close(f)
     return hits
 end

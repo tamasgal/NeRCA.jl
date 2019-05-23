@@ -190,19 +190,22 @@ struct SingleDUMinimiser <: Function
 end
 
 
-function SingleDUMinimiser(hits::Vector{CalibratedHit})
+function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{CalibratedHit})
     n = length(hits)
+    n_triggered = length(triggered_hits)
     z_positions = Vector{Float64}()
     times = Vector{Float64}()
     pmt_directions = Vector{Direction}()
     sizehint!(z_positions, n)
     sizehint!(times, n)
-    sizehint!(pmt_directions, n)
+    sizehint!(pmt_directions, n_triggered)
     for i ∈ 1:n
         hit = hits[i]
         push!(z_positions, hit.pos.z)
         push!(times, hit.t)
-        push!(pmt_directions, hit.dir)
+    end
+    for i ∈ 1:n_triggered
+        push!(pmt_directions, triggered_hits[i].dir)
     end
     SingleDUMinimiser(z_positions, times, pmt_directions)
 end
@@ -224,7 +227,7 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     hit_pool = create_hit_pool(du_hits)
     shits = select_hits(du_hits, hit_pool)
 
-    qfunc = SingleDUMinimiser(shits)
+    qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
 
     model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
 
