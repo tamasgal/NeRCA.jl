@@ -41,11 +41,11 @@ end
 
 
 """
-    f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, du=0, t₀=0)
+    f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
 
 Plot recipe to plot simple z-t-plots.
 """
-@recipe function f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, du=0, t₀=0)
+@recipe function f(hits::Vector{CalibratedHit}; label="hits", markersize=4, highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
     seriestype := :scatter
 
     xlabel := "time [ns]"
@@ -60,12 +60,19 @@ Plot recipe to plot simple z-t-plots.
 
     @series begin
         label := label
+        if multiplicities
+            markersize := count_multiplicities(hits)[1]
+            markeralpha := 0.8
+        end
         [h.t - t₀ for h in hits], [h.pos.z for h in hits]
     end
 
     if highlight_triggered
         @series begin
             label := "triggered"
+            markersize := 1
+            marker := :x
+            markerstrokewidth := 1
             [h.t - t₀ for h in thits], [h.pos.z for h in thits]
         end
     end
