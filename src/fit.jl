@@ -161,6 +161,7 @@ struct SingleDUMinimiser <: Function
     z_positions::Vector{Float64}
     times::Vector{Float64}
     pmt_directions::Vector{Direction}
+    multiplicities::Vector{Int}
 end
 
 
@@ -169,35 +170,55 @@ function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{C
     n_triggered = length(triggered_hits)
     z_positions = Vector{Float64}()
     times = Vector{Float64}()
+    multiplicities = Vector{Int32}()
     pmt_directions = Vector{Direction}()
     sizehint!(z_positions, n)
     sizehint!(times, n)
+    sizehint!(multiplicities, n)
     sizehint!(pmt_directions, n_triggered)
     for i ∈ 1:n
         hit = hits[i]
         push!(z_positions, hit.pos.z)
         push!(times, hit.t)
+        push!(multiplicities, hit.multiplicity.count)
     end
     for i ∈ 1:n_triggered
         push!(pmt_directions, triggered_hits[i].dir)
     end
-    SingleDUMinimiser(z_positions, times, pmt_directions)
+    SingleDUMinimiser(z_positions, times, pmt_directions, multiplicities)
 end
 
 
 function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
+    n = length(s.times)
+
     d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
     expected_times = ccalc.(s.z_positions)
-    Δts = abs.(s.times - expected_times) 
-    Δϕs = filter(!isnan, azimuth.(s.pmt_directions)) .- ϕ
 
-    return sum(Δts .^2) + sum(Δϕs.^2)/length(Δϕs)
+    max_multiplicity = maximum(s.multiplicities)
+    Q = 0.0
+    for i ∈ 1:n
+        t = s.times[i]
+        z = s.z_positions[i]
+        m = s.multiplicities[i]
+        t_exp = ccalc(z)
+        Δt = abs(t - t_exp)
+        Q += Δt^2 * m / max_multiplicity
+    end
+
+    Δts = abs.(s.times - expected_times) 
+    # Δϕs = filter(!isnan, azimuth.(s.pmt_directions)) .- ϕ
+
+    # return sum(Δts .^2) + sum(Δϕs.^2)/length(Δϕs)
     # return sum(Δts .^2)
+    return Q
 end
 
 
 function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     sort!(du_hits, by = h -> h.t)
+    sort!(du_hits, by=h->h.dom_id)
+    count_multiplicities!(du_hits)
 
     hit_pool = create_hit_pool(du_hits)
     shits = select_hits(du_hits, hit_pool)
