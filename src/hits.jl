@@ -38,6 +38,42 @@ end
 
 
 """
+    function multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
+
+Calculate the multiplicities for a given time window. Two arrays are
+are returned, one contains the multiplicities, the second one the IDs
+of the coincidence groups.
+"""
+function multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
+    n = length(hits)
+    mtp = ones(Int32, n)
+    cid = zeros(Int32, n)
+    idx0 = 1
+    _mtp = 1
+    _cid = idx0
+    t0 = hits[idx0].t
+    for i in 2:n
+        Δt = hits[i].t - t0
+        if Δt > tmax
+            mtp[idx0:i] .= _mtp
+            cid[idx0:i] .= _cid
+            _mtp = 0
+            _cid += 1
+            idx0 = i
+            t0 = hits[i].t
+        end
+        _mtp += 1
+        if i == n - 1
+            mtp[idx0:end] .= _mtp
+            cid[idx0:end] .= _cid
+            break
+        end
+    end
+    mtp, cid
+end
+
+
+"""
     function domhits(hits::Vector{T}) where {T<:Hit}
 
 Sort hits by DOM ID and put them into a dictionary.
