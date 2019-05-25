@@ -111,7 +111,7 @@ end
 
 
 function svdfit(M)
-    com = mean(M, 1)
+    com = mean(M, dims=1)
     subtr = M .- com
     U, S, V = svd(subtr)
     return com[:], V[:, 1]

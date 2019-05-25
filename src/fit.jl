@@ -17,6 +17,22 @@ end
 
 
 """
+    function royprefit(hits::Vector{CalibratedHit})
+
+Uses SVD to do a fast and dirty track prefit. Provide hits with a multiplicity
+of at least 2.
+"""
+function royprefit(hits::Vector{CalibratedHit})
+    t₀ = hits[div(length(hits), 2)].t
+    pos, dir = svdfit(matrix([h.pos for h in hits]))
+    if (last(hits).pos - first(hits).pos) ⋅ dir  < 0.0
+        dir *= -1
+    end
+    return Track(dir, pos, t₀)
+end
+
+
+"""
     function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
@@ -149,7 +165,7 @@ function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{KM3NeT.Cal
     shits = unique(h -> h.dom_id, thits)
 
     expand_hits!(shits, hit_pool)
-    # expand_hits!(shits, hit_pool)
+    expand_hits!(shits, hit_pool)
 
     shits = unique(h -> h.dom_id, shits)
 
@@ -163,7 +179,6 @@ struct SingleDUMinimiser <: Function
     pmt_directions::Vector{Direction}
     multiplicities::Vector{Int}
 end
-
 
 function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{CalibratedHit})
     n = length(hits)
@@ -214,6 +229,25 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
     return Q
 end
 
+struct MultiDUMinimiser <: Function
+    hits::Vector{CalibratedHit}
+end
+    
+function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
+    pos = Position(x, y, z)
+    dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
+    ccalc = make_cherenkov_calculator(Track(pos, dir, t₀))
+
+    Q = 0.0
+    for hit in m.hits
+        t_exp = ccalc(hit.pos)
+        Δt = abs(hit.t - t_exp)
+        Q += Δt^2
+    end
+    Q
+end
+
+
 
 function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     sort!(du_hits, by = h -> h.t)
@@ -243,19 +277,19 @@ function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
         hit_time = closest_hit.t
     end
 
-    d_closest_start = 50.0
+    d_closest_start = 10.0
     t_closest_start = hit_time
     dir_z_start = -0.9
     ϕ_start = π
     t₀_start = hit_time
 
-    max_z = maximum([h.pos.z for h in shits]) - 2*38
-    min_z = minimum([h.pos.z for h in shits]) + 2*38
+    max_z = maximum([h.pos.z for h in shits]) - 2*13
+    min_z = minimum([h.pos.z for h in shits]) + 2*13
     if min_z > max_z
         min_z = abs(max_z - min_z) / 2
     end
 
-    @variable(model, 1 <= d_closest <= 1000, start=d_closest_start)
+    @variable(model, 1 <= d_closest <= 100, start=d_closest_start)
     @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=t_closest_start)
     @variable(model, min_z <= z_closest <= max_z, start=z_closest_start)
     @variable(model, -1 <= dir_z <= 1, start=dir_z_start)
