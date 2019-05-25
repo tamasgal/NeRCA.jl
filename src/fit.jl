@@ -33,6 +33,52 @@ end
 
 
 """
+    function dumand(hits::Vector{CalibratedHit})
+
+Performs the prefit algorithm which was used in DUMAND II.
+"""
+function dumand(hits::Vector{CalibratedHit})
+    N = length(hits)
+    D = 0.0
+    pes = [max(1, (h.tot - 24) / 11) for h in hits]
+    for i ∈ 1:N
+        for k ∈ 1:N
+            if i == k
+                continue
+            end
+            t_i = hits[i].t
+            t_k = hits[k].t
+            D += pes[i] * pes[k] *(t_i - t_k)^2
+        end
+    end
+    dir = [0.0, 0.0, 0.0]
+    for i ∈ 1:N
+        for k ∈ 1:N
+            if i == k
+                continue
+            end
+            t_i = hits[i].t
+            t_k = hits[k].t
+            dir += pes[i] * pes[k] * (hits[i].pos - hits[k].pos) * (t_i - t_k)
+        end
+    end
+    pos = [0.0, 0.0, 0.0]
+    for i ∈ 1:N
+        for k ∈ 1:N
+            if i == k
+                continue
+            end
+            t_i = hits[i].t
+            t_k = hits[k].t
+            pos += pes[i] * pes[k] * (hits[i].pos*(t_k^2 - t_i*t_k) - hits[k].pos*(t_i^2 - t_i*t_k))
+        end
+    end
+    dir = normalize(dir/D)
+    return KM3NeT.Track(dir, pos/D*1e9, 0)
+end
+
+
+"""
     function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
