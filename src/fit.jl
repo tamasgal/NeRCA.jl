@@ -17,12 +17,12 @@ end
 
 
 """
-    function royprefit(hits::Vector{CalibratedHit})
+    function svdfit(hits::Vector{CalibratedHit})
 
 Uses SVD to do a fast and dirty track prefit. Provide hits with a multiplicity
 of at least 2.
 """
-function royprefit(hits::Vector{CalibratedHit})
+function svdfit(hits::Vector{CalibratedHit})
     t₀ = hits[div(length(hits), 2)].t
     pos, dir = svdfit(matrix([h.pos for h in hits]))
     if (last(hits).pos - first(hits).pos) ⋅ dir  < 0.0
@@ -33,11 +33,11 @@ end
 
 
 """
-    function dumand(hits::Vector{CalibratedHit})
+    function prefit(hits::Vector{CalibratedHit})
 
 Performs the prefit algorithm which was used in DUMAND II.
 """
-function dumand(hits::Vector{CalibratedHit})
+function prefit(hits::Vector{CalibratedHit})
     N = length(hits)
     D = 0.0
     pes = [max(1, (h.tot - 24) / 11) for h in hits]
@@ -282,6 +282,7 @@ end
 function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
     pos = Position(x, y, z)
     dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
+
     ccalc = make_cherenkov_calculator(Track(pos, dir, t₀))
 
     Q = 0.0

@@ -5,18 +5,18 @@ const Floor = UInt8
 const DU = UInt8
 const HitTime = Float64
 
-struct Position <: FieldVector{3, Float64}
-    x::Float64
-    y::Float64
-    z::Float64
+struct Position{T} <: FieldVector{3, T}
+    x::T
+    y::T
+    z::T
 end
 
 # Base.*(x::Vector3D, y::Vector3D ) = Vector3D(SVector(y)* SVector(x))
 
-struct Direction <: FieldVector{3, Float64}
-    x::Float64
-    y::Float64
-    z::Float64
+struct Direction{T} <: FieldVector{3, T}
+    x::T
+    y::T
+    z::T
 end
 
 Base.show(io::IO, p::Position) = begin
@@ -87,7 +87,7 @@ end
 struct Track
     dir::Direction
     pos::Position
-    time::Float64
+    time
 end
 
 # Fit
