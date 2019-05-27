@@ -337,9 +337,10 @@ Base.lastindex(E::EventReader) = length(E)
 
 
 mutable struct Event
-    hits::Vector{Hit}
+    hits::Vector{Union{Hit, CalibratedHit}}
     mc_tracks::Vector{MCTrack}
     info::MCEventInfo
+    calib::Calibration
 end
 
 function Base.iterate(iter::EventReader)
@@ -360,5 +361,5 @@ function Base.getindex(E::EventReader, i::Int)
     hits = read_hits(E._fobj, i)
     mc_tracks = E._mc_tracks[i+1]
     event_info = E._event_infos[i+1]
-    Event(hits, mc_tracks, event_info) 
+    Event(hits, mc_tracks, event_info, E._calib) 
 end

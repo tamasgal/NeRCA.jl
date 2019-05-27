@@ -73,6 +73,9 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
     calibrated_hits
 end
 
+function calibrate!(event::Event)
+    event.hits = calibrate(event.hits, event.calib)
+end
 
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
