@@ -43,6 +43,11 @@ struct MCEventInfo
     weight_w4::Float64
 end
 
+Base.show(io::IO, e::MCEventInfo) = begin
+    print(io, "EventInfo: id($(e.event_id)), mc_id($(e.mc_id)), " *
+          "mc_time($(e.mc_time) ($(e.nanoseconds)), ts($(e.timestamp)), run_id($(e.run_id))")
+end
+
 struct JMuon
     JENERGY_CHI2::Float64
     JENERGY_ENERGY::Float64
@@ -169,9 +174,13 @@ abstract type DAQHit<:AbstractHit end
 struct Hit <: DAQHit
     channel_id::ChannelID
     dom_id::DOMID
-    time::HitTime
+    t::HitTime
     tot::ToT
     triggered::Bool
+end
+
+Base.show(io::IO, h::DAQHit) = begin
+    print(io, "$(typeof(h)): DOM ID $(h.dom_id), channel ID, $(h.channel_id), t=$(h.t), tot=$(h.tot)")
 end
 
 struct McHit <: AbstractHit
@@ -285,4 +294,71 @@ function read_io(io::IOBuffer, t::T) where T
     end
 
     DAQEvent(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_snapshot_hits, snapshot_hits)
+end
+
+struct EventReader
+    filename::AbstractString
+    detx::AbstractString
+    _fobj::HDF5.HDF5File
+    _calib::Calibration
+    _event_infos::Vector{MCEventInfo}
+    _mc_tracks::Dict{Int64, Vector{MCTrack}}
+    _length::UInt64
+
+    function EventReader(filename, detx)
+        fobj = h5open(filename, "r")
+        calib = read_calibration(detx)
+        event_infos = read_compound(fobj, "/event_info", MCEventInfo)
+
+        mc_tracks = Dict{Int64}{Vector{MCTrack}}()
+        for track in read_compound(fobj, "/mc_tracks", MCTrack)
+            group_id = track.group_id + 1
+            if !haskey(mc_tracks, group_id)
+                mc_tracks[group_id] = Vector{MCTrack}()
+            end
+            push!(mc_tracks[group_id], track)
+        end
+
+        n_events = length(event_infos)
+        new(filename, detx, fobj, calib, event_infos, mc_tracks, n_events)
+    end
+end
+
+
+Base.show(io::IO, e::EventReader) = begin
+    print(io, join(["EventReader: $(e.filename)",
+          "       detx: $(e.detx)",
+          "     events: $(length(e))"], "\n"))
+end
+
+Base.length(e::EventReader) = e._length
+Base.firstindex(E::EventReader) = 0
+Base.lastindex(E::EventReader) = length(E)
+
+
+mutable struct Event
+    hits::Vector{Hit}
+    mc_tracks::Vector{MCTrack}
+    info::MCEventInfo
+end
+
+function Base.iterate(iter::EventReader)
+    group_id = 0
+    (iter[group_id], group_id)
+end
+
+function Base.iterate(iter::EventReader, state)
+    group_id = state + 1
+    if group_id >= length(iter)
+        return nothing
+    end
+    return (iter[group_id], group_id)
+end
+
+function Base.getindex(E::EventReader, i::Int)
+    0 <= i < length(E) || throw(BoundsError(E, i))
+    hits = read_hits(E._fobj, i)
+    mc_tracks = E._mc_tracks[i+1]
+    event_info = E._event_infos[i+1]
+    Event(hits, mc_tracks, event_info) 
 end

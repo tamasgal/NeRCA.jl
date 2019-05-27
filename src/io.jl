@@ -13,10 +13,19 @@ function read_compound(filename::AbstractString,
                        h5loc::AbstractString,
                        T::DataType)
     fobj = HDF5.h5open(filename)
-    data = read_compound(fobj[h5loc], T)
+    data = read_compound(fobj, T)
     close(fobj)
     data
 end
+
+
+function read_compound(fobj::HDF5.HDF5File,
+                       h5loc::AbstractString,
+                       T::DataType)
+    data = read_compound(fobj[h5loc], T)
+    data
+end
+
 
 
 function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
@@ -136,8 +145,6 @@ function read_calibration(filename::AbstractString)
         version = 1
         idx = 2
     end
-
-    println("Parsing DETX version $version")
 
     pos = Dict{Int32,Vector{KM3NeT.Position}}()
     dir = Dict{Int32,Vector{KM3NeT.Direction}}()

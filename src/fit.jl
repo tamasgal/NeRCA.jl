@@ -40,7 +40,8 @@ Performs the prefit algorithm which was used in DUMAND II.
 function prefit(hits::Vector{CalibratedHit})
     N = length(hits)
     D = 0.0
-    pes = [max(1, (h.tot - 24) / 11) for h in hits]
+    # pes = [max(1, (h.tot - 24) / 11) for h in hits]
+    pes = [h.multiplicity.count for h in hits]
     for i ∈ 1:N
         for k ∈ 1:N
             if i == k
