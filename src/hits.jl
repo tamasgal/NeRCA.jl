@@ -21,16 +21,16 @@ function nfoldhits(hits::Vector{T}, Δt, n) where {T<:DAQHit}
     for (dom_id, dom_hits) ∈ hit_map
         bag = Vector{T}()
         push!(bag, dom_hits[1])
-        t0 = dom_hits[1].time
+        t0 = dom_hits[1].t
         for hit in dom_hits[2:end]
-            if hit.time - t0 > Δt
+            if hit.t - t0 > Δt
                 if length(bag) >= n
                     append!(chits, bag)
                 end
                 bag = Vector{T}()
             end
             push!(bag, hit)
-            t0 = hit.time
+            t0 = hit.t
         end
     end
     return chits
