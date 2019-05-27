@@ -71,11 +71,11 @@ function prefit(hits::Vector{CalibratedHit})
             end
             t_i = hits[i].t
             t_k = hits[k].t
-            pos += pes[i] * pes[k] * (hits[i].pos*(t_k^2 - t_i*t_k) - hits[k].pos*(t_i^2 - t_i*t_k))
+            pos += pes[i] * pes[k] * (hits[i].pos*(t_k^2 - t_i*t_k) + hits[k].pos*(t_i^2 - t_i*t_k))
         end
     end
     dir = normalize(dir/D)
-    return KM3NeT.Track(dir, pos/D*1e9, 0)
+    return KM3NeT.Track(dir, pos/D, 0)
 end
 
 
