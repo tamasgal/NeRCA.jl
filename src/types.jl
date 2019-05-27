@@ -337,7 +337,7 @@ Base.lastindex(E::EventReader) = length(E)
 
 
 mutable struct Event
-    hits::Vector{Union{Hit, CalibratedHit}}
+    hits::Vector{Hit}
     mc_tracks::Vector{MCTrack}
     info::MCEventInfo
     calib::Calibration
