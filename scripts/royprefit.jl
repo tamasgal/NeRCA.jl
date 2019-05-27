@@ -18,15 +18,11 @@ function main()
         exit(1)
     end
 
-    calib = KM3NeT.read_calibration(detx)
-    events = KM3NeT.read_compound(filename, "/event_info", KM3NeT.MCEventInfo);
-    fobj = h5open(filename, "r")
-
     outf = open(outfile, "w")
     write(outf, "group_id,dx,dy,dz,x,y,z,t0\n")
 
-    @showprogress 1 for event in events
-        hits = calibrate(KM3NeT.read_hits(fobj, event.group_id), calib)
+    @showprogress 1 for event in KM3NeT.EventReader(filename, detx)
+        hits = calibrate(event.hits, event.calib)
         sort!(hits, by=h->h.t)
         sort!(hits, by=h->h.dom_id)
         KM3NeT.count_multiplicities!(hits)
@@ -34,11 +30,10 @@ function main()
         shits = filter(h->h.multiplicity.count >= 4, hits)
         doms = unique(map(h->h.dom_id, shits))
         track = KM3NeT.prefit(shits)
-        write(outf, "$(event.group_id),$(track.dir.x),$(track.dir.y),$(track.dir.z),$(track.pos.x),$(track.pos.y),$(track.pos.z),$(track.time)\n")
+        write(outf, "$(event.info.group_id),$(track.dir.x),$(track.dir.y),$(track.dir.z),$(track.pos.x),$(track.pos.y),$(track.pos.z),$(track.time)\n")
     end
 
     close(outf)
-    close(fobj)
 end
 
 main()
