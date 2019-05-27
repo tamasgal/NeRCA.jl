@@ -171,6 +171,10 @@ end
 abstract type AbstractHit end
 abstract type DAQHit<:AbstractHit end
 
+
+Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
+
+
 struct Hit <: DAQHit
     channel_id::ChannelID
     dom_id::DOMID
