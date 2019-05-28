@@ -42,18 +42,21 @@ function prefit(hits::Vector{CalibratedHit})
     D = 0.0
     dir = [0.0, 0.0, 0.0]
     pos = [0.0, 0.0, 0.0]
-    # pes = [max(1, (h.tot - 24) / 11) for h in hits]
-    pes = [h.multiplicity.count for h in hits]
-    for i ∈ 1:N
-        for k ∈ 1:N
+    pes = [max(1, (h.tot - 26.3) / 4.5) for h in hits]
+    # pes = [h.tot for h in hits]
+    # pes = [h.multiplicity.count for h in hits]
+    @inbounds for i ∈ 1:N
+        @inbounds for k ∈ 1:N
             if i == k
                 continue
             end
             t_i = hits[i].t
             t_k = hits[k].t
-            D += pes[i] * pes[k] *(t_i - t_k)^2
-            dir += pes[i] * pes[k] * (hits[i].pos - hits[k].pos) * (t_i - t_k)
-            pos += pes[i] * pes[k] * (hits[i].pos*(t_k^2 - t_i*t_k) + hits[k].pos*(t_i^2 - t_i*t_k))
+            q_ik = pes[i] * pes[k]
+            t_ik = t_i * t_k
+            pos += q_ik * (hits[i].pos*(t_k^2 - t_ik) + hits[k].pos*(t_i^2 - t_ik))
+            dir += q_ik * (hits[i].pos - hits[k].pos) * (t_i - t_k)
+            D += q_ik * (t_i - t_k)^2
         end
     end
     # dir = normalize(dir/D)
@@ -260,13 +263,14 @@ end
 
 struct MultiDUMinimiser <: Function
     hits::Vector{CalibratedHit}
+    v
 end
     
 function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
     pos = Position(x, y, z)
     dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
 
-    ccalc = make_cherenkov_calculator(Track(pos, dir, t₀))
+    ccalc = make_cherenkov_calculator(Track(pos, dir, t₀), v=m.v)
 
     Q = 0.0
     for hit in m.hits
