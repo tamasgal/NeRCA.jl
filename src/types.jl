@@ -160,6 +160,8 @@ struct Calibration
     t0::Dict{Int32,Vector{Float64}}
     du::Dict{Int32,DU}
     floor::Dict{Int32,Floor}
+    max_z
+    n_dus
 end
 
 Base.show(io::IO, c::Calibration) = begin
@@ -229,7 +231,7 @@ end
 struct DAQSnapshotHit <: DAQHit
     dom_id::Int32
     channel_id::UInt8
-    time::Int32
+    t::Int32
     tot::UInt8
 end
 
@@ -237,7 +239,7 @@ end
 struct DAQTriggeredHit <: DAQHit
     dom_id::Int32
     channel_id::UInt8
-    time::Int32
+    t::Int32
     tot::UInt8
     trigger_mask::Int64
 end

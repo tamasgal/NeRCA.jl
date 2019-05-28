@@ -151,7 +151,9 @@ function read_calibration(filename::AbstractString)
     t0s = Dict{Int32,Vector{Float64}}()
     dus = Dict{Int32,UInt8}()
     floors = Dict{Int32,UInt8}()
+    n_dus = length(keys(dus))
 
+    max_z = 0.0
     for dom ∈ 1:n_doms
         dom_id, du, floor, n_pmts = map(x->parse(Int,x), split(lines[idx]))
         pos[dom_id] = Vector{KM3NeT.Position}()
@@ -164,6 +166,7 @@ function read_calibration(filename::AbstractString)
             l = split(lines[idx+pmt])
             pmt_id = parse(Int,first(l))
             x, y, z, dx, dy, dz = map(x->parse(Float64, x), l[2:7])
+            max_z = max(max_z, z)
             t0 = parse(Float64,l[8])
             push!(pos[dom_id], Position(x, y, z))
             push!(dir[dom_id], Direction(dx, dy, dz))
@@ -171,7 +174,7 @@ function read_calibration(filename::AbstractString)
         end
         idx += n_pmts + 1
     end
-    Calibration(det_id, pos, dir, t0s, dus, floors)
+    Calibration(det_id, pos, dir, t0s, dus, floors, max_z, n_dus)
 end
 
 # Triggers
