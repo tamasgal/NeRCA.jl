@@ -40,6 +40,8 @@ Performs the prefit algorithm which was used in DUMAND II.
 function prefit(hits::Vector{CalibratedHit})
     N = length(hits)
     D = 0.0
+    dir = [0.0, 0.0, 0.0]
+    pos = [0.0, 0.0, 0.0]
     # pes = [max(1, (h.tot - 24) / 11) for h in hits]
     pes = [h.multiplicity.count for h in hits]
     for i ∈ 1:N
@@ -50,32 +52,12 @@ function prefit(hits::Vector{CalibratedHit})
             t_i = hits[i].t
             t_k = hits[k].t
             D += pes[i] * pes[k] *(t_i - t_k)^2
-        end
-    end
-    dir = [0.0, 0.0, 0.0]
-    for i ∈ 1:N
-        for k ∈ 1:N
-            if i == k
-                continue
-            end
-            t_i = hits[i].t
-            t_k = hits[k].t
             dir += pes[i] * pes[k] * (hits[i].pos - hits[k].pos) * (t_i - t_k)
-        end
-    end
-    pos = [0.0, 0.0, 0.0]
-    for i ∈ 1:N
-        for k ∈ 1:N
-            if i == k
-                continue
-            end
-            t_i = hits[i].t
-            t_k = hits[k].t
             pos += pes[i] * pes[k] * (hits[i].pos*(t_k^2 - t_i*t_k) + hits[k].pos*(t_i^2 - t_i*t_k))
         end
     end
-    dir = normalize(dir/D)
-    return KM3NeT.Track(dir, pos/D, 0)
+    # dir = normalize(dir/D)
+    return KM3NeT.Track(dir/D, pos/D, 0)
 end
 
 
@@ -85,11 +67,11 @@ end
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
+function make_cherenkov_calculator(track::Track; v=2.99792458e8, theta=0.759296, c_water=217445751.79)
     tan_theta = tan(theta)
     sin_theta = sin(theta)
     one_over_c_water = 1 / c_water
-    one_over_c = 1 / 2.99792458e8
+    one_over_c = 1 / v
     pos::Position -> begin
         v = pos - track.pos
         l = dot(v, normalize(track.dir))
