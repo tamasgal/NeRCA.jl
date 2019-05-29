@@ -227,21 +227,14 @@ Hit(hit::HDF5.HDF5Compound{5}) = begin
     Hit(hit.data...)
 end
 
-
-struct DAQSnapshotHit <: DAQHit
-    dom_id::Int32
-    channel_id::UInt8
-    t::Int32
-    tot::UInt8
-end
-
+const TriggerMask = Int64
 
 struct DAQTriggeredHit <: DAQHit
     dom_id::Int32
     channel_id::UInt8
     t::Int32
     tot::UInt8
-    trigger_mask::Int64
+    trigger_mask::TriggerMask
 end
 
 struct DAQEvent
@@ -255,13 +248,13 @@ struct DAQEvent
     overlays::Int32
     n_triggered_hits::Int32
     triggered_hits::Vector{DAQTriggeredHit}
-    n_snapshot_hits::Int32
-    snapshot_hits::Vector{DAQSnapshotHit}
+    n_hits::Int32
+    hits::Vector{Hit}
 end
 
 Base.show(io::IO, d::DAQEvent) = begin
     print(io, "DAQEvent: $(d.n_triggered_hits) triggered hits, " *
-              "$(d.n_snapshot_hits) snapshot hits")
+              "$(d.n_hits) snapshot hits")
 end
 
 function read_io(io::IOBuffer, t::T) where T
@@ -279,27 +272,34 @@ function read_io(io::IOBuffer, t::T) where T
     n_triggered_hits = read(io, Int32)
     triggered_hits = Vector{DAQTriggeredHit}()
     sizehint!(triggered_hits, n_triggered_hits)
+    triggered_map = Dict{Tuple{Int32, UInt8, Int32, UInt8}, Int64}()
     @inbounds for i ∈ 1:n_triggered_hits
         dom_id = read(io, Int32)
         channel_id = read(io, UInt8)
         time = bswap(read(io, Int32))
         tot = read(io, UInt8)
         trigger_mask = read(io, Int64)
+        triggered_map[(dom_id, channel_id, time, tot)] = trigger_mask
         push!(triggered_hits, DAQTriggeredHit(dom_id, channel_id, time, tot, trigger_mask))
     end
 
-    n_snapshot_hits = read(io, Int32)
-    snapshot_hits = Vector{DAQSnapshotHit}()
-    sizehint!(snapshot_hits, n_snapshot_hits)
-    @inbounds for i ∈ 1:n_snapshot_hits
+    n_hits = read(io, Int32)
+    hits = Vector{Hit}()
+    sizehint!(hits, n_hits)
+    @inbounds for i ∈ 1:n_hits
         dom_id = read(io, Int32)
         channel_id = read(io, UInt8)
         time = bswap(read(io, Int32))
         tot = read(io, UInt8)
-        push!(snapshot_hits, DAQSnapshotHit(dom_id, channel_id, time, tot))
+        key = (dom_id, channel_id, time, tot)
+        triggered = false
+        if haskey(triggered_map, key)
+            triggered = true
+        end
+        push!(hits, Hit(channel_id, dom_id, time, tot, triggered))
     end
 
-    DAQEvent(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_snapshot_hits, snapshot_hits)
+    DAQEvent(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_hits, hits)
 end
 
 struct EventReader
