@@ -84,16 +84,6 @@ Base.angle(a::T, b::T) where {T<:Union{CalibratedHit, PMT, MCTrack}} = Base.angl
 Base.angle(a::FieldVector{3}, b::Union{CalibratedHit, PMT, MCTrack}) = Base.angle(a, b.dir)
 Base.angle(a::Union{CalibratedHit, PMT, MCTrack}, b::FieldVector{3}) = Base.angle(a.dir, b)
 
-"""
-    function pld3(p1, p2, d2)
-
-Calculate the distance between a point (p1) and a line (given by p2 and d2).
-"""
-function pld3(p1, p2, d2)
-    norm(cross(d2, (p2 - p1))) / norm(d2)
-end
-
-
 function matrix(v::Vector)
     m = length(v)
     n = length(v[1])
