@@ -65,28 +65,26 @@ end
 
 
 """
-    function make_cherenkov_calculator(track::Track; theta=0.759296, c_water=217445751.79)
+    function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.38)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track; v=2.99792458e8, theta=0.759296, c_water=217445751.79)
-    tan_theta = tan(theta)
-    sin_theta = sin(theta)
-    one_over_c_water = 1 / c_water
-    one_over_c = 1 / v
+function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.38)
+    c = 2.99792458e8
+    c_medium = c/n
+    β = v/c
+    θ = acos(1/(β*n))
+    cosθ = cos(θ)
+    sinθ = sin(θ)
+    dir = normalize(track.dir)
+    t₀ = track.time
     pos::Position -> begin
-        Q = pos - track.pos
-        l = dot(Q, normalize(track.dir))
-        p = dot(Q, Q) - l^2
-        if p < 0
-            return NaN
-        end
-        k = sqrt(p)
-        a_1 = k / tan_theta
-        a_2 = k / sin_theta
-        t_c = one_over_c * (l - a_1) + one_over_c_water * a_2
-        return t_c * 1e9 + track.time
+        distance = norm(pos - track.pos)
+        track_distance = pld3(track.pos, pos, track.dir)
+        cherenkov_path = track_distance / sinθ
+        particle_travel_path = sqrt(distance^2 + track_distance) - cosθ*cherenkov_path
+        return t₀ + particle_travel_path / v*1e9 + cherenkov_path / c_medium*1e9
     end
 end
 
