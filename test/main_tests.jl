@@ -34,6 +34,10 @@ calib = Calibration(
     Dict{Int32, UInt8}(8 => 42, 9 => 23),
     # floor
     Dict{Int32, UInt8}(8 => 18, 9 => 5),
+    # max_z
+    10,
+    # n_dus
+    1
 )
 
 
