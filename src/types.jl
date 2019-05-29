@@ -9,7 +9,11 @@ struct Position{T} <: FieldVector{3, T}
     x::T
     y::T
     z::T
+
+    Position(x::T, y::T, z::T) where {T} = new{T}(x, y, z)
 end
+
+Position(x, y, z) = Position(promote(x, y, z)...)
 
 # Base.*(x::Vector3D, y::Vector3D ) = Vector3D(SVector(y)* SVector(x))
 
@@ -18,6 +22,8 @@ struct Direction{T} <: FieldVector{3, T}
     y::T
     z::T
 end
+
+Direction(x, y, z) = Direction(promote(x, y, z)...)
 
 Base.show(io::IO, p::Position) = begin
     s = Printf.@sprintf "%.2f %.2f %.2f" p.x p.y p.z
