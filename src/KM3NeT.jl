@@ -7,6 +7,7 @@ using DataStructures
 using StaticArrays
 using HDF5
 using RecipesBase
+using PlotThemes
 using JuMP
 using Ipopt
 using Statistics
