@@ -79,33 +79,40 @@ Plot recipe to plot simple z-t-plots.
 end
 
 
-@recipe function f(hits::Vector{CalibratedHit}, track::Track)
+@recipe function f(hits::Vector{CalibratedHit}, track::Track; max_z=nothing)
     seriestype := :scatter
 
     xlabel := "time [ns]"
     ylabel := "z [m]"
+    background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
     thits = filter(h -> h.triggered, hits)
-    max_z = maximum(map(h->h.pos.z, hits))
+    if max_z == nothing
+        max_z = maximum(map(h->h.pos.z, hits))
+    end
 
     dus = sort(unique(map(h->h.du, thits)))
     ccalc = make_cherenkov_calculator(track, v=norm(track.dir)*1e9)
 
-    for du in dus
+    colours = palette(:default)
+    for (idx, du) in enumerate(dus)
         du_hits = filter(h -> h.du == du, hits)
         @series begin
             label := "DU $(du)"
             linewidth := 3
             markersize := 5
-            [h.t for h in du_hits], [h.pos.z for h in du_hits]
+            markercolor := colours[idx]
+            du_hits
         end
         x = du_hits[1].pos.x
         y = du_hits[1].pos.y
         zs = range(0, max_z, length=200)
         @series begin
-            linewidth := 1
+            linewidth := 10
+            label := ""
             markersize := 1
+            markercolor := colours[idx]
             [ccalc(Position(x, y, z)) for z in zs], zs
         end
     end
