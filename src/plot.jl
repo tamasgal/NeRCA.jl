@@ -117,3 +117,50 @@ end
         end
     end
 end
+
+
+@recipe function f(hits::Vector{CalibratedHit}, fit::ROyFit; label="", max_z=nothing)
+    seriestype := :scatter
+
+    xlabel := "time [ns]"
+    ylabel := "z [m]"
+    background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
+    markerstrokewidth := 0
+
+    triggered_hits = filter(h -> h.triggered, hits)
+    if max_z == nothing
+        max_z = maximum(map(h->h.pos.z, hits))
+    end
+
+    dᵧ, ccalc = make_cherenkov_calculator(fit.sdp)
+
+    @series begin
+        markersize := 2
+        marker := :circle
+        markeralpha := 0.7
+        label := label
+        hits
+    end
+    @series begin
+        markersize := 5
+        markeralpha := 0.4
+        fillcolor := nothing
+        marker := :circle
+        label := ""
+        triggered_hits
+    end
+    @series begin
+        markersize := 10
+        marker := :cross
+        label := ""
+        fit.selected_hits
+    end
+    zs = range(0, max_z, length=200)
+    @series begin
+        linewidth := 10
+        label := ""
+        markersize := 1
+        label := ""
+        ccalc.(zs), zs
+    end
+end
