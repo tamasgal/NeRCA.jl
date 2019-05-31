@@ -267,8 +267,9 @@ end
 function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
     pos = Position(x, y, z)
     dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
+    track = Track(pos, dir, t₀)
 
-    ccalc = make_cherenkov_calculator(Track(pos, dir, t₀), v=m.v)
+    ccalc = make_cherenkov_calculator(track, v=m.v)
 
     Q = 0.0
     for hit in m.hits
