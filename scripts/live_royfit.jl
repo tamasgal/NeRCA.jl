@@ -18,11 +18,14 @@ function main()
         event = KM3NeT.read_io(IOBuffer(message.data), KM3NeT.DAQEvent)
 
         track = reconstruct(event)
+
         if track == nothing
             println("Skipping")
             continue
         end
+
         println(track)
+
         if rand() > 0.94
             println("Plotting...")
             hits = calibrate(event.hits, calib)
@@ -35,18 +38,18 @@ end
 
 
 function reconstruct(event)
-    triggered_hits = calibrate(event.triggered_hits, calib)
+    hits = calibrate(event.hits, calib)
+    triggered_hits = filter(h->h.triggered, hits)
     n_dus = length(unique(h->h.du, triggered_hits))
-    if n_dus < 2
-        return nothing
-    end
     n_doms = length(unique(h->h.dom_id, triggered_hits))
     if n_doms < 4
         return nothing
     end
-    # snapshot_hits = calibrate(event.snapshot_hits, calib)
-
-    return KM3NeT.prefit(triggered_hits)
+    brightest_du = KM3NeT.most_frequent(h -> h.du, triggered_hits)
+    du_hits = filter(h->h.du == brightest_du, triggered_hits)
+    fit = KM3NeT.single_du_fit(du_hits)
+    # return KM3NeT.prefit(triggered_hits)
+    return fit
 end
 
 
