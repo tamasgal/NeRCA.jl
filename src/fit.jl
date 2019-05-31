@@ -282,7 +282,7 @@ end
 
 
 
-function reco(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
+function single_du_fit(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
     sort!(du_hits, by = h -> h.t)
     sort!(du_hits, by=h->h.dom_id)
     count_multiplicities!(du_hits)
