@@ -1,6 +1,7 @@
 #!/usr/bin/env julia
 using KM3NeT
 using Plots
+using PlotThemes
 GR.inline("png")
 
 if length(ARGS) < 1
@@ -17,19 +18,30 @@ function main()
     for message in CHClient(ip"127.0.0.1", 55530, ["IO_EVT"])
         event = KM3NeT.read_io(IOBuffer(message.data), KM3NeT.DAQEvent)
 
-        track = reconstruct(event)
+        fit = reconstruct(event)
 
-        if track == nothing
+        if fit == nothing
             println("Skipping")
             continue
         end
 
-        println(track)
-
         if rand() > 0.94
             println("Plotting...")
             hits = calibrate(event.hits, calib)
-            plot(hits, track, max_z=calib.max_z)
+            plot()
+            triggered_hits = filter(h->h.triggered, hits)
+            dus = sort(unique(map(h->h.du, hits)))
+            println(dus)
+            colours = palette(:default)
+            for (idx, du) in enumerate(dus)
+                du_hits = filter(h->h.du == du, triggered_hits)
+                if length(du_hits)== 0
+                    println("No hits")
+                    continue
+                end
+                fit = KM3NeT.single_du_fit(du_hits)
+                plot!(du_hits, fit, markercolor=colours[idx], label="DU $(du)", max_z=calib.max_z)
+            end
             savefig("ztplot.png")
         end
     end
