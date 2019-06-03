@@ -6,7 +6,7 @@ using JuMP
 using GLPK
 using Ipopt
 
-const n = 1.38
+const n = 1.35
 const c = 2.99792458e8 / 1e9
 
 struct SingleDUTrack
