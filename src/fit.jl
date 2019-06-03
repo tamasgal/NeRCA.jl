@@ -83,7 +83,7 @@ function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.35)
         distance = norm(pos - track.pos)
         track_distance = pld3(track.pos, pos, track.dir)
         cherenkov_path = track_distance / sinθ
-        particle_travel_path = sqrt(distance^2 + track_distance) - cosθ*cherenkov_path
+        particle_travel_path = sqrt(distance^2 - track_distance^2) - cosθ*cherenkov_path
         return t₀ + particle_travel_path / v*1e9 + cherenkov_path / c_medium*1e9
     end
 end
