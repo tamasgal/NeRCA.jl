@@ -65,12 +65,12 @@ end
 
 
 """
-    function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.38)
+    function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.35)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.38)
+function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.35)
     c = 2.99792458e8
     c_medium = c/n
     β = v/c
