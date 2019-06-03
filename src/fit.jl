@@ -261,22 +261,23 @@ end
 
 struct MultiDUMinimiser <: Function
     hits::Vector{CalibratedHit}
-    v
 end
     
-function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
+function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀, v)
     pos = Position(x, y, z)
     dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
-    track = Track(pos, dir, t₀)
+    track = Track(dir, pos, t₀)
 
-    ccalc = make_cherenkov_calculator(track, v=m.v)
+    ccalc = make_cherenkov_calculator(track, v=v*1e9)
 
     Q = 0.0
     for hit in m.hits
         t_exp = ccalc(hit.pos)
         Δt = abs(hit.t - t_exp)
+        # println("expected: $(t_exp), got: $(hit.t), delta: $(Δt)")
         Q += Δt^2
     end
+    # println(Q)
     Q
 end
 
