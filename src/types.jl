@@ -25,6 +25,10 @@ end
 
 Direction(x, y, z) = Direction(promote(x, y, z)...)
 
+function Direction(ϕ, θ)
+    Direction(cos(ϕ)*cos(θ), sin(ϕ)*cos(θ), sin(θ))
+end
+
 Base.show(io::IO, p::Position) = begin
     s = Printf.@sprintf "%.2f %.2f %.2f" p.x p.y p.z
     print(io, s)
