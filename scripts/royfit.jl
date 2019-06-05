@@ -6,6 +6,7 @@ if length(ARGS) < 2
 end
 
 
+using LinearAlgebra
 using KM3NeT
 using HDF5
 using ProgressMeter
@@ -18,24 +19,29 @@ function main()
         exit(1)
     end
 
-    calib = KM3NeT.read_calibration(detx)
-    events = KM3NeT.read_compound(filename, "/event_info", KM3NeT.MCEventInfo);
-    fobj = h5open(filename, "r")
-
     outf = open(outfile, "w")
-    write(outf, "group_id,d,t,z,dz,phi,t0\n")
+    write(outf, "group_id,dx,dy,dz,x,y,z,t0\n")
 
-    @showprogress 1 for event in events
-        hits = calibrate(KM3NeT.read_hits(fobj, event.group_id), calib)
+    @showprogress 1 for event in KM3NeT.EventReader(filename, detx)
+        hits = calibrate(event.hits, event.calib)
         triggered_hits = filter(h -> h.triggered, hits);
-        brightest_du = KM3NeT.most_frequent(h -> h.du, triggered_hits)
-        du_hits = filter(h -> h.du == brightest_du, hits)
-        fit = KM3NeT.reco(du_hits)
-        write(outf, "$(event.group_id),$(fit.sdp.d),$(fit.sdp.t),$(fit.sdp.z),$(fit.sdp.dz),$(fit.sdp.ϕ),$(fit.sdp.t₀)\n")
+        prefit_track = KM3NeT.prefit(triggered_hits)
+        t = triggered_hits[1].t - 500
+        Δd = norm(prefit_track.dir) * t
+        shifted_pos = prefit_track.pos + normalize(prefit_track.dir) * Δd
+        shifted_prefit_track = KM3NeT.Track(prefit_track.dir, shifted_pos, t)
+        first_hits = unique(h->h.dom_id, triggered_hits)
+        final_track = KM3NeT.multi_du_fit(shifted_prefit_track, first_hits)
+        # dir = final_track.dir
+        # pos = final_track.pos
+        #
+        # write(outf, "$(event.info.group_id),$(dir.x),$(dir.y),$(dir.z),$(pos.x),$(pos.y),$(pos.z),$(final_track.time)\n")
     end
 
     close(outf)
-    close(fobj)
 end
 
 main()
+
+
+
