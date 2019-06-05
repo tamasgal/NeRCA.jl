@@ -15,8 +15,8 @@ using ProgressMeter
 function main()
     detx, filename, outfile = ARGS
     if isfile(outfile)
-        println("Output file already exists, aborting...")
-        exit(1)
+        print("Output file already exists. Do you want to overwrite it? [y/N]")
+        readline() != "y" && exit(1)
     end
 
     outf = open(outfile, "w")
@@ -31,11 +31,11 @@ function main()
         shifted_pos = prefit_track.pos + normalize(prefit_track.dir) * Δd
         shifted_prefit_track = KM3NeT.Track(prefit_track.dir, shifted_pos, t)
         first_hits = unique(h->h.dom_id, triggered_hits)
-        final_track = KM3NeT.multi_du_fit(shifted_prefit_track, first_hits)
-        # dir = final_track.dir
-        # pos = final_track.pos
-        #
-        # write(outf, "$(event.info.group_id),$(dir.x),$(dir.y),$(dir.z),$(pos.x),$(pos.y),$(pos.z),$(final_track.time)\n")
+        final_track = KM3NeT.multi_du_fit(prefit_track, first_hits)
+        dir = final_track.dir
+        pos = final_track.pos
+
+        write(outf, "$(event.info.group_id),$(dir.x),$(dir.y),$(dir.z),$(pos.x),$(pos.y),$(pos.z),$(final_track.time)\n")
     end
 
     close(outf)
