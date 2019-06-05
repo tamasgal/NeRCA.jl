@@ -15,16 +15,14 @@ end
 
 Calculate the azimuth angle for a given direction.
 """
-function azimuth(d::Direction)
-    if d.x >= 0 && d.y >= 0  # Quadrant I
-        return atan(d.x/d.y)
-    end
-    if d.x < 0 && d.y >= 0  # Quadrant II
-        return atan(d.x/d.y) + 2π
-    end
-    return atan(d.x/d.y) + π  # Quadrant III and IV
-end
+azimuth(d) = atan(d[2], d[1])
 
+"""
+    function zenith(d::Direction)
+
+Calculate the zenith angle for a given direction.
+"""
+zenith(d) = asin(d[3]/norm(d))
 
 """
     function pld3(p1, p2, d2)
