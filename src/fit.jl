@@ -263,24 +263,51 @@ struct MultiDUMinimiser <: Function
     hits::Vector{CalibratedHit}
 end
     
-function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀, v)
+function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
     pos = Position(x, y, z)
-    dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
+    # dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
+    dir = Direction(ϕ, θ)
     track = Track(dir, pos, t₀)
 
-    ccalc = make_cherenkov_calculator(track, v=v*1e9)
+    # ccalc = make_cherenkov_calculator(track, v=v*1e9)
+    ccalc = make_cherenkov_calculator(track)
 
     Q = 0.0
     for hit in m.hits
         t_exp = ccalc(hit.pos)
         Δt = abs(hit.t - t_exp)
         # println("expected: $(t_exp), got: $(hit.t), delta: $(Δt)")
-        Q += Δt^2
+        Q += (Δt - 2)^2
     end
-    # println(Q)
     Q
 end
 
+function multi_du_fit(prefit, hits; print_level=0)
+    ϕ_start = KM3NeT.azimuth(prefit.dir)
+    θ_start = KM3NeT.zenith(prefit.dir)
+    t₀_start = prefit.time
+    pos = prefit.pos
+
+    m = KM3NeT.MultiDUMinimiser(hits)
+
+    model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
+    register(model, :qfunc, 6, m, autodiff=true)
+
+    Δpos = 50
+
+    @variable(model, pos.x - Δpos <= x <= pos.x + Δpos, start=pos.x)
+    @variable(model, pos.y - Δpos <= y <= pos.y + Δpos, start=pos.y)
+    @variable(model, pos.z - Δpos <= z <= pos.z + Δpos, start=pos.z)
+    @variable(model, -1.0 <= θ <= 1.0, start=θ_start)
+    @variable(model, -3*2π <= ϕ <= 3*2π, start=ϕ_start)
+    @variable(model, t₀, start=t₀_start)
+
+    @NLobjective(model, Min, qfunc(x, y, z, θ, ϕ, t₀))
+
+    optimize!(model);
+
+    return Track(Direction(value(ϕ), value(θ)), Position(value(x), value(y), value(z)), value(t₀))
+end
 
 
 function single_du_fit(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
