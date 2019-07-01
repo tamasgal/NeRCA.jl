@@ -74,17 +74,35 @@ function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.35)
     c = 2.99792458e8
     c_medium = c/n
     β = v/c
-    θ = acos(1/(β*n))
-    cosθ = cos(θ)
-    sinθ = sin(θ)
-    dir = normalize(track.dir)
+    θ = acos(min(1/(β*n), 1))
+    θ′ = π - θ
+    track_dir = normalize(track.dir)
     t₀ = track.time
+
     pos::Position -> begin
-        distance = norm(pos - track.pos)
-        track_distance = pld3(track.pos, pos, track.dir)
-        cherenkov_path = track_distance / sinθ
-        particle_travel_path = sqrt(abs(distance^2 - track_distance^2)) - cosθ*cherenkov_path
-        return t₀ + particle_travel_path / v*1e9 + cherenkov_path / c_medium*1e9
+
+        # minimal distance between hit and track
+        track_distance = pld3(track.pos, pos, track_dir)
+        # the path the Cherenkov photon has to travel
+        cherenkov_path_length = track_distance / sin(θ)
+        distance_vector = pos - track.pos
+        # distance between particle position and hit
+        distance = norm(distance_vector)
+
+        t_cherenkov = cherenkov_path_length / c_medium*1e9
+
+        η = angle_between(track_dir, distance_vector)
+        χ = θ - η
+        # println("-----------")
+        # print("pos=$(pos), ")
+        # print("η=$(η) => $(rad2deg(η)), ")
+        # print("θ=$(θ) => $(rad2deg(θ)), ")
+        # print("CTP: $(cherenkov_path_length), ")
+        particle_travel_path_length = distance / sin(θ′) * sin(χ)
+        # print("PTP: $(particle_travel_path_length), ")
+        # print("\n")
+        t = t₀ + particle_travel_path_length / v*1e9 + t_cherenkov
+        return t
     end
 end
 
