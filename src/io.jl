@@ -13,7 +13,7 @@ function read_compound(filename::AbstractString,
                        h5loc::AbstractString,
                        T::DataType)
     fobj = HDF5.h5open(filename)
-    data = read_compound(fobj, T)
+    data = read_compound(fobj, h5loc, T)
     close(fobj)
     data
 end
