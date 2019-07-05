@@ -76,6 +76,13 @@ function read_hits(filename::AbstractString,
 end
 
 
+function read_hits(f::DAQEventFile, group_id)
+    idx = f._hit_indices[group_id+1][1]
+    n_hits = f._hit_indices[group_id+1][2]
+    read_hits(f._fobj, idx, n_hits)::Vector{Hit}
+end
+
+
 function read_mchits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
     hits = Vector{McHit}()
     a = fobj["mc_hits/a"][idx+1:idx+n_hits]

@@ -291,6 +291,27 @@ Base.show(io::IO, d::DAQEvent) = begin
               "$(d.n_hits) snapshot hits")
 end
 
+
+struct DAQEventFile
+    filename
+    _fobj::HDF5.HDF5File
+    _hit_indices
+    _event_infos::Vector{DAQEventInfo}
+
+    function DAQEventFile(filename)
+        fobj = HDF5.h5open(filename, "r")
+        event_infos = read_compound(fobj, "/event_info", DAQEventInfo)
+        hit_indices = read_indices(fobj, "/hits")
+
+        new(filename, fobj, hit_indices, event_infos)
+    end
+end
+
+Base.show(io::IO, f::DAQEventFile) = begin
+    print(io, "DAQEventFile(\"$(f.filename)\")")
+end
+
+
 function read_io(io::IOBuffer, t::T) where T
     length = read(io, Int32)
     type = read(io, Int32)
@@ -401,5 +422,5 @@ function Base.getindex(E::EventReader, i::Int)
     hits = read_hits(E._fobj, i)
     mc_tracks = E._mc_tracks[i+1]
     event_info = E._event_infos[i+1]
-    Event(hits, mc_tracks, event_info, E._calib) 
+    Event(hits, mc_tracks, event_info, E._calib)
 end
