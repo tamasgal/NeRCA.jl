@@ -54,8 +54,32 @@ struct MCEventInfo
 end
 
 Base.show(io::IO, e::MCEventInfo) = begin
-    print(io, "EventInfo: id($(e.event_id)), mc_id($(e.mc_id)), " *
+    print(io, "MCEventInfo: id($(e.event_id)), mc_id($(e.mc_id)), " *
           "mc_time($(e.mc_time) ($(e.nanoseconds)), ts($(e.timestamp)), run_id($(e.run_id))")
+end
+
+struct DAQEventInfo
+    det_id::Int64
+    event_id::Int64
+    frame_index::Int64
+    group_id::Int64
+    mc_run_id::Int64
+    mc_time::Float64
+    nanoseconds::Int64
+    overlays::Int64
+    run_id::Int64
+    timestamp::Int64
+    trigger_counter::Int64
+    trigger_mask::Int64
+    weight_w1::Float64
+    weight_w2::Float64
+    weight_w3::Float64
+    weight_w4::Float64
+end
+
+Base.show(io::IO, e::DAQEventInfo) = begin
+    print(io, "DAQEventInfo: id($(e.event_id)), det_id($(e.det_id)), " *
+          "timestamp($(e.timestamp) ($(e.nanoseconds)), run_id($(e.run_id))")
 end
 
 struct JMuon
