@@ -294,6 +294,7 @@ end
 
 struct DAQEventFile
     filename
+    n_events
     _fobj::HDF5.HDF5File
     _hit_indices
     _event_infos::Vector{DAQEventInfo}
@@ -303,12 +304,16 @@ struct DAQEventFile
         event_infos = read_compound(fobj, "/event_info", DAQEventInfo)
         hit_indices = read_indices(fobj, "/hits")
 
-        new(filename, fobj, hit_indices, event_infos)
+        new(filename, length(event_infos), fobj, hit_indices, event_infos)
     end
 end
 
 Base.show(io::IO, f::DAQEventFile) = begin
     print(io, "DAQEventFile(\"$(f.filename)\")")
+end
+
+function read_event_info(f::DAQEventFile, group_id)
+    f._event_infos[group_id + 1]
 end
 
 

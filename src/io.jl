@@ -124,6 +124,9 @@ function read_mchits(filename::AbstractString,
     return hits_collection
 end
 
+function read_event_info(f::DAQEventFile, group_id)
+    f._event_infos[group_id + 1]
+end
 
 function read_indices(filename::AbstractString, from::AbstractString)
     f = h5open(filename, "r")
