@@ -55,3 +55,24 @@ function lld3(t₁::Track, t₂::Track)
     return lld3(t₁.pos, t₁.dir, t₂.pos, t₂.dir)   
 end
 
+
+"""
+    function project(P, t::Track)
+
+Projects a point to a track.
+"""
+function project(P, t::Track)
+    A = t.pos
+    B = A + t.dir
+    project(P, A, B)
+end
+
+
+"""
+    function project(P, A, B)
+
+Project P onto a line spanned by A and B.
+"""
+function project(P, A, B)
+    Position(A + ((P-A)⋅(B-A))/((B-A)⋅(B-A)) * (B-A))
+end
