@@ -22,7 +22,7 @@ azimuth(d) = atan(d[2], d[1])
 
 Calculate the zenith angle for a given direction.
 """
-zenith(d) = asin(d[3]/norm(d))
+zenith(d) = acos(-d[3]/norm(d))
 
 """
     function pld3(p1, p2, d2)
