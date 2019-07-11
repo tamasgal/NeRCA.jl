@@ -84,10 +84,9 @@ end
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.35)
-    c = 2.99792458e8
-    c_medium = c/n
-    β = v/c
+function make_cherenkov_calculator(track::Track; v=2.99792458e8)
+    c_medium = c_0/N_SEAWATER
+    β = v/c_0
     θ = acos(min(1/(β*n), 1))
     θ′ = π - θ
     track_dir = normalize(track.dir)
@@ -107,14 +106,7 @@ function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=1.35)
 
         η = angle_between(track_dir, distance_vector)
         χ = θ - η
-        # println("-----------")
-        # print("pos=$(pos), ")
-        # print("η=$(η) => $(rad2deg(η)), ")
-        # print("θ=$(θ) => $(rad2deg(θ)), ")
-        # print("CTP: $(cherenkov_path_length), ")
         particle_travel_path_length = distance / sin(θ′) * sin(χ)
-        # print("PTP: $(particle_travel_path_length), ")
-        # print("\n")
         t = t₀ + particle_travel_path_length / v*1e9 + t_cherenkov
         return t
     end
@@ -140,9 +132,10 @@ Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
 function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
-    c_ns = c / 1e9
-    d_γ(z) = n_water/√(n_water^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
-    t(z) = (t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n_water^2 - 1)/n_water * d_γ(z))
+    c_ns = c_0 / 1e9
+    n = N_SEAWATER
+    d_γ(z) = n/√(n^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
+    t(z) = (t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n^2 - 1)/n * d_γ(z))
     d_γ, t
 end
 
@@ -153,9 +146,10 @@ Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
 function make_cherenkov_calculator(sdp::SingleDUParams)
-    c_ns = c / 1e9
-    d_γ(z) = n_water/√(n_water^2 - 1) * √(sdp.d^2 + (z-sdp.z)^2 * (1 - sdp.dz^2))
-    t(z) = (sdp.t₀) + 1/c_ns * ((z - sdp.z)*sdp.dz + (n_water^2 - 1)/n_water * d_γ(z))
+    c_ns = c_0 / 1e9
+    n = N_SEAWATER
+    d_γ(z) = n/√(n^2 - 1) * √(sdp.d^2 + (z-sdp.z)^2 * (1 - sdp.dz^2))
+    t(z) = (sdp.t₀) + 1/c_ns * ((z - sdp.z)*sdp.dz + (n^2 - 1)/n * d_γ(z))
     d_γ, t
 end
 
@@ -167,7 +161,7 @@ end
 Calculates five parameters to describe a track for a single DU case.
 """
 function single_du_params(track::KM3NeT.Track)
-    c_ns = c / 1e9
+    c_ns = c_0 / 1e9
     pos = track.pos
     dir = Direction(normalize(track.dir))
     t₀ = track.time
