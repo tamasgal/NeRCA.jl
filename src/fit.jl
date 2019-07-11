@@ -87,7 +87,7 @@ at a given position.
 function make_cherenkov_calculator(track::Track; v=2.99792458e8)
     c_medium = c_0/N_SEAWATER
     β = v/c_0
-    θ = acos(min(1/(β*n), 1))
+    θ = acos(min(1/(β*N_SEAWATER), 1))
     θ′ = π - θ
     track_dir = normalize(track.dir)
     t₀ = track.time
@@ -114,14 +114,14 @@ end
 
 
 """
-    function make_cherenkov_calculator(track::Track, event_info::Union{MCEventInfo,DAQEventInfo}; v=2.99792458e8, n=1.35)
+    function make_cherenkov_calculator(track::Track, event_info::Union{MCEventInfo,DAQEventInfo}; v=2.99792458e8)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track, event_info::Union{MCEventInfo,DAQEventInfo}; v=2.99792458e8, n=1.35)
+function make_cherenkov_calculator(track::Track, event_info::Union{MCEventInfo,DAQEventInfo}; v=2.99792458e8)
     jte_time = make_mc_time_converter(event_info)(track.time)
-    make_cherenkov_calculator(Track(track.dir, track.pos, jte_time), v=v, n=n)
+    make_cherenkov_calculator(Track(track.dir, track.pos, jte_time), v=v)
 end
 
 
