@@ -9,7 +9,7 @@ using Test
 @test π ≈ NeRCA.angle_between([1,0,0], [-1,0,0])
 
 # azimuth()
-@test 0 == NeRCA.azimuth(Direction(0,1,0))
-@test π/2 ≈ NeRCA.azimuth(Direction(1,0,0))
-@test π ≈ NeRCA.azimuth(Direction(0,-1,0))
-@test (3/2)π ≈ NeRCA.azimuth(Direction(-1,0,0))
+@test π/2 == NeRCA.azimuth(Direction(0,1,0))
+@test 0 ≈ NeRCA.azimuth(Direction(1,0,0))
+@test -π/2 ≈ NeRCA.azimuth(Direction(0,-1,0))
+@test π ≈ NeRCA.azimuth(Direction(-1,0,0))
