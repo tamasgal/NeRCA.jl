@@ -1,8 +1,8 @@
-using KM3NeT
+using NeRCA
 using Optim
 
-track = KM3NeT.Track([0, 0, 0.2], [0, 200, 300])
-ccalc = KM3NeT.make_cherenkov_calculator(track)
+track = NeRCA.Track([0, 0, 0.2], [0, 200, 300])
+ccalc = NeRCA.make_cherenkov_calculator(track)
 hit_positions = [Position(0, 0, 0),
                  Position(20, 50, 100),
                  Position(100, -40, 400),
@@ -13,8 +13,8 @@ times = ccalc.(hit_positions)
 function make_quality_function(positions, times)
     function quality_function(params)
         x, y, z, dx, dy, dz = params
-        track = KM3NeT.Track([dx, dy, dz], [x, y, z])
-        ccalc = KM3NeT.make_cherenkov_calculator(track)
+        track = NeRCA.Track([dx, dy, dz], [x, y, z])
+        ccalc = NeRCA.make_cherenkov_calculator(track)
         expected_times = ccalc.(positions)
         return sum((times - expected_times).^2)
     end
@@ -27,8 +27,8 @@ qfunc([100,200,300,0,1,0])
 function make_single_du_quality_function(positions, times)
     function quality_function(params)
         z, d, θ = params
-        track = KM3NeT.Track([0, sin(θ), cos(θ)], [0, d, z])
-        ccalc = KM3NeT.make_cherenkov_calculator(track)
+        track = NeRCA.Track([0, sin(θ), cos(θ)], [0, d, z])
+        ccalc = NeRCA.make_cherenkov_calculator(track)
         expected_times = ccalc.(positions)
         return sum((times - expected_times).^2)
     end

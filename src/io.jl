@@ -156,8 +156,8 @@ function read_calibration(filename::AbstractString)
         idx = 2
     end
 
-    pos = Dict{Int32,Vector{KM3NeT.Position}}()
-    dir = Dict{Int32,Vector{KM3NeT.Direction}}()
+    pos = Dict{Int32,Vector{NeRCA.Position}}()
+    dir = Dict{Int32,Vector{NeRCA.Direction}}()
     t0s = Dict{Int32,Vector{Float64}}()
     dus = Dict{Int32,UInt8}()
     floors = Dict{Int32,UInt8}()
@@ -166,8 +166,8 @@ function read_calibration(filename::AbstractString)
     max_z = 0.0
     for dom ∈ 1:n_doms
         dom_id, du, floor, n_pmts = map(x->parse(Int,x), split(lines[idx]))
-        pos[dom_id] = Vector{KM3NeT.Position}()
-        dir[dom_id] = Vector{KM3NeT.Direction}()
+        pos[dom_id] = Vector{NeRCA.Position}()
+        dir[dom_id] = Vector{NeRCA.Direction}()
         t0s[dom_id] = Vector{Float64}()
         dus[dom_id] = du
         floors[dom_id] = floor

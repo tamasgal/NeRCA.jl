@@ -1,4 +1,4 @@
-using KM3NeT
+using NeRCA
 using Test
 
 
@@ -16,12 +16,12 @@ calib = Calibration(
     # detector ID
     1,
     # PMT positions
-    Dict{Int32, Vector{KM3NeT.Position}}(
+    Dict{Int32, Vector{NeRCA.Position}}(
         8 => [(1,2,3), (4,5,6), (7,8,9)],
         9 => [(10,11,12), (13,14,15),(16,17,18)]
     ),
     # PMT directions
-    Dict{Int32, Vector{KM3NeT.Direction}}(
+    Dict{Int32, Vector{NeRCA.Direction}}(
         8 => [(1,2,3), (4,5,6), (7,8,9)],
         9 => [(10,11,12), (13,14,15),(16,17,18)]
     ),
@@ -43,7 +43,7 @@ calib = Calibration(
 
 chits = calibrate(hits, calib)
 @test 42 == chits[1].du
-@test KM3NeT.Position(4,5,6) == chits[1].pos
-@test KM3NeT.Direction(16,17,18) == chits[6].dir
+@test NeRCA.Position(4,5,6) == chits[1].pos
+@test NeRCA.Direction(16,17,18) == chits[6].dir
 @test 5000 == chits[2].t0
 @test 18 == chits[3].floor

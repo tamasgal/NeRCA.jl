@@ -1,4 +1,4 @@
-module KM3NeT
+module NeRCA
 
 using LinearAlgebra
 using Printf

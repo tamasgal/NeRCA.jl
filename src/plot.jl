@@ -1,9 +1,9 @@
 """
-    f(dom_positions, track::KM3NeT.Track)
+    f(dom_positions, track::NeRCA.Track)
 
 Plot recipe for z-t-plots.
 """
-@recipe function f(dom_positions, track::KM3NeT.Track)
+@recipe function f(dom_positions, track::NeRCA.Track)
     # layout := @layout [a b]
     layout := (2, 2)
 
@@ -14,7 +14,7 @@ Plot recipe for z-t-plots.
 
     @series begin
         subplot := 1
-        ccalc = KM3NeT.make_cherenkov_calculator(track)
+        ccalc = NeRCA.make_cherenkov_calculator(track)
         ccalc.(dom_positions), [p.z for p in dom_positions]
     end
 

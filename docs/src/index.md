@@ -1,4 +1,4 @@
-# KM3NeT.jl Package
+# NeRCA.jl Package
 
 ...
 
@@ -6,18 +6,18 @@
 
 ### I/O
 ```@autodocs
-Modules = [KM3NeT]
+Modules = [NeRCA]
 Pages   = ["io.jl"]
 ```
 
 ### RainbowAlga
 ```@autodocs
-Modules = [KM3NeT]
+Modules = [NeRCA]
 Pages   = ["rba.jl"]
 ```
 
 ### Other
 ```@autodocs
-Modules = [KM3NeT]
+Modules = [NeRCA]
 Order   = [:function, :type]
 ```

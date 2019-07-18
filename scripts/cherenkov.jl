@@ -1,20 +1,20 @@
 using Plots
-using KM3NeT
+using NeRCA
 using BenchmarkTools
 
 # pyplot()
 
-dom_positions = [KM3NeT.Position(0, 0, z)
+dom_positions = [NeRCA.Position(0, 0, z)
                  for z in range(120, length=18, stop=800)]
 
-track = KM3NeT.Track([0, 1, 0], [0, 500, 500], 0)
+track = NeRCA.Track([0, 1, 0], [0, 500, 500], 0)
 
 plot(dom_positions, track)
-plot!(dom_positions, KM3NeT.Track([0,0,-1], [0,0,800]))
-plot!(dom_positions, KM3NeT.Track([0,-1,0], [0,1000,400]))
+plot!(dom_positions, NeRCA.Track([0,0,-1], [0,0,800]))
+plot!(dom_positions, NeRCA.Track([0,-1,0], [0,1000,400]))
 
 
-function eventplot(dom_positions, track::KM3NeT.Track)
+function eventplot(dom_positions, track::NeRCA.Track)
         plot3d([p.x for p in dom_positions],
                [p.y for p in dom_positions],
                [p.z for p in dom_positions],

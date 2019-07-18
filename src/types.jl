@@ -189,8 +189,8 @@ end
 
 struct Calibration
     det_id::Int32
-    pos::Dict{Int32,Vector{KM3NeT.Position}}
-    dir::Dict{Int32,Vector{KM3NeT.Direction}}
+    pos::Dict{Int32,Vector{NeRCA.Position}}
+    dir::Dict{Int32,Vector{NeRCA.Direction}}
     t0::Dict{Int32,Vector{Float64}}
     du::Dict{Int32,DU}
     floor::Dict{Int32,Floor}

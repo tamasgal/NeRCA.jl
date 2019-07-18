@@ -7,7 +7,7 @@ end
 
 
 using LinearAlgebra
-using KM3NeT
+using NeRCA
 using HDF5
 using ProgressMeter
 
@@ -22,16 +22,16 @@ function main()
     outf = open(outfile, "w")
     write(outf, "group_id,dx,dy,dz,x,y,z,t0\n")
 
-    @showprogress 1 for event in KM3NeT.EventReader(filename, detx)
+    @showprogress 1 for event in NeRCA.EventReader(filename, detx)
         hits = calibrate(event.hits, event.calib)
         triggered_hits = filter(h -> h.triggered, hits);
-        prefit_track = KM3NeT.prefit(triggered_hits)
+        prefit_track = NeRCA.prefit(triggered_hits)
         t = triggered_hits[1].t - 500
         Δd = norm(prefit_track.dir) * t
         shifted_pos = prefit_track.pos + normalize(prefit_track.dir) * Δd
-        shifted_prefit_track = KM3NeT.Track(prefit_track.dir, shifted_pos, t)
+        shifted_prefit_track = NeRCA.Track(prefit_track.dir, shifted_pos, t)
         first_hits = unique(h->h.dom_id, triggered_hits)
-        final_track = KM3NeT.multi_du_fit(prefit_track, first_hits)
+        final_track = NeRCA.multi_du_fit(prefit_track, first_hits)
         dir = final_track.dir
         pos = final_track.pos
 

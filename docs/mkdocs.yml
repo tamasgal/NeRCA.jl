@@ -1,6 +1,6 @@
-site_name:           KM3NeT.jl
-repo_url:            https://github.com/tamasgal/KM3NeT.jl
-site_description:    KM3NeT
+site_name:           NeRCA.jl
+repo_url:            https://github.com/tamasgal/NeRCA.jl
+site_description:    NeRCA
 site_author:         Tamás Gál
 theme:               readthedocs
 

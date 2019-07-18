@@ -1,4 +1,4 @@
-using KM3NeT
+using NeRCA
 using Plots
 using LinearAlgebra
 using Optim
@@ -17,7 +17,7 @@ struct SingleDUTrack
     t₀
 end
 
-function single_du_params(track::KM3NeT.Track)
+function single_du_params(track::NeRCA.Track)
     pos = track.pos
     dir = Direction(normalize(track.dir))
     t₀ = track.time
@@ -41,7 +41,7 @@ end
 
 dom_z_positions = range(120, length=18, stop=800)
 
-track = KM3NeT.Track([0, 1, 0.5], [0, 500, 500], 0)
+track = NeRCA.Track([0, 1, 0.5], [0, 500, 500], 0)
 sdp = single_du_params(track)
 ccalc = make_cherenkov_calc(sdp...)
 times = ccalc.(dom_z_positions) * 1e9

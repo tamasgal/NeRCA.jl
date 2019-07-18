@@ -1,9 +1,9 @@
 .test_template: &test_definition
   script:
     - apt-get update -qq && apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2
-    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT"); Pkg.test("KM3NeT"; coverage = true)'
+    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
-      import KM3NeT; cd(joinpath(dirname(pathof(KM3NeT)), ".."));
+      import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
       using Coverage; cl, tl = get_summary(process_folder());
       println("(", cl/tl*100, "%) covered")'
 
@@ -27,8 +27,8 @@ pages:
   script:
     - apt-get update -qq && apt-get install -y git # needed by Documenter
     - apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2  # for HDF5.jl
-    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("KM3NeT");' # rebuild Julia (can be put somewhere else I'm sure
-    - julia -e 'using Pkg; import KM3NeT; Pkg.add("Documenter")' # install Documenter
+    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA");' # rebuild Julia (can be put somewhere else I'm sure
+    - julia -e 'using Pkg; import NeRCA; Pkg.add("Documenter")' # install Documenter
     - julia --color=yes docs/make.jl # make documentation
     - mv docs/build public # move to the directory picked up by Gitlab pages
   artifacts:

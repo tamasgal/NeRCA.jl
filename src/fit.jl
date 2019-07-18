@@ -74,7 +74,7 @@ function prefit(hits::Vector{CalibratedHit})
         end
     end
     # dir = normalize(dir/D)
-    return KM3NeT.Track(dir/D, pos/D, 0)
+    return NeRCA.Track(dir/D, pos/D, 0)
 end
 
 
@@ -156,11 +156,11 @@ end
 
 
 """
-    function single_du_params(track::KM3NeT.Track)
+    function single_du_params(track::NeRCA.Track)
 
 Calculates five parameters to describe a track for a single DU case.
 """
-function single_du_params(track::KM3NeT.Track)
+function single_du_params(track::NeRCA.Track)
     c_ns = c_0 / 1e9
     pos = track.pos
     dir = Direction(normalize(track.dir))
@@ -176,21 +176,21 @@ end
 
 
 """
-    function single_du_params(t::KM3NeT.MCTrack)
+    function single_du_params(t::NeRCA.MCTrack)
 
 Calculates five parameters to describe a MC track for a single DU case.
 """
-function single_du_params(t::KM3NeT.MCTrack, time)
-    single_du_params(KM3NeT.Track([t.dir_x, t.dir_y, t.dir_z], [t.pos_x, t.pos_y, t.pos_z], time))
+function single_du_params(t::NeRCA.MCTrack, time)
+    single_du_params(NeRCA.Track([t.dir_x, t.dir_y, t.dir_z], [t.pos_x, t.pos_y, t.pos_z], time))
 end
 
 
 function cherenkov_plausible(Δt, Δz, time_extra=10)
-    Δt < Δz * KM3NeT.n_water / KM3NeT.c*1e9 + time_extra
+    Δt < Δz * NeRCA.n_water / NeRCA.c*1e9 + time_extra
 end
 
 
-function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=2) where T<:Vector{KM3NeT.CalibratedHit}
+function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=2) where T<:Vector{NeRCA.CalibratedHit}
     n = length(hits)
     expanded = false
     for i in 1:n
@@ -214,7 +214,7 @@ function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=2) whe
 end
 
 
-function create_hit_pool(hits::T) where T<:Vector{KM3NeT.CalibratedHit}
+function create_hit_pool(hits::T) where T<:Vector{NeRCA.CalibratedHit}
     hit_pool = Dict{Int, T}()
     for hit in hits
         if !haskey(hit_pool, hit.floor)
@@ -227,7 +227,7 @@ function create_hit_pool(hits::T) where T<:Vector{KM3NeT.CalibratedHit}
 end
 
 
-function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{KM3NeT.CalibratedHit}
+function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{NeRCA.CalibratedHit}
 
     thits = filter(h -> h.triggered, hits)
     shits = unique(h -> h.dom_id, thits)
@@ -321,12 +321,12 @@ function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
 end
 
 function multi_du_fit(prefit, hits; print_level=0)
-    ϕ_start = KM3NeT.azimuth(prefit.dir)
-    θ_start = KM3NeT.zenith(prefit.dir)
+    ϕ_start = NeRCA.azimuth(prefit.dir)
+    θ_start = NeRCA.zenith(prefit.dir)
     t₀_start = prefit.time
     pos = prefit.pos
 
-    m = KM3NeT.MultiDUMinimiser(hits)
+    m = NeRCA.MultiDUMinimiser(hits)
 
     model = Model(
         with_optimizer(Ipopt.Optimizer,
@@ -353,7 +353,7 @@ function multi_du_fit(prefit, hits; print_level=0)
 end
 
 
-function single_du_fit(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
+function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}; print_level=0)
     sort!(du_hits, by = h -> h.t)
     sort!(du_hits, by=h->h.dom_id)
     count_multiplicities!(du_hits)
@@ -367,7 +367,7 @@ function single_du_fit(du_hits::Vector{KM3NeT.CalibratedHit}; print_level=0)
 
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
-    brightest_floor = KM3NeT.most_frequent(h -> h.floor, du_hits)
+    brightest_floor = NeRCA.most_frequent(h -> h.floor, du_hits)
 
     hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
     thits_on_brightest_floor = filter(h -> h.triggered, hits_on_brightest_floor)

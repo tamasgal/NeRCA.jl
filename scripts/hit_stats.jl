@@ -6,7 +6,7 @@ if length(ARGS) < 2
 end
 
 
-using KM3NeT
+using NeRCA
 using HDF5
 using ProgressMeter
 
@@ -18,7 +18,7 @@ function main()
         exit(1)
     end
 
-    events = KM3NeT.EventReader(filename, detx)
+    events = NeRCA.EventReader(filename, detx)
 
     fobj = h5open(filename, "r")
 
@@ -29,14 +29,14 @@ function main()
         n_muons = length(event.mc_tracks)
         bundle_energy = sum(map(m->m.E, event.mc_tracks))
         hits = calibrate(event.hits, event.calib)
-        muon = KM3NeT.Track(event.mc_tracks[1])
-        KM3NeT.count_multiplicities!(hits)
-        ccalc = KM3NeT.make_cherenkov_calculator(muon)
-        mc_time = KM3NeT.make_mc_time_converter(event.info)
+        muon = NeRCA.Track(event.mc_tracks[1])
+        NeRCA.count_multiplicities!(hits)
+        ccalc = NeRCA.make_cherenkov_calculator(muon)
+        mc_time = NeRCA.make_mc_time_converter(event.info)
         for hit in hits
             Δt = hit.t - mc_time(ccalc(hit.pos))
-            d = KM3NeT.pld3(hit.pos, muon.pos, muon.dir)
-            η = KM3NeT.angle_between(hit.dir, muon.dir)
+            d = NeRCA.pld3(hit.pos, muon.pos, muon.dir)
+            η = NeRCA.angle_between(hit.dir, muon.dir)
             write(outf, "$(Δt),$(n_muons),$(hit.tot),$(hit.multiplicity.count),$(hit.triggered ? 1 : 0),$(d),$(bundle_energy),$(η)\n")
         end
     end

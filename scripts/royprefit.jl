@@ -7,7 +7,7 @@ end
 
 
 using LinearAlgebra
-using KM3NeT
+using NeRCA
 using HDF5
 using ProgressMeter
 
@@ -22,15 +22,15 @@ function main()
     outf = open(outfile, "w")
     write(outf, "group_id,dx,dy,dz,x,y,z,v,t0\n")
 
-    @showprogress 1 for event in KM3NeT.EventReader(filename, detx)
+    @showprogress 1 for event in NeRCA.EventReader(filename, detx)
         hits = calibrate(event.hits, event.calib)
         sort!(hits, by=h->h.t)
         sort!(hits, by=h->h.dom_id)
-        KM3NeT.count_multiplicities!(hits)
+        NeRCA.count_multiplicities!(hits)
 
         shits = filter(h->h.multiplicity.count >= 4, hits)
         doms = unique(map(h->h.dom_id, shits))
-        track = KM3NeT.prefit(shits)
+        track = NeRCA.prefit(shits)
         dir = Direction(normalize(track.dir))
         v = norm(track.dir)
         write(outf, "$(event.info.group_id),$(dir.x),$(dir.y),$(dir.z),$(track.pos.x),$(track.pos.y),$(track.pos.z),$(v),$(track.time)\n")

@@ -1,5 +1,5 @@
 #!/usr/bin/env julia
-using KM3NeT
+using NeRCA
 using Plots
 using PlotThemes
 using Dates
@@ -12,7 +12,7 @@ if length(ARGS) < 2
 end
 
 
-const calib = KM3NeT.read_calibration(ARGS[1])
+const calib = NeRCA.read_calibration(ARGS[1])
 const LIGIER_PORT = parse(Int, ARGS[2])
 const TIME_RES = ARGS[3]
 
@@ -20,7 +20,7 @@ function main()
     println("Starting live ROyFit")
 
     for message in CHClient(ip"127.0.0.1", LIGIER_PORT, ["IO_EVT"])
-        event = KM3NeT.read_io(IOBuffer(message.data), KM3NeT.DAQEvent)
+        event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
 
         hits = calibrate(event.hits, calib)
         triggered_hits = filter(h->h.triggered, hits)
@@ -41,7 +41,7 @@ function main()
                 println("No triggered hits")
                 continue
             end
-            fit = KM3NeT.single_du_fit(du_hits)
+            fit = NeRCA.single_du_fit(du_hits)
             push!(Q, fit.Q)
             plot!(du_hits, fit, markercolor=colours[idx], label="DU $(du)", max_z=calib.max_z)
             write_time_residuals(TIME_RES, event, du_hits, fit)
@@ -68,7 +68,7 @@ function write_time_residuals(filename, event, hits, fit)
     else
         fobj = open(filename, "a")
     end
-    dγ, ccalc = KM3NeT.make_cherenkov_calculator(fit.sdp)
+    dγ, ccalc = NeRCA.make_cherenkov_calculator(fit.sdp)
     for hit in hits
         Δt = hit.t - ccalc(hit.pos.z)
         write(fobj, "$(event.run_id),$(event.timestamp),$(hit.du),$(hit.floor),$(hit.dom_id),$(Δt),$(fit.Q)\n")

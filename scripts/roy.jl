@@ -1,19 +1,19 @@
-using KM3NeT
+using NeRCA
 using ROy
 using Sockets
 
-calib = KM3NeT.read_calibration("scripts/KM3NeT_00000043_20022019.detx")
-calib = KM3NeT.read_calibration("/home/tgal/data/detx/KM3NeT_-00000001_20171212.detx")
+calib = NeRCA.read_calibration("scripts/NeRCA_00000043_20022019.detx")
+calib = NeRCA.read_calibration("/home/tgal/data/detx/NeRCA_-00000001_20171212.detx")
 
-client = KM3NeT.CHClient(ip"127.0.0.1", 5553, ["IO_EVT"])
+client = NeRCA.CHClient(ip"127.0.0.1", 5553, ["IO_EVT"])
 
 try
     for message in client
-        event = KM3NeT.read_io(IOBuffer(message.data), KM3NeT.DAQEvent)
+        event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
         hits = event.snapshot_hits
-        chits = KM3NeT.calibrate(hits, calib)
+        chits = NeRCA.calibrate(hits, calib)
         thits = event.triggered_hits
-        cthits = KM3NeT.calibrate(thits, calib)
+        cthits = NeRCA.calibrate(thits, calib)
         println(length(cthits))
     end
 catch InterruptException
