@@ -312,10 +312,6 @@ Base.show(io::IO, f::DAQEventFile) = begin
     print(io, "DAQEventFile(\"$(f.filename)\")")
 end
 
-function read_event_info(f::DAQEventFile, group_id)
-    f._event_infos[group_id + 1]
-end
-
 
 function read_io(io::IOBuffer, t::T) where T
     length = read(io, Int32)
