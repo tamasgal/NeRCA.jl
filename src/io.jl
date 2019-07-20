@@ -124,6 +124,18 @@ function read_mchits(filename::AbstractString,
     return hits_collection
 end
 
+function read_mctracks(filename::AbstractString)
+    mc_tracks = Dict{Int64}{Vector{MCTrack}}()
+    for track in NeRCA.read_compound(filename, "/mc_tracks", MCTrack)
+        group_id = track.group_id
+        if !haskey(mc_tracks, group_id)
+            mc_tracks[group_id] = Vector{MCTrack}()
+        end
+        push!(mc_tracks[group_id], track)
+    end
+    mc_tracks
+end
+
 function read_event_info(f::DAQEventFile, group_id)
     f._event_infos[group_id + 1]
 end
