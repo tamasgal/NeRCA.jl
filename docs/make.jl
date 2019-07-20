@@ -1,4 +1,9 @@
-using Documenter, NeRCA
+using Pkg
+Pkg.activate(@__DIR__)
+
+using NeRCA
+using Documenter
+
 
 makedocs(modules=[NeRCA],
          doctest=true,
@@ -18,3 +23,9 @@ makedocs(modules=[NeRCA],
 #=     repo = "github.com/tamasgal/NeRCA.jl.git", =#
 #=     julia  = "0.7.0", =#
 #=     osname = "linux") =#
+#
+
+if get(ENV, "CI", nothing) == "true"
+    deploydocs(repo = "github.com/tamasgal/NeRCA.jl.git",
+               target = "build")
+end
