@@ -25,7 +25,7 @@ makedocs(modules=[NeRCA],
 #=     osname = "linux") =#
 #
 
-if get(ENV, "CI", nothing) == "true"
-    deploydocs(repo = "github.com/tamasgal/NeRCA.jl.git",
-               target = "build")
-end
+# if get(ENV, "CI", nothing) == "true"
+deploydocs(repo = "github.com/tamasgal/NeRCA.jl.git",
+           target = "build")
+# end
