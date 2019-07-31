@@ -13,16 +13,16 @@ cache:
   key: "$CI_COMMIT_REF_SLUG"
 
 test:1.0:
-  image: julia:1.0
+  image: docker.km3net.de/base/julia:1.0
   <<: *test_definition
 
 test:1.1:
-  image: julia:1.1
+  image: docker.km3net.de/base/julia:1.1
   <<: *test_definition
 
 
 pages:
-  image: julia:1.1
+  image: docker.km3net.de/base/julia:1.1
   stage: deploy
   script:
     - apt-get update -qq && apt-get install -y git # needed by Documenter
