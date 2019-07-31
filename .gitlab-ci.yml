@@ -17,7 +17,7 @@ test:1.0:
   <<: *test_definition
 
 test:1.1:
-  image: julia:1.0
+  image: julia:1.1
   <<: *test_definition
 
 
@@ -27,9 +27,8 @@ pages:
   script:
     - apt-get update -qq && apt-get install -y git # needed by Documenter
     - apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2  # for HDF5.jl
-    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA");' # rebuild Julia (can be put somewhere else I'm sure
-    - julia -e 'using Pkg; import NeRCA; Pkg.add("Documenter")' # install Documenter
-    - julia --color=yes docs/make.jl # make documentation
+    - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+    - julia --color=yes --project=docs/ docs/make.jl # make documentation
     - mv docs/build public # move to the directory picked up by Gitlab pages
   artifacts:
     paths:
