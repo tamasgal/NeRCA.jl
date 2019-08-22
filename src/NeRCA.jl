@@ -6,6 +6,7 @@ using Sockets
 using DataStructures
 using StaticArrays
 using HDF5
+using PGFPlotsX
 using RecipesBase
 using PlotThemes
 using JuMP
