@@ -27,6 +27,7 @@ export
     mc_run_id,
     svdfit, matrix, rows,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
+    ztplot,
     savefigs,
     @ip_str
 

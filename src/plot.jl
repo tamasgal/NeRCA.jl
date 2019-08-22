@@ -1,3 +1,45 @@
+# Creates `PGFPlotsX.Coordinates` from hits
+function ZTCoordinates(hits::Vector{CalibratedHit}; offset=0)
+    PGFPlotsX.Coordinates(map(h->h.t - offset, hits), map(h->h.pos.z, hits))
+end
+
+"""
+    function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0) -> PGFPlotsX.Axis
+
+Create a zt-plot from a set of hits using PGFPlotsX. If no `du` is provided,
+the brightest DU will be determined.
+"""
+function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0)
+    if du == nothing
+        du = NeRCA.most_frequent(h -> h.du, hits)
+        hits = filter(h -> h.du == du, hits)
+    end
+    sort!(hits, by=h->h.t)
+    triggered_hits = filter(h -> h.triggered, hits)
+    ax = @pgf Axis({xlabel=raw"time [\si{\ns}]", ylabel=raw"z [\si{\m}]"})
+    push!(ax,  @pgf PlotInc({only_marks, mark="*", mark_size=".8"}, ZTCoordinates(hits, offset=t₀)))
+    push!(ax, LegendEntry("hits"))
+    push!(ax,  @pgf PlotInc({only_marks, mark="x", mark_size="4"}, ZTCoordinates(triggered_hits, offset=t₀)))
+    push!(ax, LegendEntry("triggered"))
+    ax
+end
+
+
+"""
+    function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0) -> PGFPlotsX.Axis
+
+Create a zt-plot from hits and a ROyFit using PGFPlotsX.
+"""
+function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0)
+    ax = ztplot(hits; t₀=t₀)
+    zs = range(0, 800, length=200)
+    dᵧ, ccalc = NeRCA.make_cherenkov_calculator(fit.sdp)
+    push!(ax, @pgf PlotInc({thick}, Coordinates(ccalc.(zs) .- t₀, zs)))
+    push!(ax, LegendEntry("fit"))
+    ax
+end
+
+
 """
     f(dom_positions, track::NeRCA.Track)
 
