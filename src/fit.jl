@@ -186,7 +186,7 @@ end
 
 
 function cherenkov_plausible(Δt, Δz, time_extra=10)
-    Δt < Δz * NeRCA.n_water / NeRCA.c*1e9 + time_extra
+    Δt < Δz * NeRCA.N_SEAWATER / NeRCA.c_0*1e9 + time_extra
 end
 
 
