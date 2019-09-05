@@ -18,7 +18,7 @@ function main()
         exit(1)
     end
 
-    events = NeRCA.EventReader(filename, detx)
+    events = NeRCA.MCEventReader(filename, detx)
 
     fobj = h5open(filename, "r")
 

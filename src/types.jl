@@ -358,7 +358,7 @@ function read_io(io::IOBuffer, t::T) where T
     DAQEvent(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_hits, hits)
 end
 
-struct EventReader
+struct MCEventReader
     filename::AbstractString
     detx::AbstractString
     _fobj::HDF5.HDF5File
@@ -367,7 +367,7 @@ struct EventReader
     _mc_tracks::Dict{Int64, Vector{MCTrack}}
     _length::UInt64
 
-    function EventReader(filename, detx)
+    function MCEventReader(filename, detx)
         fobj = h5open(filename, "r")
         calib = read_calibration(detx)
         event_infos = read_compound(fobj, "/event_info", MCEventInfo)
@@ -387,30 +387,30 @@ struct EventReader
 end
 
 
-Base.show(io::IO, e::EventReader) = begin
-    print(io, join(["EventReader: $(e.filename)",
+Base.show(io::IO, e::MCEventReader) = begin
+    print(io, join(["MCEventReader: $(e.filename)",
           "       detx: $(e.detx)",
           "     events: $(length(e))"], "\n"))
 end
 
-Base.length(e::EventReader) = e._length
-Base.firstindex(E::EventReader) = 0
-Base.lastindex(E::EventReader) = length(E)
+Base.length(e::MCEventReader) = e._length
+Base.firstindex(E::MCEventReader) = 0
+Base.lastindex(E::MCEventReader) = length(E)
 
 
-mutable struct Event
+mutable struct MCEvent
     hits::Vector{Hit}
     mc_tracks::Vector{MCTrack}
     info::MCEventInfo
     calib::Calibration
 end
 
-function Base.iterate(iter::EventReader)
+function Base.iterate(iter::MCEventReader)
     group_id = 0
     (iter[group_id], group_id)
 end
 
-function Base.iterate(iter::EventReader, state)
+function Base.iterate(iter::MCEventReader, state)
     group_id = state + 1
     if group_id >= length(iter)
         return nothing
@@ -418,10 +418,10 @@ function Base.iterate(iter::EventReader, state)
     return (iter[group_id], group_id)
 end
 
-function Base.getindex(E::EventReader, i::Int)
+function Base.getindex(E::MCEventReader, i::Int)
     0 <= i < length(E) || throw(BoundsError(E, i))
     hits = read_hits(E._fobj, i)
     mc_tracks = E._mc_tracks[i+1]
     event_info = E._event_infos[i+1]
-    Event(hits, mc_tracks, event_info, E._calib)
+    MCEvent(hits, mc_tracks, event_info, E._calib)
 end
