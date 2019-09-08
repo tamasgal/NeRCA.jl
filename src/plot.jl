@@ -32,7 +32,7 @@ Create a zt-plot from hits and a ROyFit using PGFPlotsX.
 """
 function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0)
     ax = ztplot(hits; t₀=t₀)
-    zs = range(0, 800, length=200)
+    zs = range(0, maximum(h->h.pos.z, hits), length=200)
     dᵧ, ccalc = NeRCA.make_cherenkov_calculator(fit.sdp)
     push!(ax, @pgf PlotInc({thick}, Coordinates(ccalc.(zs) .- t₀, zs)))
     push!(ax, LegendEntry("fit"))
