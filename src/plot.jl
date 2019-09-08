@@ -19,7 +19,7 @@ function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0)
     ax = @pgf Axis({xlabel=raw"time [\si{\ns}]", ylabel=raw"z [\si{\m}]"})
     push!(ax,  @pgf PlotInc({only_marks, mark="*", mark_size=".8"}, ZTCoordinates(hits, offset=t₀)))
     push!(ax, LegendEntry("hits"))
-    push!(ax,  @pgf PlotInc({only_marks, mark="x", mark_size="4"}, ZTCoordinates(triggered_hits, offset=t₀)))
+    push!(ax,  @pgf PlotInc({only_marks, mark="+", mark_size="5"}, ZTCoordinates(triggered_hits, offset=t₀)))
     push!(ax, LegendEntry("triggered"))
     ax
 end
@@ -36,6 +36,11 @@ function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0)
     dᵧ, ccalc = NeRCA.make_cherenkov_calculator(fit.sdp)
     push!(ax, @pgf PlotInc({thick}, Coordinates(ccalc.(zs) .- t₀, zs)))
     push!(ax, LegendEntry("fit"))
+    push!(ax, @pgf PlotInc(
+        {thick, only_marks, mark="o", mark_size="4"},
+        ZTCoordinates(fit.selected_hits, offset=t₀))
+    )
+    push!(ax, LegendEntry("selected"))
     ax
 end
 
