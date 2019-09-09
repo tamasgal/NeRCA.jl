@@ -192,6 +192,9 @@ end
 
 function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=2) where T<:Vector{NeRCA.CalibratedHit}
     n = length(hits)
+    thits = filter(h->h.triggered, hits)
+    thit_pool = create_hit_pool(thits)
+    _floors = sort(collect(keys(thit_pool)))
     expanded = false
     for i in 1:n
         hit = hits[i]
@@ -204,13 +207,30 @@ function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=2) whe
             for _hit ∈ _hits
                 Δz = abs(z - _hit.pos.z)
                 Δt = abs(time - _hit.t)
-                if cherenkov_plausible(Δt, Δz)
+                if cherenkov_plausible(Δt, Δz) && is_time_plausible(_hit, thit_pool, _floors)
                     push!(hits, _hit)
                     expanded = true
                 end
             end
         end
     end
+end
+
+function is_time_plausible(hit, hit_pool, floors)
+    for floor_above ∈ floors
+        if floor_above > hit.floor
+            for floor_below ∈ reverse(floors)
+                if floor_below < hit.floor
+                    t₀, t₁ = sort([first(hit_pool[floor_above]).t, first(hit_pool[floor_below]).t])
+                    if t₀ < hit.t < t₁
+                        return true
+                    end
+                    return false
+                end
+            end
+        end
+    end
+    return true
 end
 
 
@@ -230,7 +250,7 @@ end
 function select_hits(hits::T, hit_pool::Dict{Int, T}) where T<:Vector{NeRCA.CalibratedHit}
 
     thits = filter(h -> h.triggered, hits)
-    shits = unique(h -> h.dom_id, thits)
+    shits = unique(h -> h.dom_id, thits)  # first triggered hit on each DOM
 
     expand_hits!(shits, hit_pool)
     expand_hits!(shits, hit_pool)
@@ -289,7 +309,7 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
         Q += Δt^2 * m / max_multiplicity
     end
 
-    Δts = abs.(s.times - expected_times) 
+    Δts = abs.(s.times - expected_times)
     # Δϕs = filter(!isnan, azimuth.(s.pmt_directions)) .- ϕ
 
     # return sum(Δts .^2) + sum(Δϕs.^2)/length(Δϕs)
@@ -300,7 +320,7 @@ end
 struct MultiDUMinimiser <: Function
     hits::Vector{CalibratedHit}
 end
-    
+
 function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
     pos = Position(x, y, z)
     # dir = Direction(cos(θ)*cos(ϕ), cos(θ)*sin(ϕ), sin(θ))
