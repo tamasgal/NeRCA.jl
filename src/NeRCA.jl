@@ -1,8 +1,11 @@
 module NeRCA
 
 using LinearAlgebra
+using Statistics
 using Printf
 using Sockets
+using DrWatson
+using Parameters
 using DataStructures
 using StaticArrays
 using HDF5
@@ -11,7 +14,6 @@ using RecipesBase
 using PlotThemes
 using JuMP
 using Ipopt
-using Statistics
 
 import Base: +, -, *
 

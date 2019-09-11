@@ -85,6 +85,10 @@ end
 struct JMuon
     JENERGY_CHI2::Float64
     JENERGY_ENERGY::Float64
+    JENERGY_MUON_RANGE_METRES::Float64
+    JENERGY_NDF::Float64
+    JENERGY_NOISE_LIKELIHOOD::Float64
+    JENERGY_NUMBER_OF_HITS::Float64
     JGANDALF_BETA0_RAD::Float64
     JGANDALF_BETA1_RAD::Float64
     JGANDALF_CHI2::Float64
@@ -99,6 +103,8 @@ struct JMuon
     JSTART_LENGTH_METRES::Float64
     JSTART_NPE_MIP::Float64
     JSTART_NPE_MIP_TOTAL::Float64
+    JVETO_NPE::Float64
+    JVETO_NUMBER_OF_HITS::Float64
     dir_x::Float64
     dir_y::Float64
     dir_z::Float64
