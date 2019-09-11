@@ -17,9 +17,9 @@ function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0)
     sort!(hits, by=h->h.t)
     triggered_hits = filter(h -> h.triggered, hits)
     ax = @pgf Axis({xlabel=raw"time [\si{\ns}]", ylabel=raw"z [\si{\m}]"})
-    push!(ax,  @pgf PlotInc({only_marks, mark="*", mark_size=".8"}, ZTCoordinates(hits, offset=t₀)))
+    push!(ax,  @pgf PlotInc({only_marks, mark="*", mark_size=".8", thick}, ZTCoordinates(hits, offset=t₀)))
     push!(ax, LegendEntry("hits"))
-    push!(ax,  @pgf PlotInc({only_marks, mark="+", mark_size="5"}, ZTCoordinates(triggered_hits, offset=t₀)))
+    push!(ax,  @pgf PlotInc({only_marks, mark="+", mark_size="5", thick}, ZTCoordinates(triggered_hits, offset=t₀)))
     push!(ax, LegendEntry("triggered"))
     ax
 end
@@ -32,9 +32,9 @@ Create a zt-plot from hits and a ROyFit using PGFPlotsX.
 """
 function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0)
     ax = ztplot(hits; t₀=t₀)
-    zs = range(0, maximum(h->h.pos.z, hits), length=200)
+    zs = range(0, maximum(h->h.pos.z, hits) * 1.1, length=200)
     dᵧ, ccalc = NeRCA.make_cherenkov_calculator(fit.sdp)
-    push!(ax, @pgf PlotInc({thick}, Coordinates(ccalc.(zs) .- t₀, zs)))
+    push!(ax, @pgf PlotInc({ultra_thick}, Coordinates(ccalc.(zs) .- t₀, zs)))
     push!(ax, LegendEntry("fit"))
     push!(ax, @pgf PlotInc(
         {thick, only_marks, mark="o", mark_size="4"},
