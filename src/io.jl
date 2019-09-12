@@ -183,6 +183,7 @@ function read_calibration(filename::AbstractString)
     t0s = Dict{Int32,Vector{Float64}}()
     dus = Dict{Int32,UInt8}()
     floors = Dict{Int32,UInt8}()
+    omkeys = Dict{Int32,OMKey}()
     n_dus = length(keys(dus))
 
     max_z = 0.0
@@ -203,10 +204,11 @@ function read_calibration(filename::AbstractString)
             push!(pos[dom_id], Position(x, y, z))
             push!(dir[dom_id], Direction(dx, dy, dz))
             push!(t0s[dom_id], t0)
+            omkeys[pmt_id] = OMKey(dom_id, pmt-1)
         end
         idx += n_pmts + 1
     end
-    Calibration(det_id, pos, dir, t0s, dus, floors, max_z, n_dus)
+    Calibration(det_id, pos, dir, t0s, dus, floors, omkeys, max_z, n_dus)
 end
 
 # Triggers

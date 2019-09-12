@@ -5,6 +5,12 @@ const Floor = UInt8
 const DU = UInt8
 const HitTime = Float64
 
+
+struct OMKey
+    dom_id::UInt32
+    channel_id::UInt8
+end
+
 struct Position{T} <: FieldVector{3, T}
     x::T
     y::T
@@ -200,6 +206,7 @@ struct Calibration
     t0::Dict{Int32,Vector{Float64}}
     du::Dict{Int32,DU}
     floor::Dict{Int32,Floor}
+    omkeys::Dict{Int32,OMKey}
     max_z
     n_dus
 end

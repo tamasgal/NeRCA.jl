@@ -78,6 +78,47 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
     calibrated_hits
 end
 
+
+"""
+    function calibrate(mc_hits::Vector{T}, calibration::Calibration) where {T<:McHit}
+
+Apply geometry and time calibration to given mc_hits.
+"""
+function calibrate(mc_hits::Vector{T},
+                   calibration::Calibration,
+                   event_info::Union{Nothing,MCEventInfo,DAQEventInfo} = nothing) where {T<:McHit}
+    calibrated_hits = Vector{CalibratedHit}()
+    if event_info != nothing
+        mctime = make_mc_time_converter(event_info)
+    else
+        mctime = x->x
+    end
+    for hit in mc_hits
+        omkey = calibration.omkeys[hit.pmt_id]
+        dom_id = omkey.dom_id
+        channel_id = omkey.channel_id
+        tot = hit.a
+        pos = calibration.pos[dom_id][channel_id+1]
+        dir = calibration.dir[dom_id][channel_id+1]
+        t0 = calibration.t0[dom_id][channel_id+1]
+        t = mctime(hit.t + t0)
+        du = calibration.du[dom_id]
+        floor = calibration.floor[dom_id]
+        triggered = false
+        if T === Hit
+            triggered = hit.triggered
+        end
+        if T === DAQTriggeredHit
+            triggered = hit.trigger_mask > 0
+        end
+        c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
+                              pos, dir, t0, triggered, Multiplicity(0,0))
+        push!(calibrated_hits, c_hit)
+    end
+    calibrated_hits
+end
+
+
 # Utility
 rows(x) = (x[i, :] for i in indices(x,1))
 
