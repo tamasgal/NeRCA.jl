@@ -183,54 +183,9 @@ function single_du_params(t::NeRCA.MCTrack, time)
 end
 
 
+# TODO: delete this function
 function cherenkov_plausible(Δt, Δz; time_extra=10, n=N_SEAWATER)
     Δt < Δz * n / NeRCA.c_0*1e9 + time_extra
-end
-
-
-function expand_hits!(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=3, Δt_cherenkov=10, Δt_time_plausible=10) where T<:Vector{NeRCA.CalibratedHit}
-    n = length(hits)
-    thits = filter(h->h.triggered, hits)
-    thit_pool = create_hit_pool(thits)
-    _floors = sort(collect(keys(thit_pool)))
-    expanded = false
-    for i in 1:n
-        hit = hits[i]
-        time = hit.t
-        floor = hit.floor
-        z = hit.pos.z
-
-        for Δfloor ∈ -max_floor_distance:max_floor_distance
-            _hits = get(hit_pool, floor + Δfloor, T())
-            for _hit ∈ _hits
-                Δz = abs(z - _hit.pos.z)
-                Δt = abs(time - _hit.t)
-                if cherenkov_plausible(Δt, Δz; time_extra=Δt_cherenkov) && is_time_plausible(_hit, thit_pool, _floors; Δt = Δt_time_plausible)
-                    push!(hits, _hit)
-                    expanded = true
-                end
-            end
-        end
-    end
-end
-
-
-function is_time_plausible(hit, hit_pool, floors; Δt = 10)
-    for floor_above ∈ floors
-        if floor_above > hit.floor
-            for floor_below ∈ reverse(floors)
-                if floor_below < hit.floor
-                    t₀, t₁ = sort([first(hit_pool[floor_above]).t, first(hit_pool[floor_below]).t])
-                    if t₀ - Δt < hit.t < t₁ + Δt
-                        return true
-                    end
-                    return false
-                end
-            end
-            break
-        end
-    end
-    return true
 end
 
 
@@ -247,17 +202,80 @@ function create_hit_pool(hits::T) where T<:Vector{NeRCA.CalibratedHit}
 end
 
 
-function select_hits(hits::T, hit_pool::Dict{Int, T}; max_floor_distance=3, Δt_cherenkov=10, Δt_time_plausible=10) where T<:Vector{NeRCA.CalibratedHit}
-
-    thits = filter(h -> h.triggered, hits)
-    shits = unique(h -> h.dom_id, thits)  # first triggered hit on each DOM
-
-    expand_hits!(shits, hit_pool; max_floor_distance=max_floor_distance, Δt_cherenkov=Δt_cherenkov, Δt_time_plausible=Δt_time_plausible)
-    expand_hits!(shits, hit_pool; max_floor_distance=max_floor_distance, Δt_cherenkov=Δt_cherenkov, Δt_time_plausible=Δt_time_plausible)
-
-    shits = unique(h -> h.dom_id, shits)
-
-    return shits
+function select_hits(hits, hit_pool; Δt=10, Δz=9, new_hits=nothing)
+    intervals = Dict{Int16, Interval{Float64}}()
+    hits₀ = NeRCA.create_hit_pool(hits)
+    
+    extended = Vector{CalibratedHit}()
+    
+    function time_interval(t₀, tₜ, Δfloor)
+        t₋ = tₜ - Δfloor*Δt
+        t₊ = max(t₀ + Δfloor*Δz*NeRCA.N_SEAWATER/NeRCA.c_0*1e9 + Δt, tₜ + Δfloor*Δt)
+        @interval(t₋, t₊)
+    end
+    
+    function add_if_in_interval(floor, interval)
+        if haskey(hit_pool, floor)
+            floor_hits = hit_pool[floor]
+            for (iₕ, hit) ∈ enumerate(floor_hits)
+                if hit.t ∈ interval
+                    
+                    if  haskey(hits₀, floor) && hit.t > hits₀[floor][1].t
+                        deleteat!(floor_hits, iₕ:length(floor_hits))
+                        return
+                    end
+                    push!(extended, hit)
+                    deleteat!(floor_hits, iₕ:length(floor_hits))
+                    return
+                end
+            end
+        end
+    end
+    
+    hit_seeds = new_hits == nothing ? hits : new_hits
+    
+    for hit in hit_seeds
+        t₀ = hit.t
+        floor = hit.floor
+        for (floor₋, floor₋₋, floor₊, floor₊₊) in [(floor-1, floor-2, floor+1, floor+2), (floor+1, floor+2, floor-1, floor-2)]
+            if haskey(hits₀, floor₋)
+                t₋ = first(hits₀[floor₋]).t
+                if haskey(hits₀, floor₋₋)
+                    t₋₋ = first(hits₀[floor₋₋]).t
+                    t₊ = t₋ + 2(t₋ - t₋₋)
+                    t₊₊ = t₋ + 3(t₋ - t₋₋)
+                    interval₊ = time_interval(t₀, t₊, 1)
+                    interval₊₊ = time_interval(t₀, t₊₊, 2)
+                    #interval₊ = @interval(minimum([t₀, t₋, t₋₋]) - Δt, maximum([t₀, t₋, t₋₋]) + Δt)
+                    #interval₊₊ = @interval(minimum([t₀, t₋, t₋₋]) - 2Δt, maximum([t₀, t₋, t₋₋]) + 2Δt)
+                    add_if_in_interval(floor₊, interval₊)
+                    add_if_in_interval(floor₊₊, interval₊₊)
+                else
+                    t₊ = t₀ + (t₀ - t₋)
+                    t₊₊ = t₀ + 2(t₀ - t₋)
+                    interval₊ = time_interval(t₀, t₊, 1)
+                    interval₊₊ = time_interval(t₀, t₊₊, 2)
+                    add_if_in_interval(floor₊, interval₊)
+                    add_if_in_interval(floor₊₊, interval₊₊)
+                end
+            elseif haskey(hits₀, floor₋₋)
+                t₋₋ = first(hits₀[floor₋₋]).t
+                t₊ = t₀ + (t₀ - t₋₋)/2
+                t₊₊ = t₀ + 2(t₀ - t₋₋)/2
+                interval₊ = time_interval(t₀, t₊, 1)
+                interval₊₊ = time_interval(t₀, t₊₊, 2)
+                add_if_in_interval(floor₊, interval₊)
+                add_if_in_interval(floor₊₊, interval₊₊)
+            end
+        end
+        
+    end
+    
+    if length(extended) == 0
+        return hits
+    end
+    extension = unique(h->h.floor, vcat(hits, extended))
+    return select_hits(extension, hit_pool; Δt=Δt, Δz=Δz, new_hits=extended)
 end
 
 
@@ -307,6 +325,7 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
         t_exp = ccalc(z)
         Δt = abs(t - t_exp)
         Q += Δt^2 * m / max_multiplicity
+        # Q -= 1 / √(Δt^2 + 4^2)
     end
 
     Δts = abs.(s.times - expected_times)
@@ -374,11 +393,8 @@ end
 
 
 @with_kw struct SingleDURecoParams
-    hqhits::Int = 6
-    max_floor_distance::Int = 3
-    Δt_cherenkov::Int = 10
-    Δt_time_plausible::Int = 10
-    discard_worst_hit::Bool = false
+    floor_distance::Int = 9
+    Δt_extra::Int = 10
     data_type::AbstractString = "mupage"
 end
 
@@ -391,7 +407,9 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     count_multiplicities!(du_hits)
 
     hit_pool = create_hit_pool(du_hits)
-    shits = select_hits(du_hits, hit_pool; max_floor_distance=par.max_floor_distance, Δt_cherenkov=par.Δt_cherenkov, Δt_time_plausible=par.Δt_time_plausible)
+
+    hits₀ = unique(h->h.floor, triggered(du_hits))
+    shits = select_hits(hits₀, hit_pool; Δt = par.Δt_extra, Δz = par.floor_distance)
 
     qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
 
@@ -436,41 +454,40 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     optimize!(model);
     values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
-    # println("Initial values: $values")
     Q₀ = qfunc(values...)/length(shits)
 
     d_γ, ccalc = make_cherenkov_calculator(map(value, [d_closest, t_closest, z_closest, dir_z, t₀])...) 
-    if par.discard_worst_hit && length(shits) > 3
-        Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
-        idx = argmax(Δts)
-        deleteat!(Δts, idx)
-        deleteat!(shits, idx)
-    end
-    if length(shits) > par.hqhits
-        while length(shits) > par.hqhits
-            Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
-            idx = argmax(Δts)
-            deleteat!(Δts, idx)
-            deleteat!(shits, idx)
-
-            qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
-            qfunc_sym = gensym()
-            values_try = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
-            register(model, qfunc_sym, 6, qfunc, autodiff=true)
-            set_NL_objective(model, MOI.MIN_SENSE, :($qfunc_sym($(d_closest), $(t_closest), $(z_closest), $(dir_z), $(ϕ), $(t₀))))
-            optimize!(model)
-
-            Q = qfunc(values...)/length(shits)
-            # println("New quality parameter: $Q ($Q₀)")
-            if Q < Q₀
-                # println("Better Q: $Q ($Q₀)")
-                # println("New values: $(map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀]))")
-                continue
-            end
-            # println("No improvement")
-            break
-        end
-    end
+    # if par.discard_worst_hit && length(shits) > 3
+    #     Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
+    #     idx = argmax(Δts)
+    #     deleteat!(Δts, idx)
+    #     deleteat!(shits, idx)
+    # end
+    # if length(shits) > par.hqhits
+    #     while length(shits) > par.hqhits
+    #         Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
+    #         idx = argmax(Δts)
+    #         deleteat!(Δts, idx)
+    #         deleteat!(shits, idx)
+    #
+    #         qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
+    #         qfunc_sym = gensym()
+    #         values_try = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
+    #         register(model, qfunc_sym, 6, qfunc, autodiff=true)
+    #         set_NL_objective(model, MOI.MIN_SENSE, :($qfunc_sym($(d_closest), $(t_closest), $(z_closest), $(dir_z), $(ϕ), $(t₀))))
+    #         optimize!(model)
+    #
+    #         Q = qfunc(values...)/length(shits)
+    #         # println("New quality parameter: $Q ($Q₀)")
+    #         if Q < Q₀
+    #             # println("Better Q: $Q ($Q₀)")
+    #             # println("New values: $(map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀]))")
+    #             continue
+    #         end
+    #         # println("No improvement")
+    #         break
+    #     end
+    # end
 
     values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
     sdp = SingleDUParams(values...)

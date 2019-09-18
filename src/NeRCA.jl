@@ -14,6 +14,7 @@ using RecipesBase
 using PlotThemes
 using JuMP
 using Ipopt
+using IntervalArithmetic
 
 import Base: +, -, *
 
@@ -101,7 +102,7 @@ function calibrate(mc_hits::Vector{T},
         pos = calibration.pos[dom_id][channel_id+1]
         dir = calibration.dir[dom_id][channel_id+1]
         t0 = calibration.t0[dom_id][channel_id+1]
-        t = mctime(hit.t + t0)
+        t = mctime(hit.t)
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
         triggered = false
