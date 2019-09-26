@@ -15,20 +15,6 @@ struct ROyFit
     model::Model
 end
 
-"""
-    function slew(tot)
-
-Return the time slewing for a ToT.
-"""
-function slew(tot)
-    p₀ = 7.70824
-    p₁ = 0.00879447
-    p₂ = -0.0621101
-    p₃ = -1.90226
-
-    p₀ * ℯ^(p₁*√tot + p₂*tot) + p₃
-end
-
 
 """
     function svdfit(hits::Vector{CalibratedHit})
@@ -215,16 +201,23 @@ function select_hits(hits, hit_pool; Δt=10, Δz=9, new_hits=nothing)
     end
     
     function add_if_in_interval(floor, interval)
+        # println("    searching for hit candidate on floor $floor")
         if haskey(hit_pool, floor)
             floor_hits = hit_pool[floor]
+            # println("       $(length(floor_hits)) hits to check")
             for (iₕ, hit) ∈ enumerate(floor_hits)
+                # println("           -> hit time: $(hit.t)")
                 if hit.t ∈ interval
-                    
+                    # println("           --> in interval!")
                     if  haskey(hits₀, floor) && hit.t > hits₀[floor][1].t
+                        # println("             !! got a hit already which is earlier")
+                        # println("             -- removing consecutive hits")
                         deleteat!(floor_hits, iₕ:length(floor_hits))
                         return
                     end
+                    # println("             ++ adding hit")
                     push!(extended, hit)
+                    # println("             -- removing consecutive hits")
                     deleteat!(floor_hits, iₕ:length(floor_hits))
                     return
                 end
@@ -237,15 +230,19 @@ function select_hits(hits, hit_pool; Δt=10, Δz=9, new_hits=nothing)
     for hit in hit_seeds
         t₀ = hit.t
         floor = hit.floor
+        # println("Checking floor $floor")
         for (floor₋, floor₋₋, floor₊, floor₊₊) in [(floor-1, floor-2, floor+1, floor+2), (floor+1, floor+2, floor-1, floor-2)]
             if haskey(hits₀, floor₋)
                 t₋ = first(hits₀[floor₋]).t
                 if haskey(hits₀, floor₋₋)
+                    # println(" => Got hit on $(floor₋₋) and $(floor₋)")
                     t₋₋ = first(hits₀[floor₋₋]).t
                     t₊ = t₋ + 2(t₋ - t₋₋)
                     t₊₊ = t₋ + 3(t₋ - t₋₋)
                     interval₊ = time_interval(t₀, t₊, 1)
                     interval₊₊ = time_interval(t₀, t₊₊, 2)
+                    # println("    interval+: $interval₊")
+                    # println("    interval++: $interval₊₊")
                     #interval₊ = @interval(minimum([t₀, t₋, t₋₋]) - Δt, maximum([t₀, t₋, t₋₋]) + Δt)
                     #interval₊₊ = @interval(minimum([t₀, t₋, t₋₋]) - 2Δt, maximum([t₀, t₋, t₋₋]) + 2Δt)
                     add_if_in_interval(floor₊, interval₊)
@@ -274,7 +271,7 @@ function select_hits(hits, hit_pool; Δt=10, Δz=9, new_hits=nothing)
     if length(extended) == 0
         return hits
     end
-    extension = unique(h->h.floor, vcat(hits, extended))
+    extension = unique(h->h.floor, sort(vcat(hits, extended), by=h->h.t))
     return select_hits(extension, hit_pool; Δt=Δt, Δz=Δz, new_hits=extended)
 end
 
@@ -284,6 +281,9 @@ struct SingleDUMinimiser <: Function
     times::Vector{Float64}
     pmt_directions::Vector{Direction}
     multiplicities::Vector{Int}
+    max_multiplicity::Float64
+    nphes::Vector{Float64}
+    average_coinc_tots::Vector{Float64}
 end
 
 function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{CalibratedHit})
@@ -302,11 +302,22 @@ function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{C
         push!(z_positions, hit.pos.z)
         push!(times, hit.t)
         push!(multiplicities, hit.multiplicity.count)
+        push!(pmt_directions, hit.dir)
     end
-    for i ∈ 1:n_triggered
-        push!(pmt_directions, triggered_hits[i].dir)
+    # for i ∈ 1:n_triggered
+    #     push!(pmt_directions, triggered_hits[i].dir)
+    # end
+    max_multiplicity = maximum(multiplicities)
+    nphe = Vector{Float32}()
+    average_coinc_tots = Vector{Float32}()
+    for hit in hits
+        coinc_hits = filter(h->h.multiplicity.id == hit.multiplicity.id, hits)
+        average_coinc_tot = mean([h.tot for h in coinc_hits])
+        push!(average_coinc_tots, average_coinc_tot)
+        estimated_nphes = sum([nphes(h.tot) for h in coinc_hits])
+        push!(nphe, estimated_nphes)
     end
-    SingleDUMinimiser(z_positions, times, pmt_directions, multiplicities)
+    SingleDUMinimiser(z_positions, times, pmt_directions, multiplicities, max_multiplicity, nphe, average_coinc_tots)
 end
 
 
@@ -316,7 +327,6 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
     d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
     expected_times = ccalc.(s.z_positions)
 
-    max_multiplicity = maximum(s.multiplicities)
     Q = 0.0
     for i ∈ 1:n
         t = s.times[i]
@@ -324,8 +334,20 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
         m = s.multiplicities[i]
         t_exp = ccalc(z)
         Δt = abs(t - t_exp)
-        Q += Δt^2 * m / max_multiplicity
-        # Q -= 1 / √(Δt^2 + 4^2)
+        zenith_acceptance = 1 - NeRCA.zenith(Direction(0,0,1))/π
+        photon_distance = d_γ(z)
+
+        # Q += Δt^2 * m / s.max_multiplicity
+        # Q += Δt^2 / 10 + (m / s.max_multiplicity) * zenith_acceptance + d_γ(z) / 50
+        # Q -= 1 / (√(Δt^2 + 2^2) + m)
+        # Q += Δt^2 / 10^2 + √(d_γ(z)^2 / 50^2)
+        #
+
+        # pmt_dir = s.pmt_directions[i]
+        #
+        # Δz = z - z_closest
+        
+        Q += Δt^2 + d_γ(z) * s.nphes[i] / 72.0 / 10
     end
 
     Δts = abs.(s.times - expected_times)
@@ -396,6 +418,7 @@ end
     floor_distance::Int = 9
     Δt_extra::Int = 10
     data_type::AbstractString = "mupage"
+    discard_worst_hit::Bool = false
 end
 
 DrWatson.default_prefix(s::SingleDURecoParams) = "SingleDUReco"
@@ -457,37 +480,21 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     Q₀ = qfunc(values...)/length(shits)
 
     d_γ, ccalc = make_cherenkov_calculator(map(value, [d_closest, t_closest, z_closest, dir_z, t₀])...) 
-    # if par.discard_worst_hit && length(shits) > 3
-    #     Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
-    #     idx = argmax(Δts)
-    #     deleteat!(Δts, idx)
-    #     deleteat!(shits, idx)
-    # end
-    # if length(shits) > par.hqhits
-    #     while length(shits) > par.hqhits
-    #         Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
-    #         idx = argmax(Δts)
-    #         deleteat!(Δts, idx)
-    #         deleteat!(shits, idx)
-    #
-    #         qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
-    #         qfunc_sym = gensym()
-    #         values_try = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
-    #         register(model, qfunc_sym, 6, qfunc, autodiff=true)
-    #         set_NL_objective(model, MOI.MIN_SENSE, :($qfunc_sym($(d_closest), $(t_closest), $(z_closest), $(dir_z), $(ϕ), $(t₀))))
-    #         optimize!(model)
-    #
-    #         Q = qfunc(values...)/length(shits)
-    #         # println("New quality parameter: $Q ($Q₀)")
-    #         if Q < Q₀
-    #             # println("Better Q: $Q ($Q₀)")
-    #             # println("New values: $(map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀]))")
-    #             continue
-    #         end
-    #         # println("No improvement")
-    #         break
-    #     end
-    # end
+    if par.discard_worst_hit && length(shits) > 3
+        Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
+        idx = argmax(Δts)
+        deleteat!(Δts, idx)
+        deleteat!(shits, idx)
+
+        qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
+        qfunc_sym = gensym()
+        values_try = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
+        register(model, qfunc_sym, 6, qfunc, autodiff=true)
+        set_NL_objective(model, MOI.MIN_SENSE, :($qfunc_sym($(d_closest), $(t_closest), $(z_closest), $(dir_z), $(ϕ), $(t₀))))
+        optimize!(model)
+
+        Q₀ = qfunc(values...)/length(shits)
+    end
 
     values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
     sdp = SingleDUParams(values...)

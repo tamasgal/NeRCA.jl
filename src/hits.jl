@@ -186,6 +186,9 @@ end
 Returns the estimated number of photoelectrons for a given ToT.
 """
 function nphes(tot)
+    if tot <= 20
+        return 0.0
+    end
     if tot <= 26
         return 1.0
     end
