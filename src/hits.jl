@@ -178,3 +178,34 @@ Return a vector of hits with ToT >= `tot`.
 function totcut(hits::Vector{T}, tot) where {T<:DAQHit}
     return filter(h->h.tot >= tot, hits)
 end
+
+
+"""
+    function nphes(tot)
+
+Returns the estimated number of photoelectrons for a given ToT.
+"""
+function nphes(tot)
+    if tot <= 26
+        return 1.0
+    end
+    if tot < 170
+        return 1.0 + (tot - 26)/(1/0.28)
+    end
+    return 40.0 + (255 - tot)*2.0
+end
+
+
+"""
+    function slew(tot)
+
+Return the time slewing for a ToT.
+"""
+function slew(tot)
+    p₀ = 7.70824
+    p₁ = 0.00879447
+    p₂ = -0.0621101
+    p₃ = -1.90226
+
+    p₀ * ℯ^(p₁*√tot + p₂*tot) + p₃
+end
