@@ -277,6 +277,7 @@ end
 
 
 struct SingleDUMinimiser <: Function
+    hit_positions::Vector{Position}
     z_positions::Vector{Float64}
     times::Vector{Float64}
     pmt_directions::Vector{Direction}
@@ -284,11 +285,16 @@ struct SingleDUMinimiser <: Function
     max_multiplicity::Float64
     nphes::Vector{Float64}
     average_coinc_tots::Vector{Float64}
+    x::Float64
+    y::Float64
 end
 
 function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{CalibratedHit})
     n = length(hits)
     n_triggered = length(triggered_hits)
+    hit_positions = Vector{Position}()
+    x_positions = Vector{Float64}()
+    y_positions = Vector{Float64}()
     z_positions = Vector{Float64}()
     times = Vector{Float64}()
     multiplicities = Vector{Int32}()
@@ -297,8 +303,11 @@ function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{C
     sizehint!(times, n)
     sizehint!(multiplicities, n)
     sizehint!(pmt_directions, n_triggered)
-    for i ∈ 1:n
+    @inbounds for i ∈ 1:n
         hit = hits[i]
+        push!(hit_positions, hit.pos)
+        push!(x_positions, hit.pos.x)
+        push!(y_positions, hit.pos.y)
         push!(z_positions, hit.pos.z)
         push!(times, hit.t)
         push!(multiplicities, hit.multiplicity.count)
@@ -317,18 +326,32 @@ function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{C
         estimated_nphes = sum([nphes(h.tot) for h in coinc_hits])
         push!(nphe, estimated_nphes)
     end
-    SingleDUMinimiser(z_positions, times, pmt_directions, multiplicities, max_multiplicity, nphe, average_coinc_tots)
+    SingleDUMinimiser(hit_positions, z_positions, times, pmt_directions, multiplicities, max_multiplicity, nphe, average_coinc_tots, mean(x_positions), mean(y_positions))
 end
 
 
+"""
+    function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
+
+The quality function to be minimised when performing the single DU fit.
+`d_closest` is the closest distance between the track (starting at `t₀` and
+the DU at time `t_closest` with the z-coordinate `z_closest`. The direction
+vector is `(0, 0, dir_z)` and `ϕ` the azimuth angle.
+
+"""
 function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
     n = length(s.times)
 
     d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
     expected_times = ccalc.(s.z_positions)
+    # _pos = cartesian(ϕ, π/2; r=d_closest)  # position of the track relative to (0,0,0)
+    # track_pos = Position(_pos.x + s.x, _pos.y + s.y, z_closest)
+    #
+    # track_dir = cartesian(ϕ, acos(dir_z))
+    # track = Track(track_dir, track_pos, t₀)
 
     Q = 0.0
-    for i ∈ 1:n
+    @inbounds for i ∈ 1:n
         t = s.times[i]
         z = s.z_positions[i]
         m = s.multiplicities[i]
@@ -337,24 +360,25 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
         zenith_acceptance = 1 - NeRCA.zenith(Direction(0,0,1))/π
         photon_distance = d_γ(z)
 
-        # Q += Δt^2 * m / s.max_multiplicity
-        # Q += Δt^2 / 10 + (m / s.max_multiplicity) * zenith_acceptance + d_γ(z) / 50
-        # Q -= 1 / (√(Δt^2 + 2^2) + m)
-        # Q += Δt^2 / 10^2 + √(d_γ(z)^2 / 50^2)
-        #
+        # pos_cherenkov = cherenkov_origin(s.hit_positions[i], track)
+        # photon_dir = s.hit_positions[i] - pos_cherenkov
+        # ξ = angle_between(s.pmt_directions[i], -photon_dir)
 
-        # pmt_dir = s.pmt_directions[i]
-        #
-        # Δz = z - z_closest
+        pmtᵩ = azimuth(-s.pmt_directions[i])
+        # Δϕ = abs(pmtᵩ - ϕ) #% 2π
+        # Δϕ = abs(pmtᵩ - ϕ)
+        ξ = (ϕ - pmtᵩ - deg2rad(42))^2
+        # Δz = z - z_closest 
+        # if dir_z < 0  # downgoing
+        #     
+        # else
+        # end
+
         
-        Q += Δt^2 + d_γ(z) * s.nphes[i] / 72.0 / 10
+        Q += Δt^2 + photon_distance * s.nphes[i] / 72.0 / 10 * zenith_acceptance + ξ * 10 #+ ξ * 10
     end
 
     Δts = abs.(s.times - expected_times)
-    # Δϕs = filter(!isnan, azimuth.(s.pmt_directions)) .- ϕ
-
-    # return sum(Δts .^2) + sum(Δϕs.^2)/length(Δϕs)
-    # return sum(Δts .^2)
     return Q
 end
 
@@ -431,7 +455,10 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     hit_pool = create_hit_pool(du_hits)
 
-    hits₀ = unique(h->h.floor, triggered(du_hits))
+    hits₀ = unique(h->h.floor, nfoldhits(du_hits, 10, 2))
+    if length(hits₀) < 3
+        hits₀ = unique(h->h.floor, triggered(du_hits))
+    end
     shits = select_hits(hits₀, hit_pool; Δt = par.Δt_extra, Δz = par.floor_distance)
 
     qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
@@ -469,8 +496,8 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     @variable(model, 1 <= d_closest <= 100, start=d_closest_start)
     @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=t_closest_start)
     @variable(model, min_z <= z_closest <= max_z, start=z_closest_start)
-    @variable(model, -1 <= dir_z <= 1, start=dir_z_start)
-    @variable(model, 0 <= ϕ <= 2π, start=ϕ_start)
+    @variable(model, -0.999 <= dir_z <= .999, start=dir_z_start)
+    @variable(model, -2π <= ϕ <= 4π, start=ϕ_start)
     @variable(model, t₀, start=t₀_start)
 
     @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, ϕ, t₀))
