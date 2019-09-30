@@ -25,6 +25,15 @@ Calculate the zenith angle for a given direction.
 zenith(d) = acos(-d[3]/norm(d))
 
 """
+    function cartesian(ϕ, θ; r=1.0)
+
+Calculate the cartesian coordinates for given `ϕ`, `θ` and radius `r`.
+"""
+function cartesian(ϕ, θ; r=1.0)
+    return Position(r*sin(θ) * cos(ϕ), r*sin(θ) * sin(ϕ), cos(θ))
+end
+
+"""
     function pld3(p1, p2, d2)
 
 Calculate the distance between a point (p1) and a line (given by p2 and d2).
