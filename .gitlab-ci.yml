@@ -1,6 +1,5 @@
 .test_template: &test_definition
   script:
-    - apt-get update -qq && apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
