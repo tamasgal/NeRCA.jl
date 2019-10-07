@@ -26,11 +26,10 @@ test:julia-1.2:
 
 
 pages:
-  image: docker.km3net.de/base/julia:1.1
+  image: docker.km3net.de/base/julia:1.2
   stage: deploy
   script:
     - apt-get update -qq && apt-get install -y git # needed by Documenter
-    - apt-get install -y hdf5-tools libaec0 libgfortran3 libhdf5-100 libquadmath0 libsz2  # for HDF5.jl
     - julia --project=docs -e '
           using Pkg;
           Pkg.develop(PackageSpec(path=pwd()));
