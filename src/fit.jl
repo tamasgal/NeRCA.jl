@@ -1,4 +1,4 @@
-struct SingleDUParams
+mutable struct SingleDUParams
     d::Float64
     t::Float64
     z::Float64
@@ -433,6 +433,27 @@ end
 DrWatson.default_prefix(s::SingleDURecoParams) = "SingleDUReco"
 
 
+function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
+    brightest_floor = NeRCA.most_frequent(h -> h.floor, du_hits)
+
+    hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
+    thits_on_brightest_floor = filter(h -> h.triggered, hits_on_brightest_floor)
+
+    if length(thits_on_brightest_floor) == 0
+        z_closest = hits_on_brightest_floor[1].pos.z
+        hit_time = mean([h.t for h in hits_on_brightest_floor])
+    else
+        closest_hit = thits_on_brightest_floor[1]
+        z_closest = closest_hit.pos.z
+        hit_time = closest_hit.t
+    end
+
+    # ϕ = azimuth(sum([-h.dir for h in du_hits]) ./ length(du_hits))
+
+    SingleDUParams(10.0, hit_time, z_closest, -0.9, π, hit_time)
+end
+
+
 function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoParams; print_level=0)
     sort!(du_hits, by = h -> h.t)
     sort!(du_hits, by=h->h.dom_id)
@@ -452,47 +473,26 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
-    brightest_floor = NeRCA.most_frequent(h -> h.floor, du_hits)
+    max_z = maximum([h.pos.z for h in shits]) + 20
+    min_z = minimum([h.pos.z for h in shits]) - 20
 
-    hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
-    thits_on_brightest_floor = filter(h -> h.triggered, hits_on_brightest_floor)
+    sdp₀ = startparams(SingleDUParams, du_hits)
 
-    if length(thits_on_brightest_floor) == 0
-        z_closest_start = hits_on_brightest_floor[1].pos.z
-        hit_time = mean([h.t for h in hits_on_brightest_floor])
-    else
-        closest_hit = thits_on_brightest_floor[1]
-        z_closest_start = closest_hit.pos.z
-        hit_time = closest_hit.t
-    end
+    @variable(model, 1 <= d_closest <= 100, start=sdp₀.d)
+    @variable(model, sdp₀.t - 1000 <= t_closest <= sdp₀.t + 1000, start=sdp₀.t)
+    @variable(model, min_z <= z_closest <= max_z, start=sdp₀.z)
+    @variable(model, -0.999 <= dir_z <= .999, start=sdp₀.dz)
+    @variable(model, -4π <= ϕ₀ <= 4π, start=sdp₀.ϕ)
+    @variable(model, t₀, start=sdp₀.t₀)
 
-    d_closest_start = 10.0
-    t_closest_start = hit_time
-    dir_z_start = -0.9
-    ϕ_start = π
-    t₀_start = hit_time
-
-    max_z = maximum([h.pos.z for h in shits]) - 2*13
-    min_z = minimum([h.pos.z for h in shits]) + 2*13
-    if min_z > max_z
-        min_z = abs(max_z - min_z) / 2
-    end
-
-    @variable(model, 1 <= d_closest <= 100, start=d_closest_start)
-    @variable(model, hit_time - 1000 <= t_closest <= hit_time + 1000, start=t_closest_start)
-    @variable(model, min_z <= z_closest <= max_z, start=z_closest_start)
-    @variable(model, -0.999 <= dir_z <= .999, start=dir_z_start)
-    @variable(model, -2π <= ϕ <= 4π, start=ϕ_start)
-    @variable(model, t₀, start=t₀_start)
-
-    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, ϕ, t₀))
+    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀))
 
     optimize!(model);
-    values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
+    values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀])
     Q₀ = qfunc(values...)/length(shits)
 
     d_γ, ccalc = make_cherenkov_calculator(map(value, [d_closest, t_closest, z_closest, dir_z, t₀])...) 
-    if par.discard_worst_hit && length(shits) > 3
+    if par.discard_worst_hit && length(shits) > 5
         Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
         idx = argmax(Δts)
         deleteat!(Δts, idx)
@@ -508,9 +508,45 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
         Q₀ = qfunc(values...)/length(shits)
     end
 
-    values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
-    sdp = SingleDUParams(values...)
-    sdp_initial = SingleDUParams(d_closest_start, t_closest_start, z_closest_start, dir_z_start, ϕ_start, t₀_start)
+    # values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
 
-    return ROyFit(sdp, sdp_initial, qfunc(values...)/length(shits), shits, model)
+    values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(ϕ₀), value(t₀))
+    sdp = SingleDUParams(values...)
+    ϕ = estimate_azimuth(sdp, shits, create_hit_pool(du_hits))
+    sdp.ϕ = ϕ
+
+    return ROyFit(sdp, sdp₀, qfunc(values...)/length(shits), shits, model)
+end
+
+
+function estimate_azimuth(
+    sdp::SingleDUParams,
+    direct_hits::Vector{CalibratedHit},
+    hit_pool::Dict{Int, Vector{CalibratedHit}};
+    Δt=20, n=N_SEAWATER
+)
+    ϕ = azimuth(sum([-h.dir for h in direct_hits]) ./ length(direct_hits))
+
+    dᵧ, ccalc = make_cherenkov_calculator(sdp)
+
+    late_hits = Vector{CalibratedHit}()
+    for (floor, hits) in hit_pool
+        t₀ = ccalc(first(hits).pos.z)
+        for hit in hits
+            if hit.t - t₀ > Δt
+                push!(late_hits, hit)
+            end
+        end
+    end
+
+    if length(late_hits) == 0
+        return ϕ
+    end
+
+    ϕₗ = azimuth(sum([-h.dir for h in late_hits]) ./ length(late_hits))
+    if ϕ - ϕₗ < 0
+        return ϕ - cos(1/n)
+    else
+        return ϕ + cos(1/n)
+    end
 end
