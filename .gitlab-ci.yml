@@ -5,10 +5,11 @@
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
       using Coverage; cl, tl = get_summary(process_folder());
       println("(", cl/tl*100, "%) covered")'
+    - ls -al .julia/packages
 
 cache:
   paths:
-    - .julia/packages
+    - ~/.julia/packages
   key: "$CI_COMMIT_REF_SLUG"
 
 test:julia-1.0:
