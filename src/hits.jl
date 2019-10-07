@@ -57,10 +57,13 @@ function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
     for i in 2:n
         hit = hits[i]
         if hit.dom_id != dom_id
+            mtp[idx0:i-1] .= _mtp
+            cid[idx0:i-1] .= _cid
             dom_id = hit.dom_id
             t0 = hit.t
             _mtp = 1
             _cid += 1
+            idx0 = i
             continue
         end
         Δt = hit.t - t0
@@ -73,12 +76,9 @@ function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
             t0 = hit.t
         end
         _mtp += 1
-        if i == n - 1
-            mtp[idx0:end] .= _mtp
-            cid[idx0:end] .= _cid
-            break
-        end
     end
+    mtp[idx0:end] .= _mtp
+    cid[idx0:end] .= _cid
     mtp, cid
 end
 
