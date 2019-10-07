@@ -427,7 +427,6 @@ end
     min_hits::Int = 3
     Δt::Float64 = 10
     data_type::AbstractString = "mupage"
-    discard_worst_hit::Bool = false
 end
 
 DrWatson.default_prefix(s::SingleDURecoParams) = "SingleDUReco"
@@ -489,28 +488,6 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     optimize!(model);
     values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀])
-    Q₀ = qfunc(values...)/length(shits)
-
-    d_γ, ccalc = make_cherenkov_calculator(map(value, [d_closest, t_closest, z_closest, dir_z, t₀])...) 
-    if par.discard_worst_hit && length(shits) > 5
-        Δts = [abs(ccalc(h.pos.z) - h.t) for h in shits]
-        idx = argmax(Δts)
-        deleteat!(Δts, idx)
-        deleteat!(shits, idx)
-
-        qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
-        qfunc_sym = gensym()
-        values_try = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
-        register(model, qfunc_sym, 6, qfunc, autodiff=true)
-        set_NL_objective(model, MOI.MIN_SENSE, :($qfunc_sym($(d_closest), $(t_closest), $(z_closest), $(dir_z), $(ϕ), $(t₀))))
-        optimize!(model)
-
-        Q₀ = qfunc(values...)/length(shits)
-    end
-
-    # values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ, t₀])
-
-    values = (value(d_closest), value(t_closest), value(z_closest), value(dir_z), value(ϕ₀), value(t₀))
     sdp = SingleDUParams(values...)
     ϕ = estimate_azimuth(sdp, shits, create_hit_pool(du_hits))
     sdp.ϕ = ϕ
