@@ -3,17 +3,17 @@ variables:
 
 .test_template: &test_definition
   script:
-    - mkdir -p .julia/packages && ls -al .julia/packages
+    - mkdir -p "$CI_PROJET_DIR/.julia" && ls -al "$CI_PROJET_DIR/.julia"
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
       using Coverage; cl, tl = get_summary(process_folder());
       println("(", cl/tl*100, "%) covered")'
-    - ls -al .julia/packages
+    - ls -al "$CI_PROJET_DIR/.julia"
 
 cache:
   paths:
-    - .julia/packages
+    - "$CI_PROJET_DIR/.julia"
   key: "$CI_COMMIT_REF_SLUG"
 
 test:julia-1.0:
