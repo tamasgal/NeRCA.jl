@@ -1,5 +1,9 @@
+variables:
+    JULIA_DEPOT_PATH: "$CI_PROJET_DIR/.julia"
+
 .test_template: &test_definition
   script:
+    - ls -al .julia/packages
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
@@ -9,7 +13,7 @@
 
 cache:
   paths:
-    - ~/.julia/packages
+    - .julia/packages
   key: "$CI_COMMIT_REF_SLUG"
 
 test:julia-1.0:
