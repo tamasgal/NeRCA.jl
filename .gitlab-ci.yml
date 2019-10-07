@@ -3,7 +3,7 @@ variables:
 
 .test_template: &test_definition
   script:
-    - ls -al .julia/packages
+    - mkdir -p .julia/packages && ls -al .julia/packages
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
