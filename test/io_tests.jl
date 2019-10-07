@@ -2,7 +2,7 @@ using NeRCA
 using Test
 
 
-const DETX = joinpath("test", "data", "detx_v3.detx")
+const DETX = joinpath(@__DIR__, "data", "detx_v3.detx")
 
 
 @testset "calibration" begin
