@@ -12,12 +12,16 @@ cache:
     - .julia/packages
   key: "$CI_COMMIT_REF_SLUG"
 
-test:1.0:
+test:julia-1.0:
   image: docker.km3net.de/base/julia:1.0
   <<: *test_definition
 
-test:1.1:
+test:julia-1.1:
   image: docker.km3net.de/base/julia:1.1
+  <<: *test_definition
+
+test:julia-1.2:
+  image: docker.km3net.de/base/julia:1.2
   <<: *test_definition
 
 
