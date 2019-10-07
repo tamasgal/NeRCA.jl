@@ -184,7 +184,6 @@ function read_calibration(filename::AbstractString)
     dus = Dict{Int32,UInt8}()
     floors = Dict{Int32,UInt8}()
     omkeys = Dict{Int32,OMKey}()
-    n_dus = length(keys(dus))
 
     max_z = 0.0
     for dom ∈ 1:n_doms
@@ -208,6 +207,7 @@ function read_calibration(filename::AbstractString)
         end
         idx += n_pmts + 1
     end
+    n_dus = length(unique(values(dus)))
     Calibration(det_id, pos, dir, t0s, dus, floors, omkeys, max_z, n_dus)
 end
 
