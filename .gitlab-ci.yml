@@ -1,19 +1,19 @@
 variables:
-    JULIA_DEPOT_PATH: "$CI_PROJET_DIR/.julia"
+    JULIA_DEPOT_PATH: "$CI_PROJECT_DIR/.julia"
 
 .test_template: &test_definition
   script:
-    - mkdir -p "$CI_PROJET_DIR/.julia" && ls -al "$CI_PROJET_DIR/.julia"
+    - mkdir -p "$CI_PROJECT_DIR/.julia" && ls -al "$CI_PROJECT_DIR/.julia"
     - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
       using Coverage; cl, tl = get_summary(process_folder());
       println("(", cl/tl*100, "%) covered")'
-    - ls -al "$CI_PROJET_DIR/.julia"
+    - ls -al "$CI_PROJECT_DIR/.julia"
 
 cache:
   paths:
-    - "$CI_PROJET_DIR/.julia"
+    - "$CI_PROJECT_DIR/.julia"
   key: "$CI_COMMIT_REF_SLUG"
 
 test:julia-1.0:
