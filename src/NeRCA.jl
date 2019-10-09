@@ -33,6 +33,7 @@ export
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
     ztplot,
     savefigs,
+    most_frequent,
     @ip_str
 
 
