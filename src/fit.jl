@@ -346,6 +346,7 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
     d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
 
     Q = 0.0
+    # println("===============")
     @inbounds for i ∈ 1:n
         t = s.times[i] - slew(s.tots[i])
         z = s.z_positions[i]
@@ -355,11 +356,17 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
         zenith_acceptance = 1 - NeRCA.zenith(Direction(0,0,1))/π
         photon_distance = d_γ(z)
 
+        timing = Δt^2
+
+        distance_term = (s.nphes[i] - 72.0 / photon_distance * zenith_acceptance)^2
+
         pmtᵩ = azimuth(-s.pmt_directions[i])
         ξ = (ϕ - pmtᵩ)^2
-        
-        Q += Δt^2 + photon_distance * s.nphes[i] / 72.0 * zenith_acceptance + ξ
+
+        Q += timing + distance_term + ξ
+        # println((timing, distance_term, ξ))
     end
+    # println("---------------")
 
     Q
 end
@@ -472,8 +479,8 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
-    max_z = maximum([h.pos.z for h in shits]) + 20
-    min_z = minimum([h.pos.z for h in shits]) - 20
+    max_z = maximum([h.pos.z for h in shits]) + par.floor_distance
+    min_z = minimum([h.pos.z for h in shits]) - par.floor_distance
 
     sdp₀ = startparams(SingleDUParams, du_hits)
 
@@ -526,4 +533,8 @@ function estimate_azimuth(
     else
         return ϕ + cos(1/n)
     end
+end
+
+
+function royfit_rbr(filename::AbstractString, detx::AbstractString, sparams::SingleDURecoParams)
 end
