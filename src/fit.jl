@@ -433,7 +433,6 @@ end
     multiplicity::Int = 3
     min_hits::Int = 3
     Δt::Float64 = 10
-    data_type::AbstractString = "mupage"
 end
 
 DrWatson.default_prefix(s::SingleDURecoParams) = "SingleDUReco"
