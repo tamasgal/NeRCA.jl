@@ -218,13 +218,14 @@ end
 
 # Signal
 abstract type AbstractHit end
-abstract type DAQHit<:AbstractHit end
+abstract type AbstractDAQHit<:AbstractHit end
+abstract type AbstractMCHit<:AbstractHit end
 
 
 Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 
-struct Hit <: DAQHit
+struct Hit <: AbstractDAQHit
     channel_id::ChannelID
     dom_id::DOMID
     t::HitTime
@@ -232,7 +233,7 @@ struct Hit <: DAQHit
     triggered::Bool
 end
 
-Base.show(io::IO, h::DAQHit) = begin
+Base.show(io::IO, h::AbstractDAQHit) = begin
     print(io, "$(typeof(h)): DOM ID $(h.dom_id), channel ID, $(h.channel_id), t=$(h.t), tot=$(h.tot)")
 end
 
@@ -248,7 +249,7 @@ mutable struct Multiplicity
     id::Int64
 end
 
-struct CalibratedHit <: DAQHit
+struct CalibratedHit <: AbstractDAQHit
     channel_id::ChannelID
     dom_id::UInt32
     du::DU
@@ -263,7 +264,7 @@ struct CalibratedHit <: DAQHit
 end
 
 
-struct TimesliceHit <: DAQHit
+struct TimesliceHit <: AbstractDAQHit
     channel_id::Int8
     dom_id::UInt32
     t::Int32
@@ -276,7 +277,7 @@ end
 
 const TriggerMask = Int64
 
-struct DAQTriggeredHit <: DAQHit
+struct DAQTriggeredHit <: AbstractDAQHit
     dom_id::Int32
     channel_id::UInt8
     t::Int32

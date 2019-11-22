@@ -50,11 +50,11 @@ include("plot.jl")
 
 
 """
-    function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
+    function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:AbstractDAQHit}
 
 Apply geometry and time calibration to given hits.
 """
-function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:DAQHit}
+function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:AbstractDAQHit}
     calibrated_hits = Vector{CalibratedHit}()
     for hit in hits
         dom_id = hit.dom_id
