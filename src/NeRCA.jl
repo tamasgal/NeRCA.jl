@@ -70,7 +70,7 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:Abstract
         if T === Hit
             triggered = hit.triggered
         end
-        if T === DAQTriggeredHit
+        if T === TriggeredHit
             triggered = hit.trigger_mask > 0
         end
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
@@ -110,7 +110,7 @@ function calibrate(mc_hits::Vector{T},
         if T === Hit
             triggered = hit.triggered
         end
-        if T === DAQTriggeredHit
+        if T === TriggeredHit
             triggered = hit.trigger_mask > 0
         end
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,

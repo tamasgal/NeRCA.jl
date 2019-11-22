@@ -277,7 +277,7 @@ end
 
 const TriggerMask = Int64
 
-struct DAQTriggeredHit <: AbstractDAQHit
+struct TriggeredHit <: AbstractDAQHit
     dom_id::Int32
     channel_id::UInt8
     t::Int32
@@ -295,7 +295,7 @@ struct DAQEvent
     trigger_mask::Int64
     overlays::Int32
     n_triggered_hits::Int32
-    triggered_hits::Vector{DAQTriggeredHit}
+    triggered_hits::Vector{TriggeredHit}
     n_hits::Int32
     hits::Vector{Hit}
 end
@@ -340,7 +340,7 @@ function read_io(io::IOBuffer, t::T) where T
     overlays = read(io, Int32)
 
     n_triggered_hits = read(io, Int32)
-    triggered_hits = Vector{DAQTriggeredHit}()
+    triggered_hits = Vector{TriggeredHit}()
     sizehint!(triggered_hits, n_triggered_hits)
     triggered_map = Dict{Tuple{Int32, UInt8, Int32, UInt8}, Int64}()
     @inbounds for i ∈ 1:n_triggered_hits
@@ -350,7 +350,7 @@ function read_io(io::IOBuffer, t::T) where T
         tot = read(io, UInt8)
         trigger_mask = read(io, Int64)
         triggered_map[(dom_id, channel_id, time, tot)] = trigger_mask
-        push!(triggered_hits, DAQTriggeredHit(dom_id, channel_id, time, tot, trigger_mask))
+        push!(triggered_hits, TriggeredHit(dom_id, channel_id, time, tot, trigger_mask))
     end
 
     n_hits = read(io, Int32)
