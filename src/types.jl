@@ -226,7 +226,7 @@ Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 
 #todo: This is a snapshot hit
-struct Hit <: AbstractDAQHit
+struct SnapshotHit <: AbstractDAQHit
     channel_id::ChannelID
     dom_id::DOMID
     t::HitTime
@@ -238,7 +238,7 @@ Base.show(io::IO, h::AbstractDAQHit) = begin
     print(io, "$(typeof(h)): DOM ID $(h.dom_id), channel ID, $(h.channel_id), t=$(h.t), tot=$(h.tot)")
 end
 
-struct McHit <: AbstractHit
+struct MCHit <: AbstractHit
     a::Float32
     origin::UInt32
     pmt_id::UInt32

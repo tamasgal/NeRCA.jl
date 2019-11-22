@@ -21,7 +21,7 @@ import Base: +, -, *
 export
     Position, Direction,
     ChannelID, DOMID, ToT, Floor, DU, HitTime,
-    MCEventInfo, MCTrack, Hit, CalibratedHit, McHit, TimesliceHit,
+    MCEventInfo, MCTrack, SnapshotHit, CalibratedHit, MCHit, TimesliceHit,
     RecoTrack, NoRecoTrack,
     DAQEvent, read_io,
     is_mxshower, is_3dmuon, is_3dshower,
@@ -67,7 +67,7 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:Abstract
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
         triggered = false
-        if T === Hit
+        if T === SnapshotHit
             triggered = hit.triggered
         end
         if T === TriggeredHit
@@ -82,13 +82,13 @@ end
 
 
 """
-    function calibrate(mc_hits::Vector{T}, calibration::Calibration) where {T<:McHit}
+    function calibrate(mc_hits::Vector{T}, calibration::Calibration) where {T<:MCHit}
 
 Apply geometry and time calibration to given mc_hits.
 """
 function calibrate(mc_hits::Vector{T},
                    calibration::Calibration,
-                   event_info::Union{Nothing,MCEventInfo,DAQEventInfo} = nothing) where {T<:McHit}
+                   event_info::Union{Nothing,MCEventInfo,DAQEventInfo} = nothing) where {T<:MCHit}
     calibrated_hits = Vector{CalibratedHit}()
     if event_info != nothing
         mctime = make_mc_time_converter(event_info)
@@ -107,7 +107,7 @@ function calibrate(mc_hits::Vector{T},
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
         triggered = false
-        if T === Hit
+        if T === SnapshotHit
             triggered = hit.triggered
         end
         if T === TriggeredHit

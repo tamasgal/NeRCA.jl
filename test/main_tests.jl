@@ -2,14 +2,14 @@ using NeRCA
 using Test
 
 
-hits = [Hit(1, 8, 100, 20, false),
-        Hit(1, 9, 101, 21, true),
-        Hit(2, 8, 112, 22, true),
-        Hit(2, 9, 114, 23, false),
-        Hit(1, 8, 134, 24, true),
-        Hit(2, 9, 156, 25, false),
-        Hit(2, 8, 133, 26, true),
-        Hit(0, 8, 145, 26, false)]
+hits = [SnapshotHit(1, 8, 100, 20, false),
+        SnapshotHit(1, 9, 101, 21, true),
+        SnapshotHit(2, 8, 112, 22, true),
+        SnapshotHit(2, 9, 114, 23, false),
+        SnapshotHit(1, 8, 134, 24, true),
+        SnapshotHit(2, 9, 156, 25, false),
+        SnapshotHit(2, 8, 133, 26, true),
+        SnapshotHit(0, 8, 145, 26, false)]
 
 
 calib = Calibration(

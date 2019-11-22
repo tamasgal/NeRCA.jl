@@ -39,14 +39,14 @@ end
 
 
 function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
-    hits = Vector{Hit}()
+    hits = Vector{SnapshotHit}()
     channel_id = fobj["hits/channel_id"][idx+1:idx+n_hits]
     dom_id = fobj["hits/dom_id"][idx+1:idx+n_hits]
     t = fobj["hits/time"][idx+1:idx+n_hits]
     tot = fobj["hits/tot"][idx+1:idx+n_hits]
     triggered = fobj["hits/triggered"][idx+1:idx+n_hits]
     for i ∈ 1:n_hits
-        hit =  Hit(channel_id[i], dom_id[i], t[i], tot[i], triggered[i])
+        hit =  SnapshotHit(channel_id[i], dom_id[i], t[i], tot[i], triggered[i])
         push!(hits, hit)
     end
     return hits
@@ -56,7 +56,7 @@ function read_hits(fobj::HDF5.HDF5File, group_id::Int)
     hit_indices = read_indices(fobj, "/hits")
     idx = hit_indices[group_id+1][1]
     n_hits = hit_indices[group_id+1][2]
-    hits = read_hits(fobj, idx, n_hits)::Vector{Hit}
+    hits = read_hits(fobj, idx, n_hits)::Vector{SnapshotHit}
     hits
 end
 
@@ -74,11 +74,11 @@ function read_hits(filename::AbstractString,
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/hits")
 
-    hits_collection = Dict{Int, Vector{Hit}}()
+    hits_collection = Dict{Int, Vector{SnapshotHit}}()
     for group_id ∈ group_ids
         idx = hit_indices[group_id+1][1]
         n_hits = hit_indices[group_id+1][2]
-        hits = read_hits(f, idx, n_hits)::Vector{Hit}
+        hits = read_hits(f, idx, n_hits)::Vector{SnapshotHit}
         hits_collection[group_id] = hits
     end
     close(f)
@@ -89,18 +89,18 @@ end
 function read_hits(f::DAQEventFile, group_id)
     idx = f._hit_indices[group_id+1][1]
     n_hits = f._hit_indices[group_id+1][2]
-    read_hits(f._fobj, idx, n_hits)::Vector{Hit}
+    read_hits(f._fobj, idx, n_hits)::Vector{SnapshotHit}
 end
 
 
 function read_mchits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
-    hits = Vector{McHit}()
+    hits = Vector{MCHit}()
     a = fobj["mc_hits/a"][idx+1:idx+n_hits]
     origin = fobj["mc_hits/origin"][idx+1:idx+n_hits]
     pmt_id = fobj["mc_hits/pmt_id"][idx+1:idx+n_hits]
     t = fobj["mc_hits/time"][idx+1:idx+n_hits]
     for i ∈ 1:n_hits
-        hit =  McHit(a[i], origin[i], pmt_id[i], t[i])
+        hit =  MCHit(a[i], origin[i], pmt_id[i], t[i])
         push!(hits, hit)
     end
     return hits
@@ -112,7 +112,7 @@ function read_mchits(filename::AbstractString, group_id::Int)
     hit_indices = read_indices(f, "/mc_hits")
     idx = hit_indices[group_id+1][1]
     n_hits = hit_indices[group_id+1][2]
-    hits = read_mchits(f, idx, n_hits)::Vector{McHit}
+    hits = read_mchits(f, idx, n_hits)::Vector{MCHit}
     close(f)
     return hits
 end
@@ -123,11 +123,11 @@ function read_mchits(filename::AbstractString,
     f = h5open(filename, "r")
     hit_indices = read_indices(f, "/mc_hits")
 
-    hits_collection = Dict{Int, Vector{McHit}}()
+    hits_collection = Dict{Int, Vector{MCHit}}()
     for group_id ∈ group_ids
         idx = hit_indices[group_id+1][1]
         n_hits = hit_indices[group_id+1][2]
-        hits = read_hits(f, idx, n_hits)::Vector{McHit}
+        hits = read_hits(f, idx, n_hits)::Vector{MCHit}
         hits_collection[group_id] = hits
     end
     close(f)
