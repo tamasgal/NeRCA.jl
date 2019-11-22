@@ -1,6 +1,6 @@
-# Working with Hits
+# Hits
 
-The hit type hierarchy is currently redesigned!
+The hit type hierarchy is currently being redesigned!
 
 `NeRCA.jl` has three main types of hits: `AbstractDAQHit`, `AbstractMCHit` and
 `CalibratedHit`.
