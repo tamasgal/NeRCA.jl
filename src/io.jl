@@ -39,14 +39,14 @@ end
 
 
 function read_hits(fobj::HDF5.HDF5File, idx::Int, n_hits::Int)
-    hits = Vector{SnapshotHit}()
+    hits = Vector{Hit}()
     channel_id = fobj["hits/channel_id"][idx+1:idx+n_hits]
     dom_id = fobj["hits/dom_id"][idx+1:idx+n_hits]
     t = fobj["hits/time"][idx+1:idx+n_hits]
     tot = fobj["hits/tot"][idx+1:idx+n_hits]
     triggered = fobj["hits/triggered"][idx+1:idx+n_hits]
     for i ∈ 1:n_hits
-        hit =  SnapshotHit(channel_id[i], dom_id[i], t[i], tot[i], triggered[i])
+        hit =  Hit(channel_id[i], dom_id[i], t[i], tot[i], triggered[i])
         push!(hits, hit)
     end
     return hits
@@ -56,7 +56,7 @@ function read_hits(fobj::HDF5.HDF5File, group_id::Int)
     hit_indices = read_indices(fobj, "/hits")
     idx = hit_indices[group_id+1][1]
     n_hits = hit_indices[group_id+1][2]
-    hits = read_hits(fobj, idx, n_hits)::Vector{SnapshotHit}
+    hits = read_hits(fobj, idx, n_hits)::Vector{Hit}
     hits
 end
 

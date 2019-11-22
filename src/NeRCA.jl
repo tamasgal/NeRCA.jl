@@ -20,9 +20,9 @@ import Base: +, -, *
 
 export
     Position, Direction,
-    ChannelID, DOMID, ToT, Floor, DU, HitTime,
-    MCEventInfo, MCTrack, SnapshotHit, CalibratedHit, MCHit, TimesliceHit,
-    RecoTrack, NoRecoTrack,
+    MCEventInfo, MCTrack, RecoTrack, NoRecoTrack,
+    AbstractDAQHit, AbstractMCHit,
+    Hit, SnapshotHit, CalibratedHit, MCHit, TimesliceHit,
     DAQEvent, read_io,
     is_mxshower, is_3dmuon, is_3dshower,
     read_indices, read_hits, read_tracks, read_mctracks,
@@ -66,15 +66,12 @@ function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:Abstract
         t = hit.t + t0
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
-        triggered = false
-        if T === SnapshotHit
-            triggered = hit.triggered
-        end
+        trigger_mask = 0
         if T === TriggeredHit
-            triggered = hit.trigger_mask > 0
+            trigger_mask = hit.trigger_mask
         end
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
-                              pos, dir, t0, triggered, Multiplicity(0,0))
+                              pos, dir, t0, trigger_mask, Multiplicity(0,0))
         push!(calibrated_hits, c_hit)
     end
     calibrated_hits

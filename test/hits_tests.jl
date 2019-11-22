@@ -2,18 +2,18 @@ using NeRCA
 using Test
 
 
-hits = [SnapshotHit(1, 8, 100, 20, false),
-        SnapshotHit(2, 9, 101, 21, true),
-        SnapshotHit(3, 8, 112, 22, true),
-        SnapshotHit(4, 8, 114, 23, false),
-        SnapshotHit(5, 8, 134, 24, true),
-        SnapshotHit(6, 8, 156, 25, false),
-        SnapshotHit(7, 8, 133, 26, true),
-        SnapshotHit(8, 8, 145, 26, false),
-        SnapshotHit(9, 10, 900, 26, false),
-        SnapshotHit(1, 11, 1000, 26, false),
-        SnapshotHit(1, 11, 1001, 26, false),
-        SnapshotHit(1, 11, 1002, 26, false)]
+hits = [Hit(1, 8, 100, 20, false),
+        Hit(2, 9, 101, 21, true),
+        Hit(3, 8, 112, 22, true),
+        Hit(4, 8, 114, 23, false),
+        Hit(5, 8, 134, 24, true),
+        Hit(6, 8, 156, 25, false),
+        Hit(7, 8, 133, 26, true),
+        Hit(8, 8, 145, 26, false),
+        Hit(9, 10, 900, 26, false),
+        Hit(1, 11, 1000, 26, false),
+        Hit(1, 11, 1001, 26, false),
+        Hit(1, 11, 1002, 26, false)]
 
 
 # triggered()

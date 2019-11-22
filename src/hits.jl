@@ -3,7 +3,7 @@
 
 Return a `Vector` of triggered hits.
 """
-triggered(hits::Vector{T}) where {T<:AbstractDAQHit} = filter(h->h.trigger_mask, hits)
+triggered(hits::Vector{T}) where {T<:Union{Hit, CalibratedHit}} = filter(h->h.triggered, hits)
 
 
 """

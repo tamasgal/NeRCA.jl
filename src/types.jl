@@ -225,13 +225,20 @@ abstract type AbstractMCHit<:AbstractHit end
 Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 
-#todo: This is a snapshot hit
-struct SnapshotHit <: AbstractDAQHit
+struct Hit <: AbstractDAQHit
     channel_id::ChannelID
     dom_id::DOMID
     t::HitTime
     tot::ToT
     triggered::Bool
+end
+
+
+struct SnapshotHit <: AbstractDAQHit
+    channel_id::ChannelID
+    dom_id::DOMID
+    t::HitTime
+    tot::ToT
 end
 
 Base.show(io::IO, h::AbstractDAQHit) = begin
@@ -260,7 +267,7 @@ struct CalibratedHit <: AbstractDAQHit
     pos::Position
     dir::Direction
     t0::HitTime
-    triggered::Bool
+    triggered::Int32
     multiplicity::Multiplicity
 end
 
