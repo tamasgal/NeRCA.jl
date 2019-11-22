@@ -225,6 +225,7 @@ abstract type AbstractMCHit<:AbstractHit end
 Base.isless(lhs::AbstractHit, rhs::AbstractHit) = lhs.t < rhs.t
 
 
+#todo: This is a snapshot hit
 struct Hit <: AbstractDAQHit
     channel_id::ChannelID
     dom_id::DOMID
