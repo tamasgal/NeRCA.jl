@@ -29,7 +29,6 @@ export
     read_calibration, read_event_info,
     Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,
-    svdfit, matrix, rows,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
     ztplot,
     savefigs,
@@ -118,38 +117,8 @@ function calibrate(mc_hits::Vector{T},
 end
 
 
-# Utility
-rows(x) = (x[i, :] for i in indices(x,1))
-
-
 # Math
 Base.angle(d1::Direction, d2::Direction) = acos(dot(d1/norm(d1), d2/norm(d2)))
 Base.angle(a::T, b::T) where {T<:Union{CalibratedHit, PMT, MCTrack}} = Base.angle(a.dir, b.dir)
 Base.angle(a::FieldVector{3}, b::Union{CalibratedHit, PMT, MCTrack}) = Base.angle(a, b.dir)
 Base.angle(a::Union{CalibratedHit, PMT, MCTrack}, b::FieldVector{3}) = Base.angle(a.dir, b)
-
-function matrix(v::Vector)
-    m = length(v)
-    n = length(v[1])
-
-    M = zeros(m, n)
-    i = 1
-    for j ∈ 1:n
-        for k ∈ 1:m
-            M[i] = v[k][j]
-            i += 1
-        end
-    end
-    M
-end
-
-
-function svdfit(M)
-    com = mean(M, dims=1)
-    subtr = M .- com
-    U, S, V = svd(subtr)
-    return com[:], V[:, 1]
-end
-
-
-end # module

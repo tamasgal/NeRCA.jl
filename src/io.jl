@@ -1,7 +1,7 @@
 # # I/O related functions
 #
 # The following function are used to read datastructures from KM3NeT
-# dataformats like HDF5 or custom binary types.
+# dataformats like HDF5, ROOT or custom binary types.
 
 """
     function read_compound(dset::HDF5.HDF5Dataset, T::DataType)

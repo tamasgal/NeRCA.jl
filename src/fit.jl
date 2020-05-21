@@ -17,22 +17,6 @@ end
 
 
 """
-    function svdfit(hits::Vector{CalibratedHit})
-
-Uses SVD to do a fast and dirty track prefit. Provide hits with a multiplicity
-of at least 2.
-"""
-function svdfit(hits::Vector{CalibratedHit})
-    t₀ = hits[div(length(hits), 2)].t
-    pos, dir = svdfit(matrix([h.pos for h in hits]))
-    if (last(hits).pos - first(hits).pos) ⋅ dir  < 0.0
-        dir *= -1
-    end
-    return Track(dir, pos, t₀)
-end
-
-
-"""
     function prefit(hits::Vector{CalibratedHit})
 
 Performs the prefit algorithm which was used in DUMAND II.
@@ -532,8 +516,4 @@ function estimate_azimuth(
     else
         return ϕ + cos(1/n)
     end
-end
-
-
-function royfit_rbr(filename::AbstractString, detx::AbstractString, sparams::SingleDURecoParams)
 end
