@@ -9,6 +9,7 @@ using Parameters
 using DataStructures
 using StaticArrays
 using HDF5
+using UnROOT
 using PGFPlotsX
 using RecipesBase
 using PlotThemes

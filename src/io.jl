@@ -3,6 +3,23 @@
 # The following function are used to read datastructures from KM3NeT
 # dataformats like HDF5, ROOT or custom binary types.
 
+struct KM3NETDAQHit <: UnROOT.CustomROOTStruct
+    dom_id::Int32
+    channel_id::UInt8
+    tdc::Int32
+    tot::UInt8
+end
+function readtype(io::IO, T::Type{KM3NETDAQHit})
+    T(readtype(io, Int32), read(io, UInt8), read(io, Int32), read(io, UInt8))
+end
+
+function read_hits(f::UROOT.ROOTFile)
+    data, offsets = UnROOT.array(f, "KM3NET_EVENT/KM3NET_EVENT/snapshot_hits"; raw=true)
+    UnROOT.splitup(data, offsets, KM3NETDAQHit)
+end
+
+# HDF5
+
 """
     function read_compound(dset::HDF5.HDF5Dataset, T::DataType)
 
