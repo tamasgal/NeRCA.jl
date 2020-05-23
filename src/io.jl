@@ -13,7 +13,7 @@ function readtype(io::IO, T::Type{KM3NETDAQHit})
     T(readtype(io, Int32), read(io, UInt8), read(io, Int32), read(io, UInt8))
 end
 
-function read_hits(f::UROOT.ROOTFile)
+function read_hits(f::UnROOT.ROOTFile)
     data, offsets = UnROOT.array(f, "KM3NET_EVENT/KM3NET_EVENT/snapshot_hits"; raw=true)
     UnROOT.splitup(data, offsets, KM3NETDAQHit)
 end
