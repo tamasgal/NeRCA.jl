@@ -17,7 +17,7 @@ end
 
 
 """
-    function prefit(hits::Vector{CalibratedHit})
+$(SIGNATURES)
 
 Performs the prefit algorithm which was used in DUMAND II.
 """
@@ -49,7 +49,7 @@ end
 
 
 """
-    function make_cherenkov_calculator(track::Track; v=2.99792458e8)
+$(SIGNATURES)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
@@ -84,7 +84,7 @@ end
 
 
 """
-    function make_cherenkov_calculator(track::Track, event_info::Union{MCEventInfo,DAQEventInfo}; v=2.99792458e8)
+$(SIGNATURES)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
@@ -96,7 +96,7 @@ end
 
 
 """
-    function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
+$(SIGNATURES)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
@@ -109,7 +109,7 @@ function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀;
 end
 
 """
-    function make_cherenkov_calculator(sdp::SingleDUParams)
+$(SIGNATURES)
 
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
@@ -124,7 +124,7 @@ end
 
 
 """
-    function single_du_params(track::NeRCA.Track)
+$(SIGNATURES)
 
 Calculates five parameters to describe a track for a single DU case.
 """
@@ -144,7 +144,7 @@ end
 
 
 """
-    function single_du_params(t::NeRCA.MCTrack)
+$(SIGNATURES)
 
 Calculates five parameters to describe a MC track for a single DU case.
 """
@@ -172,7 +172,7 @@ function create_hit_pool(hits::T) where T<:Vector{NeRCA.CalibratedHit}
 end
 
 """
-    function select_hits(du_hits, hit_pool; Δt₋=10, Δz=9, new_hits=nothing)
+$(SIGNATURES)
 
 Returns the seed hits suited for a Cherenkov hit time residual based
 reconstruction algorithm.
@@ -316,7 +316,7 @@ end
 
 
 """
-    function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
+$(SIGNATURES)
 
 The quality function to be minimised when performing the single DU fit.
 `d_closest` is the closest distance between the track (starting at `t₀` and

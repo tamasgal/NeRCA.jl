@@ -4,6 +4,8 @@ using LinearAlgebra
 using Statistics
 using Printf
 using Sockets
+
+using DocStringExtensions
 using DrWatson
 using Parameters
 using DataStructures
@@ -50,11 +52,11 @@ include("plot.jl")
 
 
 """
-    function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:AbstractDAQHit}
+$(SIGNATURES)
 
 Apply geometry and time calibration to given hits.
 """
-function calibrate(hits::Vector{T}, calibration::Calibration) where {T<:AbstractDAQHit}
+function calibrate(calibration::Calibration, hits)
     calibrated_hits = Vector{CalibratedHit}()
     for hit in hits
         dom_id = hit.dom_id
@@ -79,7 +81,7 @@ end
 
 
 """
-    function calibrate(mc_hits::Vector{T}, calibration::Calibration) where {T<:MCHit}
+$(SIGNATURES)
 
 Apply geometry and time calibration to given mc_hits.
 """

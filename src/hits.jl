@@ -1,5 +1,5 @@
 """
-    function triggered(hits::Vector{T}) where {T<:TriggeredHit}
+$(SIGNATURES)
 
 Return a `Vector` of triggered hits.
 """
@@ -7,7 +7,7 @@ triggered(hits::Vector{T}) where {T<:Union{Hit, CalibratedHit}} = filter(h->h.tr
 
 
 """
-    function nfoldhits(hits::Vector{T}, Δt, n) where {T<:AbstractDAQHit}
+$(SIGNATURES)
 
 Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
@@ -38,7 +38,7 @@ end
 
 
 """
-    function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
+$(SIGNATURES)
 
 Calculate the multiplicities for a given time window. Two arrays are
 are returned, one contains the multiplicities, the second one the IDs
@@ -83,7 +83,7 @@ function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
 end
 
 """
-    function count_multiplicities!(hits::Vector{CalibratedHit}, tmax=20)
+$(SIGNATURES)
 
 Counts the multiplicities and modifies the .multiplicity field of the hits.
 Important: the hits have to be sorted by time and then by DOM ID first.
@@ -143,7 +143,7 @@ end
 
 
 """
-    function domhits(hits::Vector{T}) where {T<:AbstractDAQHit}
+$(SIGNATURES)
 
 Sort hits by DOM ID and put them into a dictionary.
 """
@@ -157,7 +157,7 @@ end
 
 
 """
-    function duhits(hits::Vector{T}) where {T<:CalibratedHit}
+$(SIGNATURES)
 
 Sort hits by DU and put them into a dictionary.
 """
@@ -171,7 +171,7 @@ end
 
 
 """
-    function totcut(hits::Vector{T}, tot) where {T<:AbstractDAQHit}
+$(SIGNATURES)
 
 Return a vector of hits with ToT >= `tot`.
 """
@@ -181,7 +181,7 @@ end
 
 
 """
-    function nphes(tot)
+$(SIGNATURES)
 
 Returns the estimated number of photoelectrons for a given ToT.
 """
@@ -200,7 +200,7 @@ end
 
 
 """
-    function slew(tot)
+$(SIGNATURES)
 
 Return the time slewing for a ToT.
 """

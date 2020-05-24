@@ -1,5 +1,5 @@
 """
-    function angle_between(v1, v2)
+$(SIGNATURES)
 
 Calculates the angle between two vectors
 """
@@ -11,21 +11,21 @@ end
 
 
 """
-    function azimuth(d::Direction)
+$(SIGNATURES)
 
 Calculate the azimuth angle for a given direction.
 """
 azimuth(d) = atan(d[2], d[1])
 
 """
-    function zenith(d::Direction)
+$(SIGNATURES)
 
 Calculate the zenith angle for a given direction.
 """
 zenith(d) = acos(-d[3]/norm(d))
 
 """
-    function cartesian(ϕ, θ; r=1.0)
+$(SIGNATURES)
 
 Calculate the cartesian coordinates for given `ϕ`, `θ` and radius `r`.
 """
@@ -34,7 +34,7 @@ function cartesian(ϕ, θ; r=1.0)
 end
 
 """
-    function pld3(p1, p2, d2)
+$(SIGNATURES)
 
 Calculate the distance between a point (p1) and a line (given by p2 and d2).
 """
@@ -44,7 +44,7 @@ end
 
 
 """
-    function lld3(P, u, Q, v)
+$(SIGNATURES)
 
 Calculate the distance between two lines.
 """
@@ -56,7 +56,7 @@ end
 
 
 """
-    function lld3(t₁::T, t₂::T) where T::Track
+$(SIGNATURES)
 
 Calculate the distance between two tracks.
 """
@@ -66,7 +66,7 @@ end
 
 
 """
-    function project(P, t::Track)
+$(SIGNATURES)
 
 Projects a point to a track.
 """
@@ -78,7 +78,7 @@ end
 
 
 """
-    function project(P, A, B)
+$(SIGNATURES)
 
 Project P onto a line spanned by A and B.
 """

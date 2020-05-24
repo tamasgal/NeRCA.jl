@@ -21,7 +21,7 @@ end
 # HDF5
 
 """
-    function read_compound(dset::HDF5.HDF5Dataset, T::DataType)
+$(SIGNATURES)
 
 Read an HDF5Compund structure from an HDF5 dataset.
 """
