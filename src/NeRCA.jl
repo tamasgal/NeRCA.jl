@@ -58,7 +58,7 @@ Apply geometry and time calibration to given hits.
 """
 function calibrate(calibration::Calibration, hits)
     calibrated_hits = Vector{CalibratedHit}()
-    has_triggermask = hasfield(eltype(hits), :trigger_mask)
+    has_triggermask = :trigger_mask ∈ fieldnames(eltype(hits))
     for hit in hits
         dom_id = hit.dom_id
         channel_id = hit.channel_id
