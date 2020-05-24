@@ -23,7 +23,7 @@ function main()
     write(outf, "group_id,dx,dy,dz,x,y,z,v,t0\n")
 
     @showprogress 1 for event in NeRCA.MCEventReader(filename, detx)
-        hits = calibrate(event.hits, event.calib)
+        hits = calibrate(event.calib, event.hits)
         sort!(hits, by=h->h.t)
         sort!(hits, by=h->h.dom_id)
         NeRCA.count_multiplicities!(hits)

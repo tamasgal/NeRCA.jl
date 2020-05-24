@@ -43,7 +43,7 @@ calib = Calibration(
 )
 
 
-chits = calibrate(hits, calib)
+chits = calibrate(calib, hits)
 @test 42 == chits[1].du
 @test NeRCA.Position(4,5,6) == chits[1].pos
 @test NeRCA.Direction(16,17,18) == chits[6].dir

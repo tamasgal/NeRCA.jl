@@ -22,7 +22,7 @@ function main()
     for message in CHClient(ip"127.0.0.1", LIGIER_PORT, ["IO_EVT"])
         event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
 
-        hits = calibrate(event.hits, calib)
+        hits = calibrate(calib, event.hits)
         triggered_hits = filter(h->h.triggered, hits)
         dus = sort(unique(map(h->h.du, hits)))
         n_dus = length(dus)

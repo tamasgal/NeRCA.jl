@@ -28,7 +28,7 @@ function main()
     @showprogress 1 for event in events
         n_muons = length(event.mc_tracks)
         bundle_energy = sum(map(m->m.E, event.mc_tracks))
-        hits = calibrate(event.hits, event.calib)
+        hits = calibrate(event.calib, event.hits)
         muon = NeRCA.Track(event.mc_tracks[1])
         NeRCA.count_multiplicities!(hits)
         ccalc = NeRCA.make_cherenkov_calculator(muon)

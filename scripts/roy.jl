@@ -11,9 +11,9 @@ try
     for message in client
         event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
         hits = event.snapshot_hits
-        chits = NeRCA.calibrate(hits, calib)
+        chits = NeRCA.calibrate(calib, hits)
         thits = event.triggered_hits
-        cthits = NeRCA.calibrate(thits, calib)
+        cthits = NeRCA.calibrate(calib, thits)
         println(length(cthits))
     end
 catch InterruptException
