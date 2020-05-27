@@ -56,8 +56,8 @@ Plot recipe for z-t-plots.
 
     seriestype := :scatter
 
-    xlabel := "time [ns]"
-    ylabel := "z [m]"
+    xguide := "time [ns]"
+    yguide := "z [m]"
 
     @series begin
         subplot := 1
@@ -65,8 +65,8 @@ Plot recipe for z-t-plots.
         ccalc.(dom_positions), [p.z for p in dom_positions]
     end
 
-    xlabel := "x [m]"
-    ylabel := "y [m]"
+    xguide := "x [m]"
+    yguide := "y [m]"
 
     @series begin
         subplot := 2
@@ -95,8 +95,8 @@ Plot recipe to plot simple z-t-plots.
 @recipe function f(hits::Vector{CalibratedHit}; label="hits", markersize=4, highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
     seriestype := :scatter
 
-    xlabel := "time [ns]"
-    ylabel := "z [m]"
+    xguide := "time [ns]"
+    yguide := "z [m]"
     markerstrokewidth := 0
 
     if du > 0
@@ -129,8 +129,8 @@ end
 @recipe function f(hits::Vector{CalibratedHit}, track::Track; max_z=nothing)
     seriestype := :scatter
 
-    xlabel := "time [ns]"
-    ylabel := "z [m]"
+    xguide := "time [ns]"
+    yguide := "z [m]"
     background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
