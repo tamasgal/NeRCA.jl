@@ -4,6 +4,7 @@ $(SIGNATURES)
 Return only triggered hits.
 """
 triggered(hits::Vector{T}) where {T<:AbstractHit} = filter(h->h.trigger_mask > 0, hits)
+triggered(hit) = hit.trigger_mask > 0
 
 
 """
