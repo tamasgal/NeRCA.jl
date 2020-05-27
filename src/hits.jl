@@ -1,9 +1,9 @@
 """
 $(SIGNATURES)
 
-Return a `Vector` of triggered hits.
+Return only triggered hits.
 """
-triggered(hits::Vector{T}) where {T<:Union{Hit, CalibratedHit}} = filter(h->h.triggered, hits)
+triggered(hits::Vector{T}) where {T<:AbstractHit} = filter(h->h.trigger_mask > 0, hits)
 
 
 """

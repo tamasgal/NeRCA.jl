@@ -1,14 +1,13 @@
 #!/usr/bin/env julia
 
 if length(ARGS) < 2
-    println("Usage: ./royfit.jl DETX HDF5FILE OUTFILE")
+    println("Usage: ./royfit.jl DETX ROOTFILE OUTFILE")
     exit(1)
 end
 
 
 using LinearAlgebra
 using NeRCA
-using HDF5
 using ProgressMeter
 
 
@@ -24,7 +23,7 @@ function main()
 
     @showprogress 1 for event in NeRCA.MCEventReader(filename, detx)
         hits = calibrate(event.calib, event.hits)
-        triggered_hits = filter(h -> h.triggered, hits);
+        triggered_hits = triggered(hits)
         prefit_track = NeRCA.prefit(triggered_hits)
         t = triggered_hits[1].t - 500
         Δd = norm(prefit_track.dir) * t

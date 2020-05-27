@@ -23,7 +23,7 @@ function main()
         event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
 
         hits = calibrate(calib, event.hits)
-        triggered_hits = filter(h->h.triggered, hits)
+        triggered_hits = triggered(hits)
         dus = sort(unique(map(h->h.du, hits)))
         n_dus = length(dus)
         n_doms = length(unique(h->h.dom_id, triggered_hits))

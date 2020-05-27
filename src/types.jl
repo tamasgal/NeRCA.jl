@@ -231,7 +231,7 @@ struct Hit <: AbstractDAQHit
     dom_id::DOMID
     t::HitTime
     tot::ToT
-    triggered::Bool
+    trigger_mask::TriggerMask
 end
 
 

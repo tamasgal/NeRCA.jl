@@ -15,7 +15,7 @@ function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0)
         hits = filter(h -> h.du == du, hits)
     end
     sort!(hits, by=h->h.t)
-    triggered_hits = filter(h -> h.triggered, hits)
+    triggered_hits = triggered(hits)
     ax = @pgf Axis({xlabel=raw"time [\si{\ns}]", ylabel=raw"z [\si{\m}]"})
     push!(ax,  @pgf PlotInc({only_marks, mark="*", mark_size=".8", thick}, ZTCoordinates(hits, offset=t₀)))
     push!(ax, LegendEntry("hits"))
@@ -103,7 +103,7 @@ Plot recipe to plot simple z-t-plots.
         hits = filter(h -> h.du == du, hits)
     end
 
-    thits = filter(h -> h.triggered, hits)
+    thits = triggered(hits)
 
     @series begin
         label := label
@@ -134,7 +134,7 @@ end
     background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
-    thits = filter(h -> h.triggered, hits)
+    thits = triggered(hits)
     if max_z == nothing
         max_z = maximum(map(h->h.pos.z, hits))
     end
@@ -174,7 +174,7 @@ end
     background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
-    triggered_hits = filter(h -> h.triggered, hits)
+    triggered_hits = triggered(hits)
     if max_z == nothing
         max_z = maximum(map(h->h.pos.z, hits))
     end

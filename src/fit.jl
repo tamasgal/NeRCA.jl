@@ -426,7 +426,7 @@ function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
     brightest_floor = NeRCA.most_frequent(h -> h.floor, du_hits)
 
     hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
-    thits_on_brightest_floor = filter(h -> h.triggered, hits_on_brightest_floor)
+    thits_on_brightest_floor = triggered(hits_on_brightest_floor)
 
     if length(thits_on_brightest_floor) == 0
         z_closest = hits_on_brightest_floor[1].pos.z
@@ -456,7 +456,7 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     end
     shits = select_hits(hits₀, hit_pool; Δt₋ = par.Δt₋, Δz = par.floor_distance)
 
-    qfunc = SingleDUMinimiser(shits, filter(h->h.triggered, du_hits))
+    qfunc = SingleDUMinimiser(shits, triggered(du_hits))
 
     model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
 

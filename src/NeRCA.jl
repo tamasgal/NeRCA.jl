@@ -59,7 +59,7 @@ Apply geometry and time calibration to given hits.
 """
 function calibrate(calibration::Calibration, hits)
     calibrated_hits = Vector{CalibratedHit}()
-    has_triggermask = :trigger_mask ∈ fieldnames(eltype(hits))
+    has_trigger_mask = :trigger_mask ∈ fieldnames(eltype(hits))
     for hit in hits
         dom_id = hit.dom_id
         channel_id = hit.channel_id
@@ -70,10 +70,7 @@ function calibrate(calibration::Calibration, hits)
         t = hit.t + t0
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
-        trigger_mask = 0
-        if has_triggermask
-            trigger_mask = hit.trigger_mask
-        end
+        trigger_mask = has_trigger_mask ? hit.trigger_mask : 0
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
                               pos, dir, t0, trigger_mask, Multiplicity(0,0))
         push!(calibrated_hits, c_hit)
@@ -107,15 +104,8 @@ function calibrate(mc_hits::Vector{T},
         t = mctime(hit.t)
         du = calibration.du[dom_id]
         floor = calibration.floor[dom_id]
-        triggered = false
-        if T === SnapshotHit
-            triggered = hit.triggered
-        end
-        if T === TriggeredHit
-            triggered = hit.trigger_mask > 0
-        end
         c_hit = CalibratedHit(channel_id, dom_id, du, floor, t, tot,
-                              pos, dir, t0, triggered, Multiplicity(0,0))
+                              pos, dir, t0, hit.triggered, Multiplicity(0,0))
         push!(calibrated_hits, c_hit)
     end
     calibrated_hits

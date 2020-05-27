@@ -33,7 +33,7 @@ threefoldhits = nfoldhits(hits, 15, 3)
 dhits = domhits(hits)
 @test 7 == length(dhits[8])
 @test 20 == dhits[8][1].tot
-@test dhits[8][6].triggered
+@test 1 == dhits[8][6].trigger_mask
 
 # multiplicities
 sorted_hits = sort(hits, by=h->h.t)
