@@ -22,26 +22,26 @@ const H5FILE = joinpath(@__DIR__, "data", "mupage.h5")
 end
 
 
-@testset "reading KM3HDF5 hits" begin
-    hits = read_hits(H5FILE, 0)
-    @test 4886 == length(hits)
-    @test 3.3263139e7 ≈ hits[end].t
-    hits = read_hits(H5FILE, 2)
-    @test 4219 == length(hits)
-    @test 5.1047085e7 ≈ hits[end].t
-end
+# @testset "reading KM3HDF5 hits" begin
+#     hits = read_hits(H5FILE, 0)
+#     @test 4886 == length(hits)
+#     @test 3.3263139e7 ≈ hits[end].t
+#     hits = read_hits(H5FILE, 2)
+#     @test 4219 == length(hits)
+#     @test 5.1047085e7 ≈ hits[end].t
+# end
 
 
-@testset "reading KM3HDF5 MC hits" begin
-    hits = NeRCA.read_mchits(H5FILE, 0)
-    @test 399 == length(hits)
-    @test 4429.716844306684 ≈ hits[end].t
-end
+# @testset "reading KM3HDF5 MC hits" begin
+#     hits = NeRCA.read_mchits(H5FILE, 0)
+#     @test 399 == length(hits)
+#     @test 4429.716844306684 ≈ hits[end].t
+# end
 
 
-@testset "reading KM3HDF5 MC tracks" begin
-    mc_tracks = NeRCA.read_mctracks(H5FILE)
-    @test 3 == length(mc_tracks)
-    @test 11 == length(mc_tracks[0])
-    @test 3 == length(mc_tracks[2])
-end
+# @testset "reading KM3HDF5 MC tracks" begin
+#     mc_tracks = NeRCA.read_mctracks(H5FILE)
+#     @test 3 == length(mc_tracks)
+#     @test 11 == length(mc_tracks[0])
+#     @test 3 == length(mc_tracks[2])
+# end
