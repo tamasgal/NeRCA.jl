@@ -1,4 +1,5 @@
 #!/usr/bin/env julia
+println("Initialising libraries...")
 using NeRCA
 using Plots
 using PlotThemes
@@ -6,26 +7,31 @@ using Dates
 using Measures
 GR.inline("png")
 
-if length(ARGS) < 2
-    println("Usage: ./live_royfit.jl DETX TIME_RES")
+if length(ARGS) < 3
+    println("Usage: ./live_royfit.jl DETX LIGIER_PORT TIME_RES")
     exit(1)
 end
 
 
-const calib = NeRCA.read_calibration(ARGS[1])
+const calib = NeRCA.read_calibration("latest.detx")
 const LIGIER_PORT = parse(Int, ARGS[2])
 const TIME_RES = ARGS[3]
 
 function main()
     println("Starting live ROyFit")
 
+    sparams = NeRCA.SingleDURecoParams()
+
     for message in CHClient(ip"127.0.0.1", LIGIER_PORT, ["IO_EVT"])
+        print(".")
         event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
 
         hits = calibrate(calib, event.hits)
         triggered_hits = triggered(hits)
         dus = sort(unique(map(h->h.du, hits)))
+        triggered_dus = sort(unique(map(h->h.du, triggered_hits)))
         n_dus = length(dus)
+        n_triggered_dus = length(triggered_dus)
         n_doms = length(unique(h->h.dom_id, triggered_hits))
 
         if n_doms < 4
@@ -38,16 +44,15 @@ function main()
         for (idx, du) in enumerate(dus)
             du_hits = filter(h->h.du == du, hits)
             if length(triggered(du_hits))== 0
-                println("No triggered hits")
                 continue
             end
-            fit = NeRCA.single_du_fit(du_hits)
+            fit = NeRCA.single_du_fit(du_hits, sparams)
             push!(Q, fit.Q)
             plot!(du_hits, fit, markercolor=colours[idx], label="DU $(du)", max_z=calib.max_z)
-            write_time_residuals(TIME_RES, event, du_hits, fit)
+            write_time_residuals(TIME_RES, event, fit.selected_hits, fit)
         end
         if sum(Q) < 200 && n_doms > 12 && n_dus > 1
-            println("Plotting...")
+            println("\nPlotting...")
             fit_params = "ROy live reconstruction (combined single line): Q=$([round(_Q,digits=2) for _Q in Q])"
             event_params = "Det ID $(event.det_id), Run $(event.run_id), FrameIndex $(event.timeslice_id), TriggerCounter $(event.trigger_counter), Overlays $(event.overlays)"
             time_params = "$(unix2datetime(event.timestamp)) UTC"
@@ -58,6 +63,15 @@ function main()
 
             savefig("plots/ztplot_roy.png")
         end
+
+        #= if n_triggered_dus > 2 && n_doms > 14 =#
+        #=     selected_hits = unique(h->h.dom_id, triggered_hits) =#
+        #=     println("\nStarting multiline fit with $(n_dus) DUs and $(length(selected_hits)) selected hits") =#
+        #=     prefit_track = NeRCA.prefit(selected_hits) =#
+        #=     println(prefit_track) =#
+        #=     plot(selected_hits, prefit_track) =#
+        #=     savefig("plots/ztplot_roy_prefit.png") =#
+        #= end =#
     end
 end
 
