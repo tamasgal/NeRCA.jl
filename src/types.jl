@@ -268,7 +268,7 @@ struct CalibratedHit <: AbstractDAQHit
     pos::Position
     dir::Direction
     t0::HitTime
-    triggered::Int32
+    trigger_mask::TriggerMask
     multiplicity::Multiplicity
 end
 

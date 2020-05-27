@@ -37,7 +37,7 @@ function main()
             Δt = hit.t - mc_time(ccalc(hit.pos))
             d = NeRCA.pld3(hit.pos, muon.pos, muon.dir)
             η = NeRCA.angle_between(hit.dir, muon.dir)
-            write(outf, "$(Δt),$(n_muons),$(hit.tot),$(hit.multiplicity.count),$(hit.triggered ? 1 : 0),$(d),$(bundle_energy),$(η)\n")
+            write(outf, "$(Δt),$(n_muons),$(hit.tot),$(hit.multiplicity.count),$(triggered(hit) ? 1 : 0),$(d),$(bundle_energy),$(η)\n")
         end
     end
 
