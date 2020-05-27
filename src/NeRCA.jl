@@ -22,6 +22,7 @@ using IntervalArithmetic
 import Base: +, -, *
 
 export
+    OnlineFile, OfflineFile,
     Position, Direction,
     MCEventInfo, MCTrack, RecoTrack, NoRecoTrack,
     AbstractDAQHit, AbstractMCHit,
