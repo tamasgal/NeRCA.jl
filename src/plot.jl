@@ -169,8 +169,8 @@ end
 @recipe function f(hits::Vector{CalibratedHit}, fit::ROyFit; label="", max_z=nothing)
     seriestype := :scatter
 
-    xlabel := "time [ns]"
-    ylabel := "z [m]"
+    xguide := "time [ns]"
+    yguide := "z [m]"
     background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
