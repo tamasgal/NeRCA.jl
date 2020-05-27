@@ -387,11 +387,13 @@ function multi_du_fit(prefit, hits; print_level=0)
     m = NeRCA.MultiDUMinimiser(hits)
 
     model = Model(
-        with_optimizer(Ipopt.Optimizer,
-                       print_level=print_level,
-                       max_iter=200,
-                       tol=1e-3)
-       )
+        optimizer_with_attributes(
+            Ipopt.Optimizer,
+            "print_level" => print_level,
+            "max_iter" => 200,
+            "tol" => 1e-3
+        )
+    )
     register(model, :qfunc, 6, m, autodiff=true)
 
     Δpos = 50
@@ -458,7 +460,7 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     qfunc = SingleDUMinimiser(shits, triggered(du_hits))
 
-    model = Model(with_optimizer(Ipopt.Optimizer, print_level=print_level, tol=1e-3))
+    model = Model(optimizer_with_attributes(Ipopt.Optimizer, "print_level" => print_level, "tol" => 1e-3))
 
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
