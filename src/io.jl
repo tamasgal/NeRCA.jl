@@ -14,7 +14,7 @@ end
 struct KM3NETDAQHit <: UnROOT.CustomROOTStruct
     dom_id::Int32
     channel_id::UInt8
-    tdc::Int32
+    time::Int32
     tot::UInt8
 end
 function UnROOT.readtype(io, T::Type{KM3NETDAQHit})
