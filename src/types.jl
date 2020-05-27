@@ -4,6 +4,7 @@ const DOMID = UInt32
 const Floor = UInt8
 const DU = UInt8
 const HitTime = Float64
+const TriggerMask = Int64
 
 
 struct OMKey
@@ -279,11 +280,6 @@ struct TimesliceHit <: AbstractDAQHit
     tot::Int16
 end
 
-Hit(hit::HDF5.HDF5Compound{5}) = begin
-    Hit(hit.data...)
-end
-
-const TriggerMask = Int64
 
 struct TriggeredHit <: AbstractDAQHit
     dom_id::Int32
