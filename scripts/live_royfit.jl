@@ -16,6 +16,7 @@ end
 const calib = NeRCA.read_calibration("latest.detx")
 const LIGIER_PORT = parse(Int, ARGS[2])
 const TIME_RES = ARGS[3]
+const DOWNSAMPLE = 0.1  # fraction to keep
 
 function main()
     println("Starting live ROyFit")
@@ -23,7 +24,12 @@ function main()
     sparams = NeRCA.SingleDURecoParams()
 
     for message in CHClient(ip"127.0.0.1", LIGIER_PORT, ["IO_EVT"])
-        print(".")
+        if rand() > DOWNSAMPLE
+            print("x")
+            continue
+        else
+            print(".")
+        end
         event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
 
         hits = calibrate(calib, event.hits)
