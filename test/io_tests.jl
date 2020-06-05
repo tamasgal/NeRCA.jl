@@ -25,7 +25,7 @@ end
 
 @testset "km3net online files" begin
     f = NeRCA.OnlineFile(ONLINEFILE)
-    hits = NeRCA.read_hits(f)
+    hits = NeRCA.read_snapshot_hits(f)
     @test 3 == length(hits)  # grouped by event
     @test 96 == length(hits[1])
     @test [806451572, 806451572, 806455814] == [h.dom_id for h in hits[1][1:3]]
