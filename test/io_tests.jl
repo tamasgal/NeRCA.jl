@@ -56,10 +56,10 @@ end
     @test [28, 11, 27, 24, 23] == [h.tot for h in hits[3][end-4:end]]
 
     thits = NeRCA.read_triggered_hits(f)
-    @test 3 == length(hits)
-    @test 18 == length(hits[1])
-    @test 53 == length(hits[2])
-    @test 9 == length(hits[3])
+    @test 3 == length(thits)
+    @test 18 == length(thits[1])
+    @test 53 == length(thits[2])
+    @test 9 == length(thits[3])
 end
 
 

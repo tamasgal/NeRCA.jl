@@ -28,12 +28,15 @@ struct KM3NETDAQTriggeredHit <: UnROOT.CustomROOTStruct
     tot::UInt8
     trigger_mask::UInt64
 end
+UnROOT.packedsizeof(::Type{KM3NETDAQTriggeredHit}) = 24  # incl. cnt and vers
+
 function UnROOT.readtype(io, T::Type{KM3NETDAQTriggeredHit})
     dom_id = UnROOT.readtype(io, Int32)
     channel_id = read(io, UInt8)
     tdc = read(io, Int32)
     tot = read(io, UInt8)
-    skip(io, 6)
+    cnt = read(io, UInt32)
+    vers = read(io, UInt16)
     trigger_mask = UnROOT.readtype(io, UInt64)
     T(dom_id, channel_id, tdc, tot, trigger_mask)
 end
