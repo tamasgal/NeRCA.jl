@@ -13,7 +13,7 @@ const ROOTFILE = ARGS[2]
 function main()
     println("Starting reconstruction.")
     sparams = NeRCA.SingleDURecoParams()
-    event_hits = NeRCA.read_hits(NeRCA.OnlineFile(ROOTFILE))
+    event_hits = NeRCA.read_snapshot_hits(NeRCA.OnlineFile(ROOTFILE))
     println(length(event_hits))
 end
 
