@@ -1,6 +1,7 @@
 using NeRCA
 using Test
 
+const ONLINEFILE = joinpath(@__DIR__, "data", "km3net_online.root")
 
 hits = [Hit(1, 8, 100, 20, false),
         Hit(2, 9, 101, 21, true),
@@ -51,3 +52,7 @@ mtps, mtp_ids = NeRCA.count_multiplicities(sorted_hits, 10)
 @test (3, 8) == (mtps[10], mtp_ids[10])
 @test (3, 8) == (mtps[11], mtp_ids[11])
 @test (3, 8) == (mtps[12], mtp_ids[12])
+
+# combine
+shits = NeRCA.read_snapshot_hits(NeRCA.OnlineFile(ONLINEFILE))
+thits = NeRCA.read_triggered_hits(NeRCA.OnlineFile(ONLINEFILE))

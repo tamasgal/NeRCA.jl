@@ -54,6 +54,12 @@ end
     @test [5,  7, 24, 23, 10] == [h.channel_id for h in hits[3][end-4:end]]
     @test [26, 29, 30, 23, 30] == [h.tot for h in hits[3][1:5]]
     @test [28, 11, 27, 24, 23] == [h.tot for h in hits[3][end-4:end]]
+
+    thits = NeRCA.read_triggered_hits(f)
+    @test 3 == length(hits)
+    @test 18 == length(hits[1])
+    @test 53 == length(hits[2])
+    @test 9 == length(hits[3])
 end
 
 

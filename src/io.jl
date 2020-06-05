@@ -45,7 +45,7 @@ end
 
 function read_triggered_hits(f::OnlineFile)
     data, offsets = UnROOT.array(f.fobj, "KM3NET_EVENT/KM3NET_EVENT/triggeredHits"; raw=true)
-    UnROOT.splitup(data, offsets, KM3NETDAQHit, skipbytes=10)
+    UnROOT.splitup(data, offsets, KM3NETDAQTriggeredHit, skipbytes=10)
 end
 # HDF5
 
