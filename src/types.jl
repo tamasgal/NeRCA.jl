@@ -242,9 +242,9 @@ struct SnapshotHit <: AbstractDAQHit
     tot::ToT
 end
 
-Base.show(io::IO, h::AbstractDAQHit) = begin
-    print(io, "$(typeof(h)): DOM ID $(h.dom_id), channel ID, $(h.channel_id), t=$(h.t), tot=$(h.tot)")
-end
+# Base.show(io::IO, h::AbstractDAQHit) = begin
+#     print(io, "$(typeof(h))(channel_id=$(h.channel_id), dom_id=$(h.dom_id), t=$(h.t), tot=$(h.tot)")
+# end
 
 struct MCHit <: AbstractHit
     a::Float32
