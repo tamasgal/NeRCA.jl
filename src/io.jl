@@ -11,13 +11,13 @@ struct OnlineFile
     OnlineFile(filename::AbstractString) = new(UnROOT.ROOTFile(filename))
 end
 
-struct KM3NETDAQHit <: UnROOT.CustomROOTStruct
+struct KM3NETDAQSnapshotHit <: UnROOT.CustomROOTStruct
     dom_id::Int32
     channel_id::UInt8
     time::Int32
     tot::UInt8
 end
-function UnROOT.readtype(io, T::Type{KM3NETDAQHit})
+function UnROOT.readtype(io, T::Type{KM3NETDAQSnapshotHit})
     T(UnROOT.readtype(io, Int32), read(io, UInt8), read(io, Int32), read(io, UInt8))
 end
 
@@ -43,7 +43,7 @@ end
 
 function read_snapshot_hits(f::OnlineFile)
     data, offsets = UnROOT.array(f.fobj, "KM3NET_EVENT/KM3NET_EVENT/snapshotHits"; raw=true)
-    UnROOT.splitup(data, offsets, KM3NETDAQHit, skipbytes=10)
+    UnROOT.splitup(data, offsets, KM3NETDAQSnapshotHit, skipbytes=10)
 end
 
 function read_triggered_hits(f::OnlineFile)

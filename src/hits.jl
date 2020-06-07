@@ -16,20 +16,20 @@ This should be used to transfer the trigger information to the
 snapshot hits from a DAQEvent. The triggered hits are a subset
 of the snapshot hits.
 """
-function combine(snapshot_hits::Vector{SnapshotHit}, triggered_hits::Vector{TriggeredHit})
-    triggermasks = Dict{Tuple{Int32, UInt8, Int32, UInt8}, Int64}()
+function combine(snapshot_hits::Vector{KM3NETDAQSnapshotHit}, triggered_hits::Vector{KM3NETDAQTriggeredHit})
+    triggermasks = Dict{Tuple{UInt8, Int32, Int32, UInt8}, Int64}()
     for hit ∈ triggered_hits
-        triggermasks[(hit.dom_id, hit.channel_id, hit.time, hit.tot)] = hit.trigger_mask
+        triggermasks[(hit.channel_id, hit.dom_id, hit.time, hit.tot)] = hit.trigger_mask
     end
     n = length(snapshot_hits)
     hits = sizehint!(Vector{Hit}(), n)
-    for hit in spanshot_hits
+    for hit in snapshot_hits
         channel_id = hit.channel_id
         dom_id = hit.dom_id
         time = hit.time
         tot = hit.tot
         triggermask = get(triggermasks, (channel_id, dom_id, time, tot), 0)
-        hits.push(Hit(channel_id, dom_id, time, tot, triggermask))
+        push!(hits, Hit(channel_id, dom_id, time, tot, triggermask))
     end
     hits
 end

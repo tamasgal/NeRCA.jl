@@ -18,23 +18,27 @@ hits = [Hit(1, 8, 100, 20, false),
 
 
 # triggered()
-thits = triggered(hits)
-@test 4 == length(thits)
-@test 9 == thits[1].dom_id
-
+@testset "triggered()" begin
+    thits = triggered(hits)
+    @test 4 == length(thits)
+    @test 9 == thits[1].dom_id
+end
 
 # nfoldhits()
-twofoldhits = nfoldhits(hits, 10, 2)
-@test 4 == length(twofoldhits)
-threefoldhits = nfoldhits(hits, 15, 3)
-@test 3 == length(threefoldhits)
-
+@testset "nfoldhits()" begin
+    twofoldhits = nfoldhits(hits, 10, 2)
+    @test 4 == length(twofoldhits)
+    threefoldhits = nfoldhits(hits, 15, 3)
+    @test 3 == length(threefoldhits)
+end
 
 # domhits()
-dhits = domhits(hits)
-@test 7 == length(dhits[8])
-@test 20 == dhits[8][1].tot
-@test 1 == dhits[8][6].trigger_mask
+@testset "domhits()" begin
+    dhits = domhits(hits)
+    @test 7 == length(dhits[8])
+    @test 20 == dhits[8][1].tot
+    @test 1 == dhits[8][6].trigger_mask
+end
 
 # multiplicities
 sorted_hits = sort(hits, by=h->h.t)
@@ -54,5 +58,10 @@ mtps, mtp_ids = NeRCA.count_multiplicities(sorted_hits, 10)
 @test (3, 8) == (mtps[12], mtp_ids[12])
 
 # combine
-shits = NeRCA.read_snapshot_hits(NeRCA.OnlineFile(ONLINEFILE))
-thits = NeRCA.read_triggered_hits(NeRCA.OnlineFile(ONLINEFILE))
+event_shits = NeRCA.read_snapshot_hits(NeRCA.OnlineFile(ONLINEFILE))
+event_thits = NeRCA.read_triggered_hits(NeRCA.OnlineFile(ONLINEFILE))
+for (shits, thits) in zip(event_shits, event_thits)
+    hits = NeRCA.combine(shits, thits)
+    @test length(hits) == length(shits)
+    @test length(NeRCA.triggered(hits)) == length(thits)
+end
