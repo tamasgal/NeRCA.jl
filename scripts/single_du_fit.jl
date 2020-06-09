@@ -7,20 +7,29 @@ if length(ARGS) < 2
 end
 
 const ROOTFILE = ARGS[2]
-# const calib = NeRCA.read_calibration("latest.detx")
 
 
 function main()
     println("Starting reconstruction.")
-    sparams = NeRCA.SingleDURecoParams()
+
+    const calib = NeRCA.read_calibration("latest.detx")
     f = NeRCA.OnlineFile(ROOTFILE)
+
+    sparams = NeRCA.SingleDURecoParams()
+
     event_shits = NeRCA.read_snapshot_hits(f)
     event_thits = NeRCA.read_triggered_hits(f)
     for (shits, thits) in zip(event_shits, event_thits)
-        println(length(shits))
-        println(length(thits))
-        hits = NeRCA.combine(shits, thits)
-        @show hits[1:4] length(hits)
+        hits = calibrate(NeRCA.combine(shits, thits))
+
+
+        triggered_hits = triggered(hits)
+
+        dus = sort(unique(map(h->h.du, hits)))
+        triggered_dus = sort(unique(map(h->h.du, triggered_hits)))
+        n_dus = length(dus)
+        n_triggered_dus = length(triggered_dus)
+        n_doms = length(unique(h->h.dom_id, triggered_hits))
     end
 end
 
