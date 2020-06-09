@@ -18,7 +18,7 @@ using JuMP
 using Ipopt
 using IntervalArithmetic
 
-import Base: +, -, *
+import Base: read, +, -, *
 
 export
     OnlineFile, OfflineFile,

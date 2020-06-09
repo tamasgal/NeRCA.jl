@@ -5,6 +5,7 @@ using Test
 const DETX = joinpath(@__DIR__, "data", "detx_v3.detx")
 const ONLINEFILE = joinpath(@__DIR__, "data", "km3net_online.root")
 const OFFLINEFILE = joinpath(@__DIR__, "data", "km3net_offline.root")
+const IO_EVT = joinpath(@__DIR__, "data", "IO_EVT.dat")
 
 
 @testset "calibration" begin
@@ -59,4 +60,23 @@ end
     @test 18 == length(thits[1])
     @test 53 == length(thits[2])
     @test 9 == length(thits[3])
+end
+
+
+@testset "DAQ readout" begin
+    f = open(IO_EVT)
+    daqevent = read(f, NeRCA.DAQEvent)
+    @test 49 == daqevent.det_id
+    @test 8142 == daqevent.run_id
+    @test 107050 == daqevent.timeslice_id
+    @test 1591693105 == daqevent.timestamp
+    @test 0 == daqevent.ticks
+    @test 9789 == daqevent.trigger_counter
+    @test 2 == daqevent.trigger_mask
+    @test 0 == daqevent.overlays
+    @test 6 == daqevent.n_triggered_hits
+    @test 6 == length(daqevent.triggered_hits)
+    @test 106 == daqevent.n_hits
+    @test 106 == length(daqevent.hits)
+    close(f)
 end
