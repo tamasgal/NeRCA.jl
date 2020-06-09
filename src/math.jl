@@ -1,13 +1,7 @@
-"""
-$(SIGNATURES)
-
-Calculates the angle between two vectors
-"""
-function angle_between(v1, v2)
-    _v1 = normalize(v1)
-    _v2 = normalize(v2)
-    angle = acos(min(dot(_v1, _v2), 1))
-end
+Base.angle(d1::Direction, d2::Direction) = acos(min(dot(normalize(d1), normalize(d2)), 1))
+Base.angle(a::T, b::T) where {T<:Union{CalibratedHit, PMT, MCTrack}} = Base.angle(a.dir, b.dir)
+Base.angle(a::FieldVector{3}, b::Union{CalibratedHit, PMT, MCTrack}) = Base.angle(a, b.dir)
+Base.angle(a::Union{CalibratedHit, PMT, MCTrack}, b::FieldVector{3}) = Base.angle(a.dir, b)
 
 
 """

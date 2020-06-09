@@ -74,7 +74,7 @@ function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=N_SEAWATER)
 
         t_cherenkov = cherenkov_path_length / c_medium*1e9
 
-        η = angle_between(track_dir, distance_vector)
+        η = angle(track_dir, distance_vector)
         χ = θ - η
         particle_travel_path_length = distance / sin(θ′) * sin(χ)
         t = t₀ + particle_travel_path_length / v*1e9 + t_cherenkov
