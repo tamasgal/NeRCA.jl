@@ -14,7 +14,7 @@ using HDF5
 using UnROOT
 using PGFPlotsX
 using RecipesBase
-using PlotThemes
+using Colors
 using JuMP
 using Ipopt
 using IntervalArithmetic

@@ -131,7 +131,7 @@ end
 
     xguide := "time [ns]"
     yguide := "z [m]"
-    background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
+    background_color_legend := RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
     thits = triggered(hits)
@@ -171,7 +171,7 @@ end
 
     xguide := "time [ns]"
     yguide := "z [m]"
-    background_color_legend := PlotThemes.RGBA{Float64}(1.0,1.0,1.0,0.4)
+    background_color_legend := RGBA{Float64}(1.0,1.0,1.0,0.4)
     markerstrokewidth := 0
 
     triggered_hits = triggered(hits)
