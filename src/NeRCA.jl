@@ -10,7 +10,6 @@ using DrWatson
 using Parameters
 using DataStructures
 using StaticArrays
-using HDF5
 using UnROOT
 using PGFPlotsX
 using RecipesBase
@@ -27,10 +26,8 @@ export
     MCEventInfo, MCTrack, RecoTrack, NoRecoTrack,
     AbstractDAQHit, AbstractMCHit,
     Hit, SnapshotHit, CalibratedHit, MCHit, TimesliceHit,
-    DAQEvent, read_io,
+    DAQEvent,
     is_mxshower, is_3dmuon, is_3dshower,
-    read_indices, read_hits, read_tracks, read_mctracks,
-    read_calibration, read_event_info,
     Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,

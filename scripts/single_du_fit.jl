@@ -12,7 +12,7 @@ const ROOTFILE = ARGS[2]
 function main()
     println("Starting reconstruction.")
 
-    const calib = NeRCA.read_calibration("latest.detx")
+    const calib = Calibration("latest.detx")
     f = NeRCA.OnlineFile(ROOTFILE)
 
     sparams = NeRCA.SingleDURecoParams()

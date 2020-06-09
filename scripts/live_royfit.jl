@@ -13,7 +13,7 @@ if length(ARGS) < 3
 end
 
 
-const calib = NeRCA.read_calibration("latest.detx")
+const calib = Calibration("latest.detx")
 const LIGIER_PORT = parse(Int, ARGS[2])
 const TIME_RES = ARGS[3]
 const DOWNSAMPLE = 0.1  # fraction to keep
@@ -30,7 +30,7 @@ function main()
         else
             print(".")
         end
-        event = NeRCA.read_io(IOBuffer(message.data), NeRCA.DAQEvent)
+        event = read(IOBuffer(message.data), NeRCA.DAQEvent)
 
         hits = calibrate(calib, event.hits)
         triggered_hits = triggered(hits)

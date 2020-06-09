@@ -19,32 +19,15 @@ struct Position{T} <: FieldVector{3, T}
 
     Position(x::T, y::T, z::T) where {T} = new{T}(x, y, z)
 end
-
 Position(x, y, z) = Position(promote(x, y, z)...)
-
-# Base.*(x::Vector3D, y::Vector3D ) = Vector3D(SVector(y)* SVector(x))
 
 struct Direction{T} <: FieldVector{3, T}
     x::T
     y::T
     z::T
 end
-
 Direction(x, y, z) = Direction(promote(x, y, z)...)
-
-function Direction(ϕ, θ)
-    Direction(cos(ϕ)*cos(θ), sin(ϕ)*cos(θ), sin(θ))
-end
-
-Base.show(io::IO, p::Position) = begin
-    s = Printf.@sprintf "%.2f %.2f %.2f" p.x p.y p.z
-    print(io, s)
-end
-
-Base.show(io::IO, d::Direction) = begin
-    s = Printf.@sprintf "%.2f %.2f %.2f" d.x d.y d.z
-    print(io, s)
-end
+Direction(ϕ, θ) = Direction(cos(ϕ)*cos(θ), sin(ϕ)*cos(θ), sin(θ))
 
 struct MCEventInfo
     event_id::Int64
@@ -89,43 +72,6 @@ Base.show(io::IO, e::DAQEventInfo) = begin
           "timestamp($(e.timestamp) ($(e.nanoseconds)), run_id($(e.run_id))")
 end
 
-struct JMuon
-    JENERGY_CHI2::Float64
-    JENERGY_ENERGY::Float64
-    JENERGY_MUON_RANGE_METRES::Float64
-    JENERGY_NDF::Float64
-    JENERGY_NOISE_LIKELIHOOD::Float64
-    JENERGY_NUMBER_OF_HITS::Float64
-    JGANDALF_BETA0_RAD::Float64
-    JGANDALF_BETA1_RAD::Float64
-    JGANDALF_CHI2::Float64
-    JGANDALF_LAMBDA::Float64
-    JGANDALF_NUMBER_OF_HITS::Float64
-    JGANDALF_NUMBER_OF_ITERATIONS::Float64
-    JMUONENERGY::Bool
-    JMUONGANDALF::Bool
-    JMUONPREFIT::Bool
-    JMUONSIMPLEX::Bool
-    JMUONSTART::Bool
-    JSTART_LENGTH_METRES::Float64
-    JSTART_NPE_MIP::Float64
-    JSTART_NPE_MIP_TOTAL::Float64
-    JVETO_NPE::Float64
-    JVETO_NUMBER_OF_HITS::Float64
-    dir_x::Float64
-    dir_y::Float64
-    dir_z::Float64
-    energy::Float64
-    group_id::Int64
-    id::Int64
-    length::Float64
-    likelihood::Float64
-    pos_x::Float64
-    pos_y::Float64
-    pos_z::Float64
-    rec_type::Int64
-    time::Float64
-end
 
 struct TimesliceInfo
     frame_index::UInt32
@@ -242,10 +188,6 @@ struct SnapshotHit <: AbstractDAQHit
     tot::ToT
 end
 
-# Base.show(io::IO, h::AbstractDAQHit) = begin
-#     print(io, "$(typeof(h))(channel_id=$(h.channel_id), dom_id=$(h.dom_id), t=$(h.t), tot=$(h.tot)")
-# end
-
 struct MCHit <: AbstractHit
     a::Float32
     origin::UInt32
@@ -310,28 +252,7 @@ Base.show(io::IO, d::DAQEvent) = begin
 end
 
 
-struct DAQEventFile
-    filename
-    n_events
-    _fobj::HDF5.HDF5File
-    _hit_indices
-    _event_infos::Vector{DAQEventInfo}
-
-    function DAQEventFile(filename)
-        fobj = HDF5.h5open(filename, "r")
-        event_infos = read_compound(fobj, "/event_info", DAQEventInfo)
-        hit_indices = read_indices(fobj, "/hits")
-
-        new(filename, length(event_infos), fobj, hit_indices, event_infos)
-    end
-end
-
-Base.show(io::IO, f::DAQEventFile) = begin
-    print(io, "DAQEventFile(\"$(f.filename)\")")
-end
-
-
-function read_io(io::IOBuffer, t::T) where T
+function Base.read(io::IOBuffer, ::Type{T}) where T<:DAQEvent
     length = read(io, Int32)
     type = read(io, Int32)
     det_id = read(io, Int32)
@@ -373,73 +294,5 @@ function read_io(io::IOBuffer, t::T) where T
         push!(hits, Hit(channel_id, dom_id, time, tot, triggered))
     end
 
-    DAQEvent(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_hits, hits)
-end
-
-struct MCEventReader
-    filename::AbstractString
-    detx::AbstractString
-    _fobj::HDF5.HDF5File
-    _calib::Calibration
-    _event_infos::Vector{MCEventInfo}
-    _mc_tracks::Dict{Int64, Vector{MCTrack}}
-    _length::UInt64
-
-    function MCEventReader(filename, detx)
-        fobj = h5open(filename, "r")
-        calib = read_calibration(detx)
-        event_infos = read_compound(fobj, "/event_info", MCEventInfo)
-
-        mc_tracks = Dict{Int64}{Vector{MCTrack}}()
-        for track in read_compound(fobj, "/mc_tracks", MCTrack)
-            group_id = track.group_id + 1
-            if !haskey(mc_tracks, group_id)
-                mc_tracks[group_id] = Vector{MCTrack}()
-            end
-            push!(mc_tracks[group_id], track)
-        end
-
-        n_events = length(event_infos)
-        new(filename, detx, fobj, calib, event_infos, mc_tracks, n_events)
-    end
-end
-
-
-Base.show(io::IO, e::MCEventReader) = begin
-    print(io, join(["MCEventReader: $(e.filename)",
-          "       detx: $(e.detx)",
-          "     events: $(length(e))"], "\n"))
-end
-
-Base.length(e::MCEventReader) = e._length
-Base.firstindex(E::MCEventReader) = 0
-Base.lastindex(E::MCEventReader) = length(E)
-
-
-mutable struct MCEvent
-    hits::Vector{Hit}
-    mc_tracks::Vector{MCTrack}
-    info::MCEventInfo
-    calib::Calibration
-end
-
-function Base.iterate(iter::MCEventReader)
-    group_id = 0
-    (iter[group_id], group_id)
-end
-
-function Base.iterate(iter::MCEventReader, state)
-    group_id = state + 1
-    if group_id >= length(iter)
-        return nothing
-    end
-    return (iter[group_id], group_id)
-end
-
-function Base.getindex(E::MCEventReader, i::Int)
-    0 <= i < length(E) || throw(BoundsError(E, i))
-    hits = read_hits(E._fobj, i)
-    mc_tracks = E._mc_tracks[i+1]
-    event_info = E._event_infos[i+1]
-    MCEvent(hits, mc_tracks, event_info, E._calib)
+    T(det_id, run_id, timeslice_id, timestamp, ticks, trigger_counter, trigger_mask, overlays, n_triggered_hits, triggered_hits, n_hits, hits)
 end
