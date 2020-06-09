@@ -226,18 +226,3 @@ function nphes(tot)
     end
     return 40.0 + (255 - tot)*2.0
 end
-
-
-"""
-$(SIGNATURES)
-
-Return the time slewing for a ToT.
-"""
-function slew(tot)
-    p₀ = 7.70824
-    p₁ = 0.00879447
-    p₂ = -0.0621101
-    p₃ = -1.90226
-
-    p₀ * ℯ^(p₁*√tot + p₂*tot) + p₃
-end
