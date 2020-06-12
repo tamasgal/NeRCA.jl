@@ -1,5 +1,16 @@
 println("Loading libraries...")
+using Distributed
 using NeRCA
+using ProgressMeter
+
+addprocs(8)
+
+@everywhere begin
+    using Pkg
+    Pkg.activate(".")
+    using NeRCA
+    using ProgressMeter
+end
 
 if length(ARGS) < 2
     println("Usage: ./single_du_fit.jl DETX ROOTFILE")
@@ -16,11 +27,13 @@ function main()
     calib = Calibration(DETX)
     f = NeRCA.OnlineFile(ROOTFILE)
 
-    sparams = NeRCA.SingleDURecoParams()
+    sparams = NeRCA.SingleDURecoParams(max_iter=200)
 
     event_shits = NeRCA.read_snapshot_hits(f)
     event_thits = NeRCA.read_triggered_hits(f)
-    for (shits, thits) in zip(event_shits, event_thits)
+    println("$(length(event_shits)) events found")
+    @showprogress pmap(zip(event_shits, event_thits)) do (shits, thits)
+    # for (shits, thits) in zip(event_shits, event_thits)
         hits = calibrate(calib, NeRCA.combine(shits, thits))
 
 
@@ -38,7 +51,6 @@ function main()
                 continue
             end
             fit = NeRCA.single_du_fit(du_hits, sparams)
-            println(fit)
         end
     end
 end
