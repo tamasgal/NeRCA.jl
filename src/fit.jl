@@ -419,6 +419,7 @@ end
     multiplicity::Int = 3
     min_hits::Int = 3
     Δt::Float64 = 10
+    max_iter::Int = 500
 end
 
 DrWatson.default_prefix(s::SingleDURecoParams) = "SingleDUReco"
@@ -460,7 +461,14 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
 
     qfunc = SingleDUMinimiser(shits, triggered(du_hits))
 
-    model = Model(optimizer_with_attributes(Ipopt.Optimizer, "print_level" => print_level, "tol" => 1e-3))
+    model = Model(
+        optimizer_with_attributes(
+            Ipopt.Optimizer,
+            "print_level" => print_level,
+            "tol" => 1e-3,
+            "max_iter" => par.max_iter
+        )
+    )
 
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
