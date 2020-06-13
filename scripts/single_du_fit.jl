@@ -1,7 +1,7 @@
 println("Loading libraries...")
 using Distributed
 
-# addprocs(4)
+addprocs(4)
 
 @everywhere begin
     using Pkg
@@ -25,15 +25,15 @@ struct RecoFile{T}
             @warn "Reconstruction file '$filepath' present, overwriting..."
         end
         fobj = open(filepath, "w")
-        write(fobj, join(["event_id", fieldnames(T)...], ",") * "\n")
+        write(fobj, join(["event_id", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
         new(filepath, fobj)
     end
 end
 
 close(f::RecoFile) = close(f._fobj)
 
-function Base.write(f::RecoFile, event_id, s::SingleDUParams)
-    write(f._fobj, string(event_id) * ",")
+function Base.write(f::RecoFile, event_id, Q, n_doms, n_hits, n_triggered_hits, s::SingleDUParams)
+    write(f._fobj, "$event_id,$Q,$n_doms,$n_hits,$n_triggered_hits,")
     write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
     write(f._fobj, "\n")
 end
@@ -74,11 +74,12 @@ function main()
 
         for (idx, du) in enumerate(dus)
             du_hits = filter(h->h.du == du, hits)
-            if length(triggered(du_hits))== 0
+            n_triggered_hits = length(triggered(du_hits))
+            if n_triggered_hits == 0
                 continue
             end
             fit = NeRCA.single_du_fit(du_hits, sparams)
-            write(recofile, event_id, fit.sdp)
+            write(recofile, event_id, fit.Q, n_doms, length(du_hits), n_triggered_hits, fit.sdp)
         end
     end
 end
