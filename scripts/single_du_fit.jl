@@ -1,36 +1,65 @@
 println("Loading libraries...")
 using Distributed
 
-addprocs(4)
+# addprocs(4)
 
 @everywhere begin
     using Pkg
     Pkg.activate(".")
     using NeRCA
+    using DrWatson
     using ProgressMeter
 end
 
-if length(ARGS) < 2
-    println("Usage: ./single_du_fit.jl DETX ROOTFILE")
+if length(ARGS) < 3
+    println("Usage: ./single_du_fit.jl OUTPATH DETX ROOTFILE")
     exit(1)
 end
 
-const DETX = ARGS[1]
-const ROOTFILE = ARGS[2]
+struct RecoFile{T}
+    filepath::AbstractString
+    _fobj
 
+    function RecoFile{T}(filepath::AbstractString) where T
+        if isfile(filepath)
+            @warn "Reconstruction file '$filepath' present, overwriting..."
+        end
+        fobj = open(filepath, "w")
+        write(fobj, join(["event_id", fieldnames(T)...], ",") * "\n")
+        new(filepath, fobj)
+    end
+end
+
+close(f::RecoFile) = close(f._fobj)
+
+function Base.write(f::RecoFile, event_id, s::SingleDUParams)
+    write(f._fobj, string(event_id) * ",")
+    write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
+    write(f._fobj, "\n")
+end
 
 function main()
     println("Starting reconstruction.")
 
-    calib = Calibration(DETX)
-    f = NeRCA.OnlineFile(ROOTFILE)
+    sparams = SingleDURecoParams(max_iter=200)
 
-    sparams = NeRCA.SingleDURecoParams(max_iter=200)
+    outpath = ARGS[1]
+    detx = ARGS[2]
+    rootfile = ARGS[3]
+    outfile = joinpath(outpath, basename(rootfile) * ".ROyFit.csv")
+
+    mkpath(outpath)
+    recofile = RecoFile{SingleDUParams}(outfile)
+
+    calib = Calibration(detx)
+    f = NeRCA.OnlineFile(rootfile)
 
     event_shits = NeRCA.read_snapshot_hits(f)
     event_thits = NeRCA.read_triggered_hits(f)
-    println("$(length(event_shits)) events found")
-    @showprogress pmap(zip(event_shits, event_thits)) do (shits, thits)
+    n_events = length(event_shits)
+    println("$n_events events found")
+
+    @showprogress pmap(zip(1:n_events, event_shits, event_thits)) do (event_id, shits, thits)
     # for (shits, thits) in zip(event_shits, event_thits)
         hits = calibrate(calib, NeRCA.combine(shits, thits))
 
@@ -49,8 +78,14 @@ function main()
                 continue
             end
             fit = NeRCA.single_du_fit(du_hits, sparams)
+            write(recofile, event_id, fit.sdp)
         end
     end
 end
+
+
+function initialise_recofile(path)
+end
+
 
 main()
