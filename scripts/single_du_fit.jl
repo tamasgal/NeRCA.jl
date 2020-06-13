@@ -1,9 +1,7 @@
 println("Loading libraries...")
 using Distributed
-using NeRCA
-using ProgressMeter
 
-addprocs(8)
+addprocs(4)
 
 @everywhere begin
     using Pkg
