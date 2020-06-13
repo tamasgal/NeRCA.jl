@@ -9,6 +9,28 @@ addprocs(4)
     using NeRCA
     using DrWatson
     using ProgressMeter
+
+    struct RecoFile{T}
+        filepath::AbstractString
+        _fobj
+
+        function RecoFile{T}(filepath::AbstractString) where T
+            if isfile(filepath)
+                @warn "Reconstruction file '$filepath' present, overwriting..."
+            end
+            fobj = open(filepath, "w")
+            write(fobj, join(["event_id", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
+            new(filepath, fobj)
+        end
+    end
+
+    close(f::RecoFile) = close(f._fobj)
+
+    function Base.write(f::RecoFile, event_id, Q, n_doms, n_hits, n_triggered_hits, s::SingleDUParams)
+        write(f._fobj, "$event_id,$Q,$n_doms,$n_hits,$n_triggered_hits,")
+        write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
+        write(f._fobj, "\n")
+    end
 end
 
 if length(ARGS) < 3
@@ -16,27 +38,6 @@ if length(ARGS) < 3
     exit(1)
 end
 
-struct RecoFile{T}
-    filepath::AbstractString
-    _fobj
-
-    function RecoFile{T}(filepath::AbstractString) where T
-        if isfile(filepath)
-            @warn "Reconstruction file '$filepath' present, overwriting..."
-        end
-        fobj = open(filepath, "w")
-        write(fobj, join(["event_id", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
-        new(filepath, fobj)
-    end
-end
-
-close(f::RecoFile) = close(f._fobj)
-
-function Base.write(f::RecoFile, event_id, Q, n_doms, n_hits, n_triggered_hits, s::SingleDUParams)
-    write(f._fobj, "$event_id,$Q,$n_doms,$n_hits,$n_triggered_hits,")
-    write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
-    write(f._fobj, "\n")
-end
 
 function main()
     println("Starting reconstruction.")
