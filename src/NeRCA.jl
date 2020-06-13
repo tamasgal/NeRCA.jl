@@ -34,8 +34,8 @@ export
     ztplot,
     savefigs,
     most_frequent,
+    SingleDUParams, SingleDURecoParams,
     @ip_str
-
 
 include("constants.jl")
 include("types.jl")
