@@ -74,7 +74,7 @@ function main()
 
         for du in dus
             du_hits = filter(h->h.du == du, hits)
-            triggerd_du_hits = triggered(du_hits)
+            triggered_du_hits = triggered(du_hits)
             n_triggered_hits = length(triggered_du_hits)
             n_triggered_doms = length(unique(h->h.dom_id, triggered_du_hits))
             if n_triggered_hits == 0
