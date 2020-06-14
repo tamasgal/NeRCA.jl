@@ -19,15 +19,15 @@ addprocs(4)
                 @warn "Reconstruction file '$filepath' present, overwriting..."
             end
             fobj = open(filepath, "w")
-            write(fobj, join(["event_id", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
+            write(fobj, join(["event_id", "du", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
             new(filepath, fobj)
         end
     end
 
     close(f::RecoFile) = close(f._fobj)
 
-    function Base.write(f::RecoFile, event_id, Q, n_doms, n_hits, n_triggered_hits, s::SingleDUParams)
-        write(f._fobj, "$event_id,$Q,$n_doms,$n_hits,$n_triggered_hits,")
+    function Base.write(f::RecoFile, event_id, du, Q, n_triggered_doms, n_hits, n_triggered_hits, s::SingleDUParams)
+        write(f._fobj, "$event_id,$du,$Q,$n_triggered_doms,$n_hits,$n_triggered_hits,")
         write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
         write(f._fobj, "\n")
     end
@@ -71,16 +71,17 @@ function main()
         triggered_dus = sort(unique(map(h->h.du, triggered_hits)))
         n_dus = length(dus)
         n_triggered_dus = length(triggered_dus)
-        n_doms = length(unique(h->h.dom_id, triggered_hits))
 
-        for (idx, du) in enumerate(dus)
+        for du in dus
             du_hits = filter(h->h.du == du, hits)
-            n_triggered_hits = length(triggered(du_hits))
+            triggerd_du_hits = triggered(du_hits)
+            n_triggered_hits = length(triggered_du_hits)
+            n_triggered_doms = length(unique(h->h.dom_id, triggered_du_hits))
             if n_triggered_hits == 0
                 continue
             end
             fit = NeRCA.single_du_fit(du_hits, sparams)
-            write(recofile, event_id, fit.Q, n_doms, length(du_hits), n_triggered_hits, fit.sdp)
+            write(recofile, event_id, du, fit.Q, n_triggered_doms, length(du_hits), n_triggered_hits, fit.sdp)
         end
     end
 end
