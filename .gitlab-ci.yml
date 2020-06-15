@@ -4,7 +4,7 @@ variables:
 .test_template: &test_definition
   script:
     - mkdir -p "$CI_PROJECT_DIR/.julia" && ls -al "$CI_PROJECT_DIR/.julia"
-    - julia -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
+    - julia -e 'using Pkg; Pkg.add(pwd()); Pkg.build("NeRCA"); Pkg.test("NeRCA"; coverage = true)'
     - julia -e 'using Pkg; Pkg.add("Coverage"); 
       import NeRCA; cd(joinpath(dirname(pathof(NeRCA)), ".."));
       using Coverage; cl, tl = get_summary(process_folder());
