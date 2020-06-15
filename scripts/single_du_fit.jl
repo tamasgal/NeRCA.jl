@@ -1,36 +1,28 @@
 println("Loading libraries...")
-using Distributed
+using NeRCA
+using DrWatson
+using ProgressMeter
 
-addprocs(4)
+struct RecoFile{T}
+    filepath::AbstractString
+    _fobj
 
-@everywhere begin
-    using Pkg
-    Pkg.activate(".")
-    using NeRCA
-    using DrWatson
-    using ProgressMeter
-
-    struct RecoFile{T}
-        filepath::AbstractString
-        _fobj
-
-        function RecoFile{T}(filepath::AbstractString) where T
-            if isfile(filepath)
-                @warn "Reconstruction file '$filepath' present, overwriting..."
-            end
-            fobj = open(filepath, "w")
-            write(fobj, join(["event_id", "du", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
-            new(filepath, fobj)
+    function RecoFile{T}(filepath::AbstractString) where T
+        if isfile(filepath)
+            @warn "Reconstruction file '$filepath' present, overwriting..."
         end
+        fobj = open(filepath, "w")
+        write(fobj, join(["event_id", "du", "Q", "n_triggered_doms", "n_hits", "n_triggered_hits", fieldnames(T)...], ",") * "\n")
+        new(filepath, fobj)
     end
+end
 
-    close(f::RecoFile) = close(f._fobj)
+close(f::RecoFile) = close(f._fobj)
 
-    function Base.write(f::RecoFile, event_id, du, Q, n_triggered_doms, n_hits, n_triggered_hits, s::SingleDUParams)
-        write(f._fobj, "$event_id,$du,$Q,$n_triggered_doms,$n_hits,$n_triggered_hits,")
-        write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
-        write(f._fobj, "\n")
-    end
+function Base.write(f::RecoFile, event_id, du, Q, n_triggered_doms, n_hits, n_triggered_hits, s::SingleDUParams)
+    write(f._fobj, "$event_id,$du,$Q,$n_triggered_doms,$n_hits,$n_triggered_hits,")
+    write(f._fobj, join([getfield(s, field) for field in fieldnames(typeof(s))], ","))
+    write(f._fobj, "\n")
 end
 
 if length(ARGS) < 3
@@ -60,10 +52,8 @@ function main()
     n_events = length(event_shits)
     println("$n_events events found")
 
-    @showprogress pmap(zip(1:n_events, event_shits, event_thits)) do (event_id, shits, thits)
-    # for (shits, thits) in zip(event_shits, event_thits)
+    @showprogress for (event_id, shits, thits) in zip(1:n_events, event_shits, event_thits))
         hits = calibrate(calib, NeRCA.combine(shits, thits))
-
 
         triggered_hits = triggered(hits)
 
@@ -84,10 +74,6 @@ function main()
             write(recofile, event_id, du, fit.Q, n_triggered_doms, length(du_hits), n_triggered_hits, fit.sdp)
         end
     end
-end
-
-
-function initialise_recofile(path)
 end
 
 
