@@ -61,7 +61,7 @@ mtps, mtp_ids = NeRCA.count_multiplicities(sorted_hits, 10)
 event_shits = NeRCA.read_snapshot_hits(NeRCA.OnlineFile(ONLINEFILE))
 event_thits = NeRCA.read_triggered_hits(NeRCA.OnlineFile(ONLINEFILE))
 for (shits, thits) in zip(event_shits, event_thits)
-    hits = NeRCA.combine(shits, thits)
+    local hits = NeRCA.combine(shits, thits)
     @test length(hits) == length(shits)
     @test length(NeRCA.triggered(hits)) == length(thits)
 end
