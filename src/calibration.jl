@@ -93,5 +93,5 @@ $(SIGNATURES)
 
 Return the time slewing for a ToT.
 """
-slew(tot) = SLEWS[tot + 1]
+slew(tot) = @inbounds ifelse(tot < 256, SLEWS[tot + 1], SLEWS[end])
 slew(hit::AbstractHit) = slew(hit.tot)
