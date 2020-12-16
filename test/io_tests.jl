@@ -65,7 +65,7 @@ end
 
 @testset "DAQ readout" begin
     f = open(IO_EVT)
-    daqevent = read(f, NeRCA.DAQEvent)
+    daqevent = read(f, NeRCA.DAQEvent; legacy=true)
     @test 49 == daqevent.det_id
     @test 8142 == daqevent.run_id
     @test 107050 == daqevent.timeslice_id

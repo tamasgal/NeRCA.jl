@@ -103,10 +103,11 @@ is_mxshower(e::DAQEvent) = Bool(e.trigger_mask & 4 > 0)
 
 # Online DAQ readout
 
-function Base.read(s::IO, ::Type{T}) where T<:DAQEvent
+function Base.read(s::IO, ::Type{T}; legacy=false) where T<:DAQEvent
     length = read(s, Int32)
     type = read(s, Int32)
-    version = read(s, Int16)
+    version = 0::Int16
+    !legacy && (version = read(s, Int16))
     det_id = read(s, Int32)
     run_id = read(s, Int32)
     timeslice_id = read(s, Int32)
