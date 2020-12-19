@@ -27,7 +27,7 @@ export
     AbstractDAQHit, AbstractMCHit,
     Hit, SnapshotHit, CalibratedHit, MCHit, TimesliceHit,
     DAQEvent,
-    is_mxshower, is_3dmuon, is_3dshower,
+    ismxshower, is3dmuon, is3dshower, isnb,
     Calibration, calibrate,
     duhits, domhits, nfoldhits, triggered,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,

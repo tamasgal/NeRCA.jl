@@ -96,10 +96,13 @@ end
 @deprecate read_calibration(filename::AbstractString) Calibration(filename::AbstractString)
 
 # Triggers
-is_3dmuon(e::DAQEvent) = Bool(e.trigger_mask & 16 > 0)
-is_3dshower(e::DAQEvent) = Bool(e.trigger_mask & 2 > 0)
-is_mxshower(e::DAQEvent) = Bool(e.trigger_mask & 4 > 0)
-
+is3dmuon(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGER3DMUON)
+is3dshower(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGER3DSHOWER)
+ismxshower(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGERMXSHOWER)
+isnb(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGERNB)
+@deprecate is_3dmuon is3dmuon
+@deprecate is_3dshower is3dshower
+@deprecate is_mxshower ismxshower
 
 # Online DAQ readout
 
