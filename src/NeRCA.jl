@@ -37,12 +37,12 @@ export
     SingleDUParams, SingleDURecoParams,
     @ip_str
 
-include("daqdatatypes.jl")
-include("fitparameters.jl")
-include("reconstruction.jl")
-include("trigger.jl")
-include("w2list_genhen.jl")
-include("w2list_gseagen.jl")
+include("definitions/daqdatatypes.jl")
+include("definitions/fitparameters.jl")
+include("definitions/reconstruction.jl")
+include("definitions/trigger.jl")
+include("definitions/w2list_genhen.jl")
+include("definitions/w2list_gseagen.jl")
 
 include("constants.jl")
 include("types.jl")
