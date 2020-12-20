@@ -96,10 +96,10 @@ end
 @deprecate read_calibration(filename::AbstractString) Calibration(filename::AbstractString)
 
 # Triggers
-is3dmuon(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGER3DMUON)
-is3dshower(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGER3DSHOWER)
-ismxshower(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGERMXSHOWER)
-isnb(e::DAQEvent) = nthbitset(e.trigger_mask, Trigger.JTRIGGERNB)
+is3dmuon(e::DAQEvent) = nthbitset(Trigger.JTRIGGER3DMUON, e.trigger_mask)
+is3dshower(e::DAQEvent) = nthbitset(Trigger.JTRIGGER3DSHOWER, e.trigger_mask)
+ismxshower(e::DAQEvent) = nthbitset(Trigger.JTRIGGERMXSHOWER, e.trigger_mask)
+isnb(e::DAQEvent) = nthbitset(Trigger.JTRIGGERNB, e.trigger_mask)
 @deprecate is_3dmuon is3dmuon
 @deprecate is_3dshower is3dshower
 @deprecate is_mxshower ismxshower

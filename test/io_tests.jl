@@ -78,9 +78,9 @@ end
     @test 6 == length(daqevent.triggered_hits)
     @test 106 == daqevent.n_hits
     @test 106 == length(daqevent.hits)
-    @test !NeRCA.ismxshower(daqevent)
     @test NeRCA.is3dshower(daqevent)
-    @test NeRCA.is3dmuon(daqevent)
-    @test NeRCA.isnb(daqevent)
+    @test !NeRCA.ismxshower(daqevent)
+    @test !NeRCA.is3dmuon(daqevent)
+    @test !NeRCA.isnb(daqevent)
     close(f)
 end
