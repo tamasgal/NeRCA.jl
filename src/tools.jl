@@ -48,6 +48,8 @@ Examples
 ========
 
 ```jldoctest
+julia> using NeRCA
+
 julia> struct PMT
          dom_id
          time
