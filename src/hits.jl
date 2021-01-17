@@ -42,10 +42,7 @@ Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
 """
 function nfoldhits(hits::Vector{T}, Δt, n) where {T<:AbstractDAQHit}
-    hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
-    for hit ∈ sort(hits)
-        push!(hit_map[hit.dom_id], hit)
-    end
+    hit_map = domhits(hits)
     chits = Vector{T}()
     for (dom_id, dom_hits) ∈ hit_map
         bag = Vector{T}()
