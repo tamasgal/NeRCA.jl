@@ -8,7 +8,6 @@ using Sockets
 using DocStringExtensions
 using DrWatson
 using Parameters
-using DataStructures
 using StaticArrays
 using UnROOT
 using PGFPlotsX

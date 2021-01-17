@@ -174,12 +174,17 @@ end
 """
 $(SIGNATURES)
 
-Sort hits by DOM ID and put them into a dictionary.
+Categorise hits by DOM ID and put them into a dictionary of DOM ID=>Vector{Hit}.
 """
 function domhits(hits::Vector{T}) where {T<:AbstractDAQHit}
-    hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
+    field = :dom_id
+    hit_map = Dict{fieldtype(T, field), Vector{T}}()
     for hit ∈ hits
-        push!(hit_map[hit.dom_id], hit)
+        key = hit.dom_id
+        if !haskey(hit_map, key)
+            hit_map[key] = T[]
+        end
+        push!(hit_map[key], hit)
     end
     hit_map
 end
@@ -188,12 +193,17 @@ end
 """
 $(SIGNATURES)
 
-Sort hits by DU and put them into a dictionary.
+Categorise hits by DU and put them into a dictionary of DU=>Vector{Hit}.
 """
 function duhits(hits::Vector{T}) where {T<:CalibratedHit}
-    hit_map = DefaultDict{Integer}{Vector{T}}(() -> T[])
+    field = :du
+    hit_map = Dict{fieldtype(T, field), Vector{T}}()
     for hit ∈ hits
-        push!(hit_map[hit.du], hit)
+        key = getfield(hit, key)
+        if !haskey(hit_map, key)
+            hit_map[key] = T[]
+        end
+        push!(hit_map[key], hit)
     end
     hit_map
 end
