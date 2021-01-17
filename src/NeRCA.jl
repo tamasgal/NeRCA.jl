@@ -31,7 +31,7 @@ export
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
     ztplot,
     savefigs,
-    most_frequent,
+    most_frequent, categorize,
     SingleDUParams, SingleDURecoParams,
     @ip_str
 
