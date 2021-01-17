@@ -12,7 +12,6 @@ using StaticArrays
 using UnROOT
 using PGFPlotsX
 using RecipesBase
-using Colors
 using JuMP
 using Ipopt
 using IntervalArithmetic
