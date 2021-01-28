@@ -422,8 +422,6 @@ end
     max_iter::Int = 500
 end
 
-DrWatson.default_prefix(s::SingleDURecoParams) = "SingleDUReco"
-
 
 function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
     brightest_floor = NeRCA.most_frequent(h -> h.floor, du_hits)

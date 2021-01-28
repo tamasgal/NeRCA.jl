@@ -6,7 +6,6 @@ using Printf
 using Sockets
 
 using DocStringExtensions
-using DrWatson
 using Parameters
 using StaticArrays
 using UnROOT
