@@ -2,7 +2,7 @@ name = "NeRCA"
 uuid = "89b7c20c-a96a-11e9-35df-35fba0891eb2"
 authors = ["Tamas Gal <tgal@km3net.de>"]
 repo = "https://github.com/tamasgal/NeRCA.jl.git"
-version = "0.6.2"
+version = "0.6.3"
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
