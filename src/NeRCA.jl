@@ -10,6 +10,7 @@ using Parameters
 using StaticArrays
 using UnROOT
 using PGFPlotsX
+using Colors
 using RecipesBase
 using JuMP
 using Ipopt
