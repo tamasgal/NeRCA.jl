@@ -6,6 +6,8 @@ struct OnlineFile
     OnlineFile(filename::AbstractString) = new(UnROOT.ROOTFile(filename))
 end
 
+Base.close(f::OnlineFile) = close(f.fobj)
+
 struct KM3NETDAQSnapshotHit <: UnROOT.CustomROOTStruct
     dom_id::Int32
     channel_id::UInt8
@@ -34,6 +36,40 @@ function UnROOT.readtype(io, T::Type{KM3NETDAQTriggeredHit})
     vers = read(io, UInt16)
     trigger_mask = UnROOT.readtype(io, UInt64)
     T(dom_id, channel_id, tdc, tot, trigger_mask)
+end
+
+
+struct KM3NETDAQEventHeader
+    detector_id::Int32
+    run::Int32
+    frame_index::Int32
+    UTC_seconds::UInt32
+    UTC_16nanosecondcycles::UInt32
+    trigger_counter::UInt64
+    trigger_mask::UInt64
+    overlays::UInt32
+end
+packedsizeof(::Type{KM3NETDAQEventHeader}) = 76
+
+function UnROOT.readtype(io::IO, T::Type{KM3NETDAQEventHeader})
+    skip(io, 18)
+    detector_id = UnROOT.readtype(io, Int32)
+    run = UnROOT.readtype(io, Int32)
+    frame_index = UnROOT.readtype(io, Int32)
+    skip(io, 6)
+    UTC_seconds = UnROOT.readtype(io, UInt32)
+    UTC_16nanosecondcycles = UnROOT.readtype(io, UInt32)
+    skip(io, 6)
+    trigger_counter = UnROOT.readtype(io, UInt64)
+    skip(io, 6)
+    trigger_mask = UnROOT.readtype(io, UInt64)
+    overlays = UnROOT.readtype(io, UInt32)
+    T(detector_id, run, frame_index, UTC_seconds, UTC_16nanosecondcycles, trigger_counter, trigger_mask, overlays)
+end
+
+function read_headers(f::OnlineFile)
+    data, offsets = UnROOT.array(f, "KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"; raw=true)
+    UnROOT.splitup(data, offsets, KM3NETDAQEventHeader; jagged=false)
 end
 
 function read_snapshot_hits(f::OnlineFile)
