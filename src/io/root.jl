@@ -68,7 +68,7 @@ function UnROOT.readtype(io::IO, T::Type{KM3NETDAQEventHeader})
 end
 
 function read_headers(f::OnlineFile)
-    data, offsets = UnROOT.array(f, "KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"; raw=true)
+    data, offsets = UnROOT.array(f.fobj, "KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"; raw=true)
     UnROOT.splitup(data, offsets, KM3NETDAQEventHeader; jagged=false)
 end
 
