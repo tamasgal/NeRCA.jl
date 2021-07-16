@@ -19,17 +19,17 @@ of the snapshot hits.
 function combine(snapshot_hits::Vector{KM3NETDAQSnapshotHit}, triggered_hits::Vector{KM3NETDAQTriggeredHit})
     triggermasks = Dict{Tuple{UInt8, Int32, Int32, UInt8}, Int64}()
     for hit ∈ triggered_hits
-        triggermasks[(hit.channel_id, hit.dom_id, hit.time, hit.tot)] = hit.trigger_mask
+        triggermasks[(hit.channel_id, hit.dom_id, hit.t, hit.tot)] = hit.trigger_mask
     end
     n = length(snapshot_hits)
     hits = sizehint!(Vector{Hit}(), n)
     for hit in snapshot_hits
         channel_id = hit.channel_id
         dom_id = hit.dom_id
-        time = hit.time
+        t = hit.t
         tot = hit.tot
-        triggermask = get(triggermasks, (channel_id, dom_id, time, tot), 0)
-        push!(hits, Hit(channel_id, dom_id, time, tot, triggermask))
+        triggermask = get(triggermasks, (channel_id, dom_id, t, tot), 0)
+        push!(hits, Hit(channel_id, dom_id, t, tot, triggermask))
     end
     hits
 end

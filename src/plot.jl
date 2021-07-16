@@ -108,8 +108,8 @@ Plot recipe to plot simple z-t-plots.
     @series begin
         label := label
         if multiplicities
-            markersize := count_multiplicities(hits)[1]
-            markeralpha := 0.8
+            markersize := count_multiplicities(hits)[1] * sqrt(markersize)
+            markeralpha := 0.5
         end
         [h.t - t₀ for h in hits], [h.pos.z for h in hits]
     end
@@ -117,7 +117,7 @@ Plot recipe to plot simple z-t-plots.
     if highlight_triggered
         @series begin
             label := "triggered"
-            markersize := 1
+            markersize := √markersize
             marker := :x
             markerstrokewidth := 1
             [h.t - t₀ for h in thits], [h.pos.z for h in thits]

@@ -467,7 +467,6 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
             "max_iter" => par.max_iter
         )
     )
-
     register(model, :qfunc, 6, qfunc, autodiff=true)
 
     max_z = maximum([h.pos.z for h in shits]) + par.floor_distance

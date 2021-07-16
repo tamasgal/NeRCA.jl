@@ -11,7 +11,7 @@ Base.close(f::OnlineFile) = close(f.fobj)
 struct KM3NETDAQSnapshotHit <: UnROOT.CustomROOTStruct
     dom_id::Int32
     channel_id::UInt8
-    time::Int32
+    t::Int32
     tot::UInt8
 end
 function UnROOT.readtype(io, T::Type{KM3NETDAQSnapshotHit})
@@ -21,7 +21,7 @@ end
 struct KM3NETDAQTriggeredHit <: UnROOT.CustomROOTStruct
     dom_id::Int32
     channel_id::UInt8
-    time::Int32
+    t::Int32
     tot::UInt8
     trigger_mask::UInt64
 end
@@ -82,54 +82,6 @@ function read_triggered_hits(f::OnlineFile)
     UnROOT.splitup(data, offsets, KM3NETDAQTriggeredHit, skipbytes=10)
 end
 
-function Calibration(filename::AbstractString)
-    lines = readlines(filename)
-    filter!(e->!startswith(e, "#") && !isempty(strip(e)), lines)
-
-    if 'v' ∈ first(lines)
-        det_id, version = map(x->parse(Int,x), split(first(lines), 'v'))
-        n_doms = parse(Int, lines[4])
-        idx = 5
-    else
-        det_id, n_doms = map(x->parse(Int,x), split(first(lines)))
-        version = 1
-        idx = 2
-    end
-
-    pos = Dict{Int32,Vector{NeRCA.Position}}()
-    dir = Dict{Int32,Vector{NeRCA.Direction}}()
-    t0s = Dict{Int32,Vector{Float64}}()
-    dus = Dict{Int32,UInt8}()
-    floors = Dict{Int32,UInt8}()
-    omkeys = Dict{Int32,OMKey}()
-
-    max_z = 0.0
-    for dom ∈ 1:n_doms
-        dom_id, du, floor, n_pmts = map(x->parse(Int,x), split(lines[idx]))
-        pos[dom_id] = Vector{NeRCA.Position}()
-        dir[dom_id] = Vector{NeRCA.Direction}()
-        t0s[dom_id] = Vector{Float64}()
-        dus[dom_id] = du
-        floors[dom_id] = floor
-
-        for pmt in 1:n_pmts
-            l = split(lines[idx+pmt])
-            pmt_id = parse(Int,first(l))
-            x, y, z, dx, dy, dz = map(x->parse(Float64, x), l[2:7])
-            max_z = max(max_z, z)
-            t0 = parse(Float64,l[8])
-            push!(pos[dom_id], Position(x, y, z))
-            push!(dir[dom_id], Direction(dx, dy, dz))
-            push!(t0s[dom_id], t0)
-            omkeys[pmt_id] = OMKey(dom_id, pmt-1)
-        end
-        idx += n_pmts + 1
-    end
-    n_dus = length(unique(values(dus)))
-    Calibration(det_id, pos, dir, t0s, dus, floors, omkeys, max_z, n_dus)
-end
-
-@deprecate read_calibration(filename::AbstractString) Calibration(filename::AbstractString)
 
 # Triggers
 is3dmuon(e::DAQEvent) = nthbitset(Trigger.JTRIGGER3DMUON, e.trigger_mask)
