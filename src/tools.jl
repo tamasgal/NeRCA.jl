@@ -47,7 +47,7 @@ $(TYPEDSIGNATURES)
 Examples
 ========
 
-```jldoctest
+```
 julia> using NeRCA
 
 julia> struct PMT
@@ -58,9 +58,9 @@ julia> struct PMT
 julia> pmts = [PMT(2, 10.4), PMT(4, 23.5), PMT(2, 42.0)];
 
 julia> categorize(:dom_id, pmts)
-Dict{Any,Array{PMT,1}} with 2 entries:
-  4 => PMT[PMT(4, 23.5)]
-  2 => PMT[PMT(2, 10.4), PMT(2, 42.0)]
+Dict{Any, Vector{PMT}} with 2 entries:
+  4 => [PMT(4, 23.5)]
+  2 => [PMT(2, 10.4), PMT(2, 42.0)]
 ```
 """
 @inline function categorize(field::Symbol, elements::Vector)
