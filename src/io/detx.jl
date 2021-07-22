@@ -19,7 +19,8 @@ function Calibration(filename::AbstractString)
     t0s = Dict{Int32,Vector{Float64}}()
     dus = Dict{Int32,UInt8}()
     floors = Dict{Int32,UInt8}()
-    omkeys = Dict{Int32,OMKey}()
+    omkeys = Dict{OMKey,Int32}()
+    pmts = Dict{Int32,Tuple{Int32, UInt8}}()  # DOM ID and channel ID
 
     max_z = 0.0
     for mod ∈ 1:n_modules
@@ -44,12 +45,13 @@ function Calibration(filename::AbstractString)
             push!(pos[module_id], Position(x, y, z))
             push!(dir[module_id], Direction(dx, dy, dz))
             push!(t0s[module_id], t0)
-            omkeys[pmt_id] = OMKey(module_id, pmt-1)
+            omkeys[OMKey(du, floor)] = module_id
+            pmts[pmt_id] = (module_id, pmt-1)
         end
         idx += n_pmts + 1
     end
     n_dus = length(unique(values(dus)))
-    Calibration(det_id, pos, dir, t0s, dus, floors, omkeys, max_z, n_dus)
+    Calibration(det_id, pos, dir, t0s, dus, floors, omkeys, pmts, max_z, n_dus)
 end
 
 @deprecate read_calibration(filename::AbstractString) Calibration(filename::AbstractString)

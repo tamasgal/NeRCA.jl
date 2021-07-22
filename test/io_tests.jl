@@ -17,10 +17,13 @@ const IO_EVT = joinpath(@__DIR__, "data", "IO_EVT.dat")
     @test 6 == length(values(calib.t0))
     @test 6 == length(values(calib.du))
     @test 6 == length(values(calib.floor))
-    @test 18 == length(values(calib.omkeys))
+    @test 6 == length(values(calib.omkeys))
     @test 23.9 ≈ calib.max_z
     @test 2 == calib.n_dus
     @test 3.6 ≈ calib.pos[3][2].z
+
+    @test 4 == omkey2domid(calib, 2, 1)
+    @test 4 == omkey2domid(calib, OMKey(2, 1))
 end
 
 @testset "km3net online files" begin

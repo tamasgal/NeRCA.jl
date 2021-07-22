@@ -26,7 +26,7 @@ export
     Hit, SnapshotHit, CalibratedHit, MCHit, TimesliceHit,
     DAQEvent,
     ismxshower, is3dmuon, is3dshower, isnb,
-    Calibration, calibrate,
+    Calibration, calibrate, OMKey, omkey2domid,
     duhits, domhits, nfoldhits, triggered,
     CHClient, CHTag, CHPrefix, CHMessage, subscribe,
     ztplot,

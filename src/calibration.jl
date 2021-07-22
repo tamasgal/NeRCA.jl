@@ -40,9 +40,7 @@ function calibrate(mc_hits::Vector{T},
         mctime = x->x
     end
     for hit in mc_hits
-        omkey = calibration.omkeys[hit.pmt_id]
-        dom_id = omkey.dom_id
-        channel_id = omkey.channel_id
+        dom_id, channel_id = calibration.pmts[hit.pmt_id]
         tot = hit.a
         pos = calibration.pos[dom_id][channel_id+1]
         dir = calibration.dir[dom_id][channel_id+1]
@@ -95,3 +93,6 @@ Return the time slewing for a ToT.
 """
 slew(tot) = @inbounds ifelse(tot < 256, SLEWS[tot + 1], SLEWS[end])
 slew(hit::AbstractHit) = slew(hit.tot)
+
+omkey2domid(calib::Calibration, du, floor) = omkey2domid(calib, OMKey(du, floor))
+omkey2domid(calib::Calibration, omkey::OMKey) = calib.omkeys[omkey]

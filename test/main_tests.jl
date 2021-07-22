@@ -35,7 +35,9 @@ calib = Calibration(
     # floor
     Dict{Int32, UInt8}(8 => 18, 9 => 5),
     # OMKeys
-    Dict{Int32, NeRCA.OMKey}(1 => NeRCA.OMKey(1, 2)),  # just dummy data
+    Dict{NeRCA.OMKey, Int32}(OMKey(2, 5) => 123456),  # just dummy data
+    # PMTs
+    Dict(1 => (2, 5), 2 => (3, 7)),
     # max_z
     10,
     # n_dus
@@ -49,3 +51,4 @@ chits = calibrate(calib, hits)
 @test NeRCA.Direction(16,17,18) == chits[6].dir
 @test 5000 == chits[2].t0
 @test 18 == chits[3].floor
+@test 123456 == calib.omkeys[OMKey(2, 5)]

@@ -8,8 +8,8 @@ const TriggerMask = Int64
 
 
 struct OMKey
-    dom_id::UInt32
-    channel_id::UInt8
+    du::DU
+    floor::Floor
 end
 
 struct Position{T} <: FieldVector{3, T}
@@ -153,7 +153,8 @@ struct Calibration
     t0::Dict{Int32,Vector{Float64}}
     du::Dict{Int32,DU}
     floor::Dict{Int32,Floor}
-    omkeys::Dict{Int32,OMKey}
+    omkeys::Dict{OMKey,Int32}  # maps OMKey to Module ID
+    pmts::Dict{Int32,Tuple{Int32,UInt8}}
     max_z
     n_dus
 end
