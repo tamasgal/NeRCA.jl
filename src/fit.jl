@@ -420,6 +420,7 @@ end
     min_hits::Int = 3
     Δt::Float64 = 10
     max_iter::Int = 500
+    tol::Float64 = 1e-3
 end
 
 
@@ -463,7 +464,7 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
         optimizer_with_attributes(
             Ipopt.Optimizer,
             "print_level" => print_level,
-            "tol" => 1e-3,
+            "tol" => par.tol,
             "max_iter" => par.max_iter
         )
     )
