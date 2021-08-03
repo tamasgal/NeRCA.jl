@@ -80,7 +80,7 @@ function UnROOT.readtype(io::IO, T::Type{KM3NETDAQEventHeader})
     T(detector_id, run, frame_index, UTC_seconds, UTC_16nanosecondcycles, trigger_counter, trigger_mask, overlays)
 end
 function UnROOT.interped_data(rawdata, rawoffsets, ::Type{KM3NETDAQEventHeader}, ::Type{J}) where {T, J <: UnROOT.JaggType}
-    UnROOT.splitup(rawdata, rawoffsets, KM3NETDAQEventHeader, skipbytes=10)
+    UnROOT.splitup(rawdata, rawoffsets, KM3NETDAQEventHeader, jagged=false)
 end
 
 function read_headers(f::OnlineFile)
