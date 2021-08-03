@@ -16,7 +16,7 @@ using JuMP
 using Ipopt
 using IntervalArithmetic
 
-import Base: read, +, -, *
+import Base: read, +, -, *, getindex, next, done, length, eltype, start
 
 export
     OnlineFile, OfflineFile,
