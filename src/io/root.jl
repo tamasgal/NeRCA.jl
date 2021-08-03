@@ -24,7 +24,7 @@ function UnROOT.readtype(io, T::Type{KM3NETDAQSnapshotHit})
     T(UnROOT.readtype(io, Int32), read(io, UInt8), read(io, Int32), read(io, UInt8))
 end
 function UnROOT.interped_data(rawdata, rawoffsets, ::Type{Vector{KM3NETDAQSnapshotHit}}, ::Type{J}) where {T, J <: UnROOT.JaggType}
-    UnROOT.splitup(data, offsets, KM3NETDAQSnapshotHit, skipbytes=10)
+    UnROOT.splitup(rawdata, rawoffsets, KM3NETDAQSnapshotHit, skipbytes=10)
 end
 
 struct KM3NETDAQTriggeredHit <: UnROOT.CustomROOTStruct
@@ -48,7 +48,7 @@ function UnROOT.readtype(io, T::Type{KM3NETDAQTriggeredHit})
 end
 
 function UnROOT.interped_data(rawdata, rawoffsets, ::Type{Vector{KM3NETDAQTriggeredHit}}, ::Type{J}) where {T, J <: UnROOT.JaggType}
-    UnROOT.splitup(data, offsets, KM3NETDAQTriggeredHit, skipbytes=10)
+    UnROOT.splitup(rawdata, rawoffsets, KM3NETDAQTriggeredHit, skipbytes=10)
 end
 
 struct KM3NETDAQEventHeader
