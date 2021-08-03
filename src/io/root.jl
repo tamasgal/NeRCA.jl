@@ -1,7 +1,14 @@
 struct OfflineFile end
 
+struct OnlineEvent
+    header::KM3NETDAQEventHeader
+    snapshot_hits::Vector{KM3NETDAQSnapshotHit}
+    triggered_hits::Vector{KM3NETDAQTriggeredHit}
+end
+
 struct OnlineFile
     fobj::UnROOT.ROOTFile
+    headers::Vector{KM3NETDAQEventHeader}
 
     function OnlineFile(filename::AbstractString)
         customstructs = Dict(
@@ -9,9 +16,15 @@ struct OnlineFile
             "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
             "KM3NETDAQ::JDAQEvent.KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
         )
-        new(UnROOT.ROOTFile(filename, customstructs=customstructs))
+        new(UnROOT.ROOTFile(filename, customstructs=customstructs), fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"])
     end
 end
+Base.getindex(f::OnlineFile, idx::Integer) = OnlineEvent(
+    f.headers[idx],
+    f.fobj["KM3NET_EVENT/KM3NET_EVENT/snapshotHits"][idx],
+    f.fobj["KM3NET_EVENT/KM3NET_EVENT/triggeredHits"][idx],
+)
+Base.length(f::OnlineFile) = length(f.headers)
 
 Base.close(f::OnlineFile) = close(f.fobj)
 
