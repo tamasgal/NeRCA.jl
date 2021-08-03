@@ -7,6 +7,7 @@ struct OnlineFile
         customstructs = Dict(
             "KM3NETDAQ::JDAQEvent.snapshotHits" => Vector{KM3NETDAQSnapshotHit},
             "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
+            "KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
         )
         new(UnROOT.ROOTFile(filename, customstructs=customstructs))
     end
@@ -77,6 +78,9 @@ function UnROOT.readtype(io::IO, T::Type{KM3NETDAQEventHeader})
     trigger_mask = UnROOT.readtype(io, UInt64)
     overlays = UnROOT.readtype(io, UInt32)
     T(detector_id, run, frame_index, UTC_seconds, UTC_16nanosecondcycles, trigger_counter, trigger_mask, overlays)
+end
+function UnROOT.interped_data(rawdata, rawoffsets, ::Type{KM3NETDAQEventHeader}, ::Type{J}) where {T, J <: UnROOT.JaggType}
+    UnROOT.splitup(rawdata, rawoffsets, KM3NETDAQEventHeader, skipbytes=10)
 end
 
 function read_headers(f::OnlineFile)
