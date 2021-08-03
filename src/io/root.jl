@@ -84,7 +84,9 @@ struct OnlineFile
             "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
             "KM3NETDAQ::JDAQEvent.KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
         )
-        new(UnROOT.ROOTFile(filename, customstructs=customstructs), fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"])
+        fobj = UnROOT.ROOTFile(filename, customstructs=customstructs)
+
+        new(fobj, fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"])
     end
 end
 Base.getindex(f::OnlineFile, idx::Integer) = OnlineEvent(
