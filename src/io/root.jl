@@ -3,7 +3,13 @@ struct OfflineFile end
 struct OnlineFile
     fobj::UnROOT.ROOTFile
 
-    OnlineFile(filename::AbstractString) = new(UnROOT.ROOTFile(filename))
+    function OnlineFile(filename::AbstractString)
+        customstructs = Dict(
+            "KM3NETDAQ::JDAQEvent.snapshotHits" => Vector{KM3NETDAQSnapshotHit},
+            "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
+        )
+        new(UnROOT.ROOTFile(filename, customstructs=customstructs))
+    end
 end
 
 Base.close(f::OnlineFile) = close(f.fobj)
