@@ -1,33 +1,5 @@
 struct OfflineFile end
 
-struct OnlineEvent
-    header::KM3NETDAQEventHeader
-    snapshot_hits::Vector{KM3NETDAQSnapshotHit}
-    triggered_hits::Vector{KM3NETDAQTriggeredHit}
-end
-
-struct OnlineFile
-    fobj::UnROOT.ROOTFile
-    headers::Vector{KM3NETDAQEventHeader}
-
-    function OnlineFile(filename::AbstractString)
-        customstructs = Dict(
-            "KM3NETDAQ::JDAQEvent.snapshotHits" => Vector{KM3NETDAQSnapshotHit},
-            "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
-            "KM3NETDAQ::JDAQEvent.KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
-        )
-        new(UnROOT.ROOTFile(filename, customstructs=customstructs), fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"])
-    end
-end
-Base.getindex(f::OnlineFile, idx::Integer) = OnlineEvent(
-    f.headers[idx],
-    f.fobj["KM3NET_EVENT/KM3NET_EVENT/snapshotHits"][idx],
-    f.fobj["KM3NET_EVENT/KM3NET_EVENT/triggeredHits"][idx],
-)
-Base.length(f::OnlineFile) = length(f.headers)
-
-Base.close(f::OnlineFile) = close(f.fobj)
-
 struct KM3NETDAQSnapshotHit <: UnROOT.CustomROOTStruct
     dom_id::Int32
     channel_id::UInt8
@@ -95,6 +67,34 @@ end
 function UnROOT.interped_data(rawdata, rawoffsets, ::Type{KM3NETDAQEventHeader}, ::Type{J}) where {T, J <: UnROOT.JaggType}
     UnROOT.splitup(rawdata, rawoffsets, KM3NETDAQEventHeader, jagged=false)
 end
+
+struct OnlineEvent
+    header::KM3NETDAQEventHeader
+    snapshot_hits::Vector{KM3NETDAQSnapshotHit}
+    triggered_hits::Vector{KM3NETDAQTriggeredHit}
+end
+
+struct OnlineFile
+    fobj::UnROOT.ROOTFile
+    headers::Vector{KM3NETDAQEventHeader}
+
+    function OnlineFile(filename::AbstractString)
+        customstructs = Dict(
+            "KM3NETDAQ::JDAQEvent.snapshotHits" => Vector{KM3NETDAQSnapshotHit},
+            "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
+            "KM3NETDAQ::JDAQEvent.KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
+        )
+        new(UnROOT.ROOTFile(filename, customstructs=customstructs), fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"])
+    end
+end
+Base.getindex(f::OnlineFile, idx::Integer) = OnlineEvent(
+    f.headers[idx],
+    f.fobj["KM3NET_EVENT/KM3NET_EVENT/snapshotHits"][idx],
+    f.fobj["KM3NET_EVENT/KM3NET_EVENT/triggeredHits"][idx],
+)
+Base.length(f::OnlineFile) = length(f.headers)
+
+Base.close(f::OnlineFile) = close(f.fobj)
 
 function read_headers(f::OnlineFile)
     data, offsets = UnROOT.array(f.fobj, "KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"; raw=true)
