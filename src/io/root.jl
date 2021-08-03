@@ -77,6 +77,8 @@ end
 struct OnlineFile
     fobj::UnROOT.ROOTFile
     headers::Vector{KM3NETDAQEventHeader}
+    snapshot_hits
+    triggered_hits
 
     function OnlineFile(filename::AbstractString)
         customstructs = Dict(
@@ -86,13 +88,14 @@ struct OnlineFile
         )
         fobj = UnROOT.ROOTFile(filename, customstructs=customstructs)
 
-        new(fobj, fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"])
+        new(fobj,
+            fobj["KM3NET_EVENT/KM3NET_EVENT/KM3NETDAQ::JDAQEventHeader"],
+            fobj["KM3NET_EVENT/KM3NET_EVENT/snapshotHits"],
+            fobj["KM3NET_EVENT/KM3NET_EVENT/triggeredHits"])
     end
 end
 Base.getindex(f::OnlineFile, idx::Integer) = OnlineEvent(
-    f.headers[idx],
-    f.fobj["KM3NET_EVENT/KM3NET_EVENT/snapshotHits"][idx],
-    f.fobj["KM3NET_EVENT/KM3NET_EVENT/triggeredHits"][idx],
+    f.headers[idx], f.snapshot_hits[idx], f.triggered_hits[idx]
 )
 Base.length(f::OnlineFile) = length(f.headers)
 
