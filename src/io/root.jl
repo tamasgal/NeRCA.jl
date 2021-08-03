@@ -7,7 +7,7 @@ struct OnlineFile
         customstructs = Dict(
             "KM3NETDAQ::JDAQEvent.snapshotHits" => Vector{KM3NETDAQSnapshotHit},
             "KM3NETDAQ::JDAQEvent.triggeredHits" => Vector{KM3NETDAQTriggeredHit},
-            "KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
+            "KM3NETDAQ::JDAQEvent.KM3NETDAQ::JDAQEventHeader" => KM3NETDAQEventHeader
         )
         new(UnROOT.ROOTFile(filename, customstructs=customstructs))
     end
