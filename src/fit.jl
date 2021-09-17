@@ -3,7 +3,7 @@ mutable struct SingleDUParams
     t::Float64
     z::Float64
     dz::Float64
-    ϕ::Float64
+    # ϕ::Float64
     t₀::Float64
 end
 
@@ -324,7 +324,8 @@ the DU at time `t_closest` with the z-coordinate `z_closest`. The direction
 is `dir_z` and `ϕ` (azimuth).
 
 """
-function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
+#function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀)
+function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, t₀)
     n = length(s.times)
 
     d_γ, ccalc = make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀)
@@ -334,20 +335,20 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, ϕ, t₀
     @inbounds for i ∈ 1:n
         t = s.times[i] - slew(s.tots[i])
         z = s.z_positions[i]
-        m = s.multiplicities[i]
+        # m = s.multiplicities[i]
         t_exp = ccalc(z)
         Δt = abs(t - t_exp)
-        zenith_acceptance = 1 - NeRCA.zenith(Direction(0,0,1))/π
+        # zenith_acceptance = 1 - NeRCA.zenith(Direction(0,0,1))/π
         photon_distance = d_γ(z)
 
         timing = Δt^2
 
-        distance_term = (s.nphes[i] - 72.0 / photon_distance * zenith_acceptance)^2
+        distance_term = (s.nphes[i] - 72.0 / photon_distance)^2
 
-        pmtᵩ = azimuth(-s.pmt_directions[i])
-        ξ = (ϕ - pmtᵩ)^2
+#        pmtᵩ = azimuth(-s.pmt_directions[i])
+#        ξ = (ϕ - pmtᵩ)^2
 
-        Q += timing + distance_term + ξ
+        Q += timing + distance_term #+ ξ
         # println((timing, distance_term, ξ))
     end
     # println("---------------")
@@ -441,7 +442,7 @@ function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
 
     # ϕ = azimuth(sum([-h.dir for h in du_hits]) ./ length(du_hits))
 
-    SingleDUParams(10.0, hit_time, z_closest, -0.9, π, hit_time)
+    SingleDUParams(10.0, hit_time, z_closest, -0.9, hit_time)
 end
 
 
@@ -468,7 +469,8 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
             "max_iter" => par.max_iter
         )
     )
-    register(model, :qfunc, 6, qfunc, autodiff=true)
+    # register(model, :qfunc, 6, qfunc, autodiff=true)
+    register(model, :qfunc, 5, qfunc, autodiff=true)
 
     max_z = maximum([h.pos.z for h in shits]) + par.floor_distance
     min_z = minimum([h.pos.z for h in shits]) - par.floor_distance
@@ -479,16 +481,18 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     @variable(model, sdp₀.t - 1000 <= t_closest <= sdp₀.t + 1000, start=sdp₀.t)
     @variable(model, min_z <= z_closest <= max_z, start=sdp₀.z)
     @variable(model, -0.999 <= dir_z <= .999, start=sdp₀.dz)
-    @variable(model, -4π <= ϕ₀ <= 4π, start=sdp₀.ϕ)
+    # @variable(model, -4π <= ϕ₀ <= 4π, start=sdp₀.ϕ)
     @variable(model, t₀, start=sdp₀.t₀)
 
-    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀))
+    # @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀))
+    @NLobjective(model, Min, qfunc(d_closest, t_closest, z_closest, dir_z, t₀))
 
     optimize!(model);
-    values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀])
+    # values = map(value, [d_closest, t_closest, z_closest, dir_z, ϕ₀, t₀])
+    values = map(value, [d_closest, t_closest, z_closest, dir_z, t₀])
     sdp = SingleDUParams(values...)
-    ϕ = estimate_azimuth(sdp, shits, create_hit_pool(du_hits))
-    sdp.ϕ = ϕ
+    # ϕ = estimate_azimuth(sdp, shits, create_hit_pool(du_hits))
+    # sdp.ϕ = ϕ
 
     return ROyFit(sdp, sdp₀, qfunc(values...)/length(shits), shits, model)
 end
