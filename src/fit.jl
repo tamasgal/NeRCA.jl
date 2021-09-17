@@ -185,12 +185,17 @@ between two floors.
 function select_hits(du_hits, hit_pool; Δt₋=10, Δz=9, new_hits=nothing)
     intervals = Dict{Int16, Interval{Float64}}()
     hits₀ = NeRCA.create_hit_pool(du_hits)
+
+    # println("===============\nSearching in floors:")
+    # @show keys(hit_pool)
+#    @show unique([h.du for h ∈ hit_pool])
     
     extended = Vector{CalibratedHit}()
     
     function time_interval(t₀, tₜ, Δfloor)
         t₋ = tₜ - Δfloor*Δt₋
         t₊ = max(t₀ + Δfloor*Δz*NeRCA.N_SEAWATER/NeRCA.c_0*1e9 + Δt₋, tₜ + Δfloor*Δt₋)
+        # @show t₊-t₋
         @interval(t₋, t₊)
     end
     
@@ -220,6 +225,8 @@ function select_hits(du_hits, hit_pool; Δt₋=10, Δz=9, new_hits=nothing)
     end
     
     hit_seeds = new_hits == nothing ? du_hits : new_hits
+
+    # @show [signed(h.floor) for h ∈ hit_seeds]
     
     for hit in hit_seeds
         t₀ = hit.t
@@ -457,6 +464,7 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     if length(hits₀) < par.min_hits
         hits₀ = unique(h->h.floor, triggered(du_hits))
     end
+    # @show [signed(h.floor) for h ∈ hits₀]
     shits = select_hits(hits₀, hit_pool; Δt₋ = par.Δt₋, Δz = par.floor_distance)
 
     qfunc = SingleDUMinimiser(shits, triggered(du_hits))
