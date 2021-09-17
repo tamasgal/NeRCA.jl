@@ -427,7 +427,7 @@ end
     multiplicity::Int = 3
     min_hits::Int = 3
     Δt::Float64 = 10
-    max_iter::Int = 500
+    max_iter::Int = 13
     tol::Float64 = 1e-3
 end
 
