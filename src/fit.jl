@@ -456,7 +456,7 @@ end
 function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoParams; print_level=0)
     sort!(du_hits, by = h -> h.t)
     sort!(du_hits, by=h->h.dom_id)
-    count_multiplicities!(du_hits)
+    count_multiplicities!(du_hits, par.Δt)
 
     hit_pool = create_hit_pool(du_hits)
 
