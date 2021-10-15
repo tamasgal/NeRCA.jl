@@ -422,7 +422,7 @@ end
 
 
 @with_kw struct SingleDURecoParams
-    floor_distance::Int = 9
+    floor_distance::Float64 = NaN  # this calls for trouble, we need a more robust way for this
     Δt₋::Int = 10
     multiplicity::Int = 3
     min_hits::Int = 3
@@ -452,7 +452,6 @@ function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
     SingleDUParams(10.0, hit_time, z_closest, -0.9, hit_time)
 end
 
-
 function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoParams; print_level=0)
     sort!(du_hits, by = h -> h.t)
     sort!(du_hits, by=h->h.dom_id)
@@ -464,7 +463,8 @@ function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoPa
     if length(hits₀) < par.min_hits
         hits₀ = unique(h->h.floor, triggered(du_hits))
     end
-    # @show [signed(h.floor) for h ∈ hits₀]
+#    @show par.Δt par.multiplicity
+#    @show [signed(h.floor) for h ∈ hits₀]
     shits = select_hits(hits₀, hit_pool; Δt₋ = par.Δt₋, Δz = par.floor_distance)
 
     qfunc = SingleDUMinimiser(shits, triggered(du_hits))
