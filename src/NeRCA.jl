@@ -15,6 +15,9 @@ using RecipesBase
 using JuMP
 using Ipopt
 using IntervalArithmetic
+using LandauDistribution
+using Distributions: pdf, Normal
+
 
 import Base: read, +, -, *, getindex, length, eltype
 

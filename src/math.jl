@@ -79,3 +79,13 @@ Project P onto a line spanned by A and B.
 function project(P, A, B)
     Position(A + ((P-A)⋅(B-A))/((B-A)⋅(B-A)) * (B-A))
 end
+
+
+"""
+$(SIGNATURES)
+
+The function to fit time residual plot distributions.
+"""
+function langauss(x, LA, Lμ, Lσ, GA, Gμ, Gσ, offset)
+    LA * pdf(Landau(Lμ, Lσ), x) + GA * pdf(Normal(Gμ, Gσ), x) + offset
+end
