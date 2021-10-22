@@ -422,7 +422,7 @@ end
 
 
 @with_kw struct SingleDURecoParams
-    floor_distance::Float64 = NaN  # this calls for trouble, we need a more robust way for this
+    floor_distance::Float64 = NaN  # this calls for trouble, need a more robust way for this, for now: call floordist()
     Δt₋::Int = 10
     multiplicity::Int = 3
     min_hits::Int = 3

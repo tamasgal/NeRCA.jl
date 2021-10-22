@@ -56,6 +56,23 @@ function calibrate(mc_hits::Vector{T},
 end
 
 
+"""
+    function floordist(calib::Calibration)
+
+Calculates the average floor distance between neighboured modules.
+"""
+function floordist(calib::Calibration)
+    floors = unique(sort([floor for floor ∈ values(calib.floor)]))
+    floordistances = Float64[]
+    for du ∈ values(calib.du)
+        # collecting the z position for the same PMT channel on each module
+        zs = [calib.pos[omkey2domid(calib, du, floor)][1][3] for floor ∈ floors]
+        push!(floordistances, mean(diff(zs)))
+    end
+    mean(floordistances)
+end
+
+
 const SLEWS = [
     8.01, 7.52, 7.05, 6.59, 6.15, 5.74, 5.33, 4.95, 4.58, 4.22, 3.89, 3.56,
     3.25, 2.95, 2.66, 2.39, 2.12, 1.87, 1.63, 1.40, 1.19, 0.98, 0.78, 0.60,
