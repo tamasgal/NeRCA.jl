@@ -16,9 +16,6 @@ cache:
     - "$CI_PROJECT_DIR/.julia"
   key: "$CI_COMMIT_REF_SLUG"
 
-test:julia-1.3:
-  image: docker.km3net.de/base/julia:1.3
-  <<: *test_definition
 
 test:julia-1.6:
   image: docker.km3net.de/base/julia:1.6
