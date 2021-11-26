@@ -1,5 +1,18 @@
+function Calibration(detid::Integer, runid::Integer)
+    ascii_data = detx(detid, runid)
+    Calibration(IOBuffer(ascii_data))
+end
+
+
 function Calibration(filename::AbstractString)
-    lines = readlines(filename)
+    open(filename, "r") do fobj
+        Calibration(fobj)
+    end
+end
+
+
+function Calibration(io::IO)
+    lines = readlines(io)
     filter!(e->!startswith(e, "#") && !isempty(strip(e)), lines)
 
     first_line = lowercase(first(lines))  # version can be v or V, halleluja

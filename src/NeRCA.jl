@@ -18,6 +18,9 @@ using IntervalArithmetic
 using LandauDistribution
 using Distributions: pdf, Normal
 
+using CSV
+using DataFrames
+using HTTP
 
 import Base: read, +, -, *, getindex, length, eltype
 
@@ -36,7 +39,8 @@ export
     savefigs,
     most_frequent, categorize,
     SingleDUParams, SingleDURecoParams,
-    @ip_str
+    @ip_str,
+    initdb, streamds, detx  # db.jl
 
 include("definitions/daqdatatypes.jl")
 include("definitions/fitparameters.jl")
@@ -57,5 +61,6 @@ include("mc.jl")
 include("fit.jl")
 include("controlhost.jl")
 include("plot.jl")
+include("db.jl")
 
 end
