@@ -16,17 +16,13 @@ struct Position{T} <: FieldVector{3, T}
     x::T
     y::T
     z::T
-
-    Position(x::T, y::T, z::T) where {T} = new{T}(x, y, z)
 end
-Position(x, y, z) = Position(promote(x, y, z)...)
 
 struct Direction{T} <: FieldVector{3, T}
     x::T
     y::T
     z::T
 end
-Direction(x, y, z) = Direction(promote(x, y, z)...)
 Direction(ϕ, θ) = Direction(cos(ϕ)*cos(θ), sin(ϕ)*cos(θ), sin(θ))
 
 struct MCEventInfo
