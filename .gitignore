@@ -12,3 +12,4 @@ docs/site
 *.h5
 *.detx
 *.csv
+!test/data/*
