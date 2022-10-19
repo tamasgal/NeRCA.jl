@@ -1,9 +1,9 @@
 """
-# KM3NeT Data Definitions v1.3.1-8-gae7dfb2
+# KM3NeT Data Definitions v2.2.0-15-g40086db
 https://git.km3net.de/common/km3net-dataformat
 """
 
-module Fitparameters
+module FITPARAMETERS
   const JGANDALF_BETA0_RAD = 0
   const JGANDALF_BETA1_RAD = 1
   const JGANDALF_CHI2 = 2
@@ -14,6 +14,7 @@ module Fitparameters
   const JGANDALF_NUMBER_OF_ITERATIONS = 7
   const JSTART_NPE_MIP = 8
   const JSTART_NPE_MIP_TOTAL = 9
+  const JSTART_NPE_MIP_MISSED = 22
   const JSTART_LENGTH_METRES = 10
   const JVETO_NPE = 11
   const JVETO_NUMBER_OF_HITS = 12
@@ -22,5 +23,11 @@ module Fitparameters
   const JENERGY_NDF = 15
   const JENERGY_NUMBER_OF_HITS = 16
   const JCOPY_Z_M = 17
+  const JPP_COVERAGE_ORIENTATION = 18
+  const JPP_COVERAGE_POSITION = 19
+  const JENERGY_MINIMAL_ENERGY = 20
+  const JENERGY_MAXIMAL_ENERGY = 21
   const JSHOWERFIT_ENERGY = 4
+  const AASHOWERFIT_ENERGY = 0
+  const AASHOWERFIT_NUMBER_OF_HITS = 1
 end

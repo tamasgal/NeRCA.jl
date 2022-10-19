@@ -42,12 +42,11 @@ export
     @ip_str,
     initdb, streamds, detx  # db.jl
 
-include("definitions/daqdatatypes.jl")
-include("definitions/fitparameters.jl")
-include("definitions/reconstruction.jl")
-include("definitions/trigger.jl")
-include("definitions/w2list_genhen.jl")
-include("definitions/w2list_gseagen.jl")
+# KM3NeT Dataformat definitions
+for inc ∈ readdir(joinpath(@__DIR__, "definitions"), join=true)
+    !endswith(inc, ".jl") && continue
+    include(inc)
+end
 
 include("constants.jl")
 include("types.jl")

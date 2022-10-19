@@ -118,14 +118,14 @@ end
 
 
 # Triggers
-is3dmuon(e::DAQEvent) = nthbitset(Trigger.JTRIGGER3DMUON, e.trigger_mask)
-is3dshower(e::DAQEvent) = nthbitset(Trigger.JTRIGGER3DSHOWER, e.trigger_mask)
-ismxshower(e::DAQEvent) = nthbitset(Trigger.JTRIGGERMXSHOWER, e.trigger_mask)
-isnb(e::DAQEvent) = nthbitset(Trigger.JTRIGGERNB, e.trigger_mask)
-is3dmuon(x) = nthbitset(Trigger.JTRIGGER3DMUON, x)
-is3dshower(x) = nthbitset(Trigger.JTRIGGER3DSHOWER, x)
-ismxshower(x) = nthbitset(Trigger.JTRIGGERMXSHOWER, x)
-isnb(x) = nthbitset(Trigger.JTRIGGERNB, x)
+is3dmuon(e::DAQEvent) = nthbitset(TRIGGER.JTRIGGER3DMUON, e.trigger_mask)
+is3dshower(e::DAQEvent) = nthbitset(TRIGGER.JTRIGGER3DSHOWER, e.trigger_mask)
+ismxshower(e::DAQEvent) = nthbitset(TRIGGER.JTRIGGERMXSHOWER, e.trigger_mask)
+isnb(e::DAQEvent) = nthbitset(TRIGGER.JTRIGGERNB, e.trigger_mask)
+is3dmuon(x) = nthbitset(TRIGGER.JTRIGGER3DMUON, x)
+is3dshower(x) = nthbitset(TRIGGER.JTRIGGER3DSHOWER, x)
+ismxshower(x) = nthbitset(TRIGGER.JTRIGGERMXSHOWER, x)
+isnb(x) = nthbitset(TRIGGER.JTRIGGERNB, x)
 @deprecate is_3dmuon is3dmuon
 @deprecate is_3dshower is3dshower
 @deprecate is_mxshower ismxshower

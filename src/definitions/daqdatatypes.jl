@@ -1,9 +1,9 @@
 """
-# KM3NeT Data Definitions v1.3.1-8-gae7dfb2
+# KM3NeT Data Definitions v2.2.0-15-g40086db
 https://git.km3net.de/common/km3net-dataformat
 """
 
-module Daqdatatypes
+module DAQDATATYPES
   const DAQSUPERFRAME = 101
   const DAQSUMMARYFRAME = 201
   const DAQTIMESLICE = 1001

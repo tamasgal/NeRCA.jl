@@ -1,9 +1,9 @@
 """
-# KM3NeT Data Definitions v1.3.1-8-gae7dfb2
+# KM3NeT Data Definitions v2.2.0-15-g40086db
 https://git.km3net.de/common/km3net-dataformat
 """
 
-module W2list_gseagen
+module W2LIST_GSEAGEN
   const W2LIST_GSEAGEN_PS = 0
   const W2LIST_GSEAGEN_EG = 1
   const W2LIST_GSEAGEN_XSEC_MEAN = 2
@@ -23,4 +23,8 @@ module W2list_gseagen
   const W2LIST_GSEAGEN_TARGETZ = 16
   const W2LIST_GSEAGEN_VERINCAN = 17
   const W2LIST_GSEAGEN_LEPINCAN = 18
+  const W2LIST_GSEAGEN_N_RETRIES = 19
+  const W2LIST_GSEAGEN_CUSTOM_YAW = 20
+  const W2LIST_GSEAGEN_CUSTOM_PITCH = 21
+  const W2LIST_GSEAGEN_CUSTOM_ROLL = 22
 end
