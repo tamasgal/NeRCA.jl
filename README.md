@@ -11,3 +11,9 @@ package to access and analyse KM3NeT related data.
 It can read the official KM3NeT ROOT and formats, calibration information (DETX
 files) and also live data from running detectors.
 The ROyFit reconstruction is also included and can be found in `src/fit.jl`.
+
+## Installation
+
+NeRCA is published as a Julia package. Installation is as easy as
+
+    import Pkg; Pkg.add("NeRCA")
