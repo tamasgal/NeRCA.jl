@@ -53,7 +53,7 @@ function main()
     n_events = length(event_shits)
     println("$n_events events found")
 
-    @showprogress for (event_id, shits, thits) in zip(1:n_events, event_shits, event_thits))
+    @showprogress for (event_id, shits, thits) in zip(1:n_events, event_shits, event_thits)
         hits = calibrate(calib, NeRCA.combine(shits, thits))
 
         triggered_hits = triggered(hits)
