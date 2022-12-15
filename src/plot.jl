@@ -10,7 +10,7 @@ Create a zt-plot from a set of hits using PGFPlotsX. If no `du` is provided,
 the brightest DU will be determined.
 """
 function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0)
-    if du == nothing
+    if du === nothing
         du = NeRCA.most_frequent(h -> h.du, hits)
         hits = filter(h -> h.du == du, hits)
     end
@@ -135,7 +135,7 @@ end
     markerstrokewidth := 0
 
     thits = triggered(hits)
-    if max_z == nothing
+    if max_z === nothing
         max_z = maximum(map(h->h.pos.z, hits))
     end
 
@@ -175,7 +175,7 @@ end
     markerstrokewidth := 0
 
     triggered_hits = triggered(hits)
-    if max_z == nothing
+    if max_z === nothing
         max_z = maximum(map(h->h.pos.z, hits))
     end
 

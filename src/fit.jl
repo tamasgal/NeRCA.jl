@@ -224,7 +224,7 @@ function select_hits(du_hits, hit_pool; Δt₋=10, Δz=9, new_hits=nothing)
         end
     end
     
-    hit_seeds = new_hits == nothing ? du_hits : new_hits
+    hit_seeds = new_hits === nothing ? du_hits : new_hits
 
     # @show [signed(h.floor) for h ∈ hit_seeds]
     
