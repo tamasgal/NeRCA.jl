@@ -1,3 +1,13 @@
+abstract type AbstractRecoTrack end
+
+struct RecoTrack<:AbstractRecoTrack
+    dir::Direction
+    pos::Position
+    time::Float64
+end
+
+struct NoRecoTrack<:AbstractRecoTrack end
+
 mutable struct SingleDUParams
     d::Float64
     t::Float64
@@ -11,7 +21,7 @@ struct ROyFit
     sdp::SingleDUParams
     sdp_initial::SingleDUParams
     Q::Float64
-    selected_hits::Vector{CalibratedHit}
+    selected_hits::Vector{KM3io.CalibratedHit}
     model::Model
 end
 
@@ -21,7 +31,7 @@ $(SIGNATURES)
 
 Performs the prefit algorithm which was used in DUMAND II.
 """
-function prefit(hits::Vector{CalibratedHit})
+function prefit(hits::Vector{KM3io.CalibratedHit})
     N = length(hits)
     D = 0.0
     dir = [0.0, 0.0, 0.0]
@@ -89,18 +99,6 @@ $(SIGNATURES)
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track, event_info::Union{MCEventInfo,DAQEventInfo}; v=2.99792458e8)
-    jte_time = make_mc_time_converter(event_info)(track.time)
-    make_cherenkov_calculator(Track(track.dir, track.pos, jte_time), v=v)
-end
-
-
-"""
-$(SIGNATURES)
-
-Returns a function which calculates the arrival time of a Cherenkov photon
-at a given position.
-"""
 function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀; n=N_SEAWATER)
     c_ns = c_0 / 1e9
     d_γ(z) = n/√(n^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
@@ -142,24 +140,13 @@ function single_du_params(track::NeRCA.Track)
     d_closest, t_closest, z_closest, dir.z, t₀
 end
 
-
-"""
-$(SIGNATURES)
-
-Calculates five parameters to describe a MC track for a single DU case.
-"""
-function single_du_params(t::NeRCA.MCTrack, time)
-    single_du_params(NeRCA.Track([t.dir_x, t.dir_y, t.dir_z], [t.pos_x, t.pos_y, t.pos_z], time))
-end
-
-
 # TODO: delete this function
 function cherenkov_plausible(Δt, Δz; time_extra=10, n=N_SEAWATER)
     Δt < Δz * n / NeRCA.c_0*1e9 + time_extra
 end
 
 
-function create_hit_pool(hits::T) where T<:Vector{NeRCA.CalibratedHit}
+function create_hit_pool(hits::T) where T<:Vector{KM3io.CalibratedHit}
     hit_pool = Dict{Int, T}()
     for hit in hits
         if !haskey(hit_pool, hit.floor)
@@ -190,7 +177,7 @@ function select_hits(du_hits, hit_pool; Δt₋=10, Δz=9, new_hits=nothing)
     # @show keys(hit_pool)
 #    @show unique([h.du for h ∈ hit_pool])
     
-    extended = Vector{CalibratedHit}()
+    extended = Vector{KM3io.CalibratedHit}()
     
     function time_interval(t₀, tₜ, Δfloor)
         t₋ = tₜ - Δfloor*Δt₋
@@ -288,7 +275,7 @@ struct SingleDUMinimiser <: Function
     average_coinc_tots::Vector{Float64}
 end
 
-function SingleDUMinimiser(hits::Vector{CalibratedHit}, triggered_hits::Vector{CalibratedHit})
+function SingleDUMinimiser(hits::Vector{KM3io.CalibratedHit}, triggered_hits::Vector{KM3io.CalibratedHit})
     n = length(hits)
     n_triggered = length(triggered_hits)
     z_positions = Vector{Float64}()
@@ -364,7 +351,7 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, t₀)
 end
 
 struct MultiDUMinimiser <: Function
-    hits::Vector{CalibratedHit}
+    hits::Vector{KM3io.CalibratedHit}
 end
 
 function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
@@ -432,7 +419,7 @@ end
 end
 
 
-function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
+function startparams(SingleDUParams, du_hits::Vector{KM3io.CalibratedHit})
     brightest_floor = NeRCA.most_frequent(h -> h.floor, du_hits)
 
     hits_on_brightest_floor = filter(h -> h.floor == brightest_floor, du_hits)
@@ -452,7 +439,7 @@ function startparams(SingleDUParams, du_hits::Vector{NeRCA.CalibratedHit})
     SingleDUParams(10.0, hit_time, z_closest, -0.9, hit_time)
 end
 
-function single_du_fit(du_hits::Vector{NeRCA.CalibratedHit}, par::SingleDURecoParams; print_level=0)
+function single_du_fit(du_hits::Vector{KM3io.CalibratedHit}, par::SingleDURecoParams; print_level=0)
     sort!(du_hits, by = h -> h.t)
     sort!(du_hits, by=h->h.dom_id)
     count_multiplicities!(du_hits, par.Δt)
@@ -508,15 +495,15 @@ end
 
 function estimate_azimuth(
     sdp::SingleDUParams,
-    direct_hits::Vector{CalibratedHit},
-    hit_pool::Dict{Int, Vector{CalibratedHit}};
+    direct_hits::Vector{KM3io.CalibratedHit},
+    hit_pool::Dict{Int, Vector{KM3io.CalibratedHit}};
     Δt=20, n=N_SEAWATER
 )
     ϕ = azimuth(sum([-h.dir for h in direct_hits]) ./ length(direct_hits))
 
     dᵧ, ccalc = make_cherenkov_calculator(sdp)
 
-    late_hits = Vector{CalibratedHit}()
+    late_hits = Vector{KM3io.CalibratedHit}()
     for (floor, hits) in hit_pool
         t₀ = ccalc(first(hits).pos.z)
         for hit in hits

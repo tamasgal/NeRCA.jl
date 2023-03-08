@@ -3,7 +3,7 @@ $(SIGNATURES)
 
 Return only triggered hits.
 """
-triggered(hits::Vector{T}) where {T<:AbstractHit} = filter(h->h.trigger_mask > 0, hits)
+triggered(hits::Vector{T}) where {T<:KM3io.AbstractHit} = filter(h->h.trigger_mask > 0, hits)
 triggered(hit) = hit.trigger_mask > 0
 
 
@@ -16,7 +16,7 @@ This should be used to transfer the trigger information to the
 snapshot hits from a DAQEvent. The triggered hits are a subset
 of the snapshot hits.
 """
-function combine(snapshot_hits::Vector{KM3NETDAQSnapshotHit}, triggered_hits::Vector{KM3NETDAQTriggeredHit})
+function combine(snapshot_hits::Vector{KM3io.SnapshotHit}, triggered_hits::Vector{KM3io.TriggeredHit})
     triggermasks = Dict{Tuple{UInt8, Int32, Int32, UInt8}, Int64}()
     for hit ∈ triggered_hits
         triggermasks[(hit.channel_id, hit.dom_id, hit.t, hit.tot)] = hit.trigger_mask
@@ -29,7 +29,7 @@ function combine(snapshot_hits::Vector{KM3NETDAQSnapshotHit}, triggered_hits::Ve
         t = hit.t
         tot = hit.tot
         triggermask = get(triggermasks, (channel_id, dom_id, t, tot), 0)
-        push!(hits, Hit(channel_id, dom_id, t, tot, triggermask))
+        push!(hits, Hit(dom_id, channel_id, t, tot, triggermask))
     end
     hits
 end
@@ -41,7 +41,7 @@ $(SIGNATURES)
 Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
 """
-function nfoldhits(hits::Vector{T}, Δt, n) where {T<:AbstractDAQHit}
+function nfoldhits(hits::Vector{T}, Δt, n) where {T<:KM3io.AbstractDAQHit}
     hit_map = domhits(hits)
     chits = Vector{T}()
     for (dom_id, dom_hits) ∈ hit_map
@@ -71,7 +71,7 @@ are returned, one contains the multiplicities, the second one the IDs
 of the coincidence groups.
 The hits should be sorted by time and then by dom_id.
 """
-function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:AbstractHit}
+function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:KM3io.AbstractHit}
     n = length(hits)
     mtp = ones(Int32, n)
     cid = zeros(Int32, n)
@@ -114,7 +114,7 @@ $(SIGNATURES)
 Counts the multiplicities and modifies the .multiplicity field of the hits.
 Important: the hits have to be sorted by time and then by DOM ID first.
 """
-function count_multiplicities!(hits::Vector{CalibratedHit}, tmax=20)
+function count_multiplicities!(hits::Vector{KM3io.CalibratedHit}, tmax=20)
     _mtp = 0
     _cid = 0
     t0 = 0
@@ -181,7 +181,7 @@ $(SIGNATURES)
 
 Categorise hits by DU and put them into a dictionary of DU=>Vector{Hit}.
 """
-@inline duhits(hits::Vector{T}) where {T<:CalibratedHit} = categorize(:du, hits)
+@inline duhits(hits::Vector{T}) where {T<:KM3io.CalibratedHit} = categorize(:du, hits)
 
 
 """
@@ -189,7 +189,7 @@ $(SIGNATURES)
 
 Return a vector of hits with ToT >= `tot`.
 """
-function totcut(hits::Vector{T}, tot) where {T<:AbstractDAQHit}
+function totcut(hits::Vector{T}, tot) where {T<:KM3io.AbstractDAQHit}
     return filter(h->h.tot >= tot, hits)
 end
 

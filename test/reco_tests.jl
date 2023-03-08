@@ -3,9 +3,9 @@ using Test
 
 
 @testset "Single DU" begin
-    f = NeRCA.OnlineFile(joinpath(@__DIR__, "data", "mcv6.1.mupage_10G.sirene.jterbr00007209.2548_0-499_JDAQEvent.root"))
-    calib = Calibration(joinpath(@__DIR__, "data", "KM3NeT_00000044_00007209.v6.0_PMTeff_merge8.K40.detx"))
-    sparams = NeRCA.SingleDURecoParams(floor_distance=floordist(calib))
+    f = OnlineFile(joinpath(@__DIR__, "data", "mcv6.1.mupage_10G.sirene.jterbr00007209.2548_0-499_JDAQEvent.root"))
+    det = Detector(joinpath(@__DIR__, "data", "KM3NeT_00000044_00007209.v6.0_PMTeff_merge8.K40.detx"))
+    sparams = NeRCA.SingleDURecoParams(floor_distance=floordist(det))
 
     n_events = length(f)
     @test 500 == n_events
@@ -25,7 +25,7 @@ using Test
         hits = event.snapshot_hits
         thits = event.triggered_hits
 
-        chits = calibrate(calib, NeRCA.combine(hits, thits))
+        chits = calibrate(det, NeRCA.combine(hits, thits))
 
         brightest_du = NeRCA.most_frequent(h->h.du, triggered(chits))
         @test results[event_id][1] == brightest_du
