@@ -1,4 +1,5 @@
 using NeRCA
+using KM3io
 using Test
 
 
@@ -7,7 +8,7 @@ using Test
     det = Detector(joinpath(@__DIR__, "data", "KM3NeT_00000044_00007209.v6.0_PMTeff_merge8.K40.detx"))
     sparams = NeRCA.SingleDURecoParams(floor_distance=floordist(det))
 
-    n_events = length(f)
+    n_events = length(f.events)
     @test 500 == n_events
 
     # event_id => (brightest, reco_dz)
@@ -20,14 +21,14 @@ using Test
     )
 
     for event_id in keys(results)
-        event = f[event_id]
+        event = f.events[event_id]
 
         hits = event.snapshot_hits
         thits = event.triggered_hits
 
         chits = calibrate(det, NeRCA.combine(hits, thits))
 
-        brightest_du = NeRCA.most_frequent(h->h.du, triggered(chits))
+        brightest_du = most_frequent(h->h.du, triggered(chits))
         @test results[event_id][1] == brightest_du
 
         du_hits = filter(h->h.du == brightest_du, chits)
