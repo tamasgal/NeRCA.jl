@@ -21,6 +21,6 @@ makedocs(;
 
 deploydocs(;
   repo = "git.km3net.de/tgal/NeRCA.jl",
-  devbranch = "main",
+  devbranch = "master",
   push_preview=true
 )
