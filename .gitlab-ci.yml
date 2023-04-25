@@ -1,6 +1,3 @@
-variables:
-    JULIA_DEPOT_PATH: "$CI_PROJECT_DIR/.julia"
-
 stages:
   - test
   - docs
@@ -52,20 +49,21 @@ Julia 1.8:
     - .coverage
 
 docs:
-  image: docker.km3net.de/base/julia:1.8
+  image: docker.km3net.de/base/julia:1.8-tex
   stage: docs
   script:
+    - |
+      julia -e '
+        using Pkg
+        Pkg.update()
+        Pkg.Registry.add(RegistrySpec(url = "https://git.km3net.de/common/julia-registry"))'
     - |
       julia --project=docs -e '
         using Pkg
         Pkg.update()
-        Pkg.Registry.add(RegistrySpec(url = "https://git.km3net.de/common/julia-registry"))
         Pkg.develop(PackageSpec(path=pwd()))
         Pkg.instantiate()
         using Documenter: doctest
         using NeRCA
         doctest(NeRCA)
         include("docs/make.jl")'
-  only:
-    - main
-    - tags
