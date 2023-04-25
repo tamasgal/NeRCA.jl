@@ -1,20 +1,12 @@
 """
 $(SIGNATURES)
 
-Return only triggered hits.
-"""
-triggered(hits::Vector{T}) where {T<:KM3io.AbstractHit} = filter(h->h.trigger_mask > 0, hits)
-triggered(hit) = hit.trigger_mask > 0
-
-
-"""
-$(SIGNATURES)
-
 Combine snapshot and triggered hits to a single hits-vector.
 
 This should be used to transfer the trigger information to the
 snapshot hits from a DAQEvent. The triggered hits are a subset
 of the snapshot hits.
+
 """
 function combine(snapshot_hits::Vector{KM3io.SnapshotHit}, triggered_hits::Vector{KM3io.TriggeredHit})
     triggermasks = Dict{Tuple{UInt8, Int32, Int32, UInt8}, Int64}()
@@ -114,12 +106,12 @@ $(SIGNATURES)
 Counts the multiplicities and modifies the .multiplicity field of the hits.
 Important: the hits have to be sorted by time and then by DOM ID first.
 """
-function count_multiplicities!(hits::Vector{KM3io.CalibratedHit}, tmax=20)
+function count_multiplicities!(hits::Vector{KM3io.XCalibratedHit}, tmax=20)
     _mtp = 0
     _cid = 0
     t0 = 0
     dom_id = 0
-    hit_buffer = Vector{CalibratedHit}()
+    hit_buffer = Vector{XCalibratedHit}()
 
     function process_buffer()
         while !isempty(hit_buffer)
@@ -181,7 +173,7 @@ $(SIGNATURES)
 
 Categorise hits by DU and put them into a dictionary of DU=>Vector{Hit}.
 """
-@inline duhits(hits::Vector{T}) where {T<:KM3io.CalibratedHit} = categorize(:du, hits)
+@inline duhits(hits::Vector{T}) where {T<:KM3io.XCalibratedHit} = categorize(:du, hits)
 
 
 """

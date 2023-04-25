@@ -1,7 +1,7 @@
 Base.angle(d1, d2) = acos(min(dot(normalize(d1), normalize(d2)), 1))
-Base.angle(a::T, b::T) where {T<:Union{KM3io.CalibratedHit, KM3io.PMT}} = Base.angle(a.dir, b.dir)
-Base.angle(a, b::Union{KM3io.CalibratedHit, KM3io.PMT}) = Base.angle(a, b.dir)
-Base.angle(a::Union{KM3io.CalibratedHit, KM3io.PMT}, b) = Base.angle(a.dir, b)
+Base.angle(a::T, b::T) where {T<:Union{KM3io.AbstractCalibratedHit, KM3io.PMT}} = Base.angle(a.dir, b.dir)
+Base.angle(a, b::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}) = Base.angle(a, b.dir)
+Base.angle(a::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}, b) = Base.angle(a.dir, b)
 
 
 """

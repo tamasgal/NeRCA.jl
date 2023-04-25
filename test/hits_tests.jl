@@ -20,7 +20,7 @@ hits = [TriggeredHit(8, 1, 100, 20, false),
 
 # triggered()
 @testset "triggered()" begin
-    thits = triggered(hits)
+    thits = filter(triggered, hits)
     @test 4 == length(thits)
     @test 9 == thits[1].dom_id
 end
@@ -59,9 +59,9 @@ mtps, mtp_ids = NeRCA.count_multiplicities(sorted_hits, 10)
 @test (3, 8) == (mtps[12], mtp_ids[12])
 
 # combine
-f = OnlineFile(ONLINEFILE)
-for event in f.events
+f = ROOTFile(ONLINEFILE)
+for event in f.online.events
     local hits = NeRCA.combine(event.snapshot_hits, event.triggered_hits)
     @test length(hits) == length(event.snapshot_hits)
-    @test length(NeRCA.triggered(hits)) == length(event.triggered_hits)
+    @test length(filter(triggered, hits)) == length(event.triggered_hits)
 end

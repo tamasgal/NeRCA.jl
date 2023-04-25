@@ -1,15 +1,15 @@
 # Creates `PGFPlotsX.Coordinates` from hits
-function ZTCoordinates(hits::Vector{CalibratedHit}; offset=0)
+function ZTCoordinates(hits::Vector{AbstractCalibratedHit}; offset=0)
     PGFPlotsX.Coordinates(map(h->h.t - offset, hits), map(h->h.pos.z, hits))
 end
 
 """
-    function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0) -> PGFPlotsX.Axis
+    function ztplot(hits::Vector{AbstractCalibratedHit}; du=nothing, t₀=0) -> PGFPlotsX.Axis
 
 Create a zt-plot from a set of hits using PGFPlotsX. If no `du` is provided,
 the brightest DU will be determined.
 """
-function ztplot(hits::Vector{CalibratedHit}; du=nothing, t₀=0)
+function ztplot(hits::Vector{AbstractCalibratedHit}; du=nothing, t₀=0)
     if du === nothing
         du = NeRCA.most_frequent(h -> h.du, hits)
         hits = filter(h -> h.du == du, hits)
@@ -26,11 +26,11 @@ end
 
 
 """
-    function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0) -> PGFPlotsX.Axis
+    function ztplot(hits::Vector{AbstractCalibratedHit}, fit::NeRCA.ROyFit; t₀=0) -> PGFPlotsX.Axis
 
 Create a zt-plot from hits and a ROyFit using PGFPlotsX.
 """
-function ztplot(hits::Vector{CalibratedHit}, fit::NeRCA.ROyFit; t₀=0)
+function ztplot(hits::Vector{AbstractCalibratedHit}, fit::NeRCA.ROyFit; t₀=0)
     ax = ztplot(hits; t₀=t₀)
     zs = range(0, maximum(h->h.pos.z, hits) * 1.1, length=200)
     dᵧ, ccalc = NeRCA.make_cherenkov_calculator(fit.sdp)
@@ -88,11 +88,11 @@ end
 
 
 """
-    f(hits::Vector{CalibratedHit}; label="hits", highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
+    f(hits::Vector{AbstractCalibratedHit}; label="hits", highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
 
 Plot recipe to plot simple z-t-plots.
 """
-@recipe function f(hits::Vector{CalibratedHit}; label="hits", markersize=4, highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
+@recipe function f(hits::Vector{AbstractCalibratedHit}; label="hits", markersize=4, highlight_triggered=false, multiplicities=false, Δt=20, du=0, t₀=0)
     seriestype := :scatter
 
     xguide := "time [ns]"
@@ -126,7 +126,7 @@ Plot recipe to plot simple z-t-plots.
 end
 
 
-@recipe function f(hits::Vector{CalibratedHit}, track::Track; max_z=nothing)
+@recipe function f(hits::Vector{AbstractCalibratedHit}, track::Track; max_z=nothing)
     seriestype := :scatter
 
     xguide := "time [ns]"
@@ -166,7 +166,7 @@ end
 end
 
 
-@recipe function f(hits::Vector{CalibratedHit}, fit::ROyFit; label="", max_z=nothing)
+@recipe function f(hits::Vector{AbstractCalibratedHit}, fit::ROyFit; label="", max_z=nothing)
     seriestype := :scatter
 
     xguide := "time [ns]"
