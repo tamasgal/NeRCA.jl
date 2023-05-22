@@ -1,8 +1,0 @@
-julia 1.0
-
-StaticArrays
-HDF5
-RecipesBase
-PlotThemes
-JuMP
-Ipopt
