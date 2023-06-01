@@ -30,9 +30,7 @@ function main()
 
         shits = filter(h->h.multiplicity.count >= 4, hits)
         doms = unique(map(h->h.dom_id, shits))
-        track = NeRCA.prefit(shits)
-        dir = Direction(normalize(track.dir))
-        v = norm(track.dir)
+        track = NeRCA.dumandfit(shits)
         write(outf, "$(event.info.group_id),$(dir.x),$(dir.y),$(dir.z),$(track.pos.x),$(track.pos.y),$(track.pos.z),$(v),$(track.time)\n")
     end
 

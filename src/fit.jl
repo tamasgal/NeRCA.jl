@@ -31,11 +31,11 @@ $(SIGNATURES)
 
 Performs the prefit algorithm which was used in DUMAND II.
 """
-function prefit(hits::Vector{KM3io.XCalibratedHit})
+function dumandfit(hits::Vector{T}) where T <: AbstractCalibratedHit
     N = length(hits)
     D = 0.0
-    dir = [0.0, 0.0, 0.0]
-    pos = [0.0, 0.0, 0.0]
+    dir = Direction(0.0, 0.0, 0.0)
+    pos = Position(0.0, 0.0, 0.0)
     pes = [max(1, (h.tot - 26.3) / 4.5) for h in hits]
     # pes = [h.tot for h in hits]
     # pes = [h.multiplicity.count for h in hits]
@@ -53,8 +53,8 @@ function prefit(hits::Vector{KM3io.XCalibratedHit})
             D += q_ik * (t_i - t_k)^2
         end
     end
-    # dir = normalize(dir/D)
-    return NeRCA.Track(dir/D, pos/D, 0)
+    dir = normalize(dir/D)
+    return Track(dir, pos/D, 0)
 end
 
 
@@ -332,7 +332,7 @@ function (s::SingleDUMinimiser)(d_closest, t_closest, z_closest, dir_z, t₀)
         # m = s.multiplicities[i]
         t_exp = ccalc(z)
         Δt = abs(t - t_exp)
-        # zenith_acceptance = 1 - NeRCA.zenith(Direction(0,0,1))/π
+        # zenith_acceptance = 1 - z.enith(Direction(0,0,1))/π
         photon_distance = d_γ(z)
 
         timing = Δt^2
@@ -374,8 +374,8 @@ function (m::MultiDUMinimiser)(x, y, z, θ, ϕ, t₀)
 end
 
 function multi_du_fit(prefit, hits; print_level=0)
-    ϕ_start = NeRCA.azimuth(prefit.dir)
-    θ_start = NeRCA.zenith(prefit.dir)
+    ϕ_start = azimuth(prefit.dir)
+    θ_start = zenith(prefit.dir)
     t₀_start = prefit.time
     pos = prefit.pos
 

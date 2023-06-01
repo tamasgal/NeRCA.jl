@@ -26,7 +26,7 @@ using HTTP
 import Base: read, +, -, *, getindex, length, eltype
 
 export
-    RecoTrack, NoRecoTrack,
+    RecoTrack, NoRecoTrack, dumandfit,
     duhits, domhits, nfoldhits,
     ztplot,
     most_frequent, categorize,

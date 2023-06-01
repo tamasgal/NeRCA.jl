@@ -3,21 +3,6 @@ Base.angle(a::T, b::T) where {T<:Union{KM3io.AbstractCalibratedHit, KM3io.PMT}} 
 Base.angle(a, b::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}) = Base.angle(a, b.dir)
 Base.angle(a::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}, b) = Base.angle(a.dir, b)
 
-
-"""
-$(SIGNATURES)
-
-Calculate the azimuth angle for a given direction.
-"""
-azimuth(d) = atan(d[2], d[1])
-
-"""
-$(SIGNATURES)
-
-Calculate the zenith angle for a given direction.
-"""
-zenith(d) = acos(-d[3]/norm(d))
-
 """
 $(SIGNATURES)
 

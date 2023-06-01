@@ -73,7 +73,7 @@ function main()
         #= if n_triggered_dus > 2 && n_doms > 14 =#
         #=     selected_hits = unique(h->h.dom_id, triggered_hits) =#
         #=     println("\nStarting multiline fit with $(n_dus) DUs and $(length(selected_hits)) selected hits") =#
-        #=     prefit_track = NeRCA.prefit(selected_hits) =#
+        #=     prefit_track = NeRCA.dumandfit(selected_hits) =#
         #=     println(prefit_track) =#
         #=     plot(selected_hits, prefit_track) =#
         #=     savefig("plots/ztplot_roy_prefit.png") =#

@@ -24,7 +24,7 @@ function main()
     @showprogress 1 for event in NeRCA.MCEventReader(filename, detx)
         hits = calibrate(event.calib, event.hits)
         triggered_hits = triggered(hits)
-        prefit_track = NeRCA.prefit(triggered_hits)
+        prefit_track = NeRCA.dumandfit(triggered_hits)
         t = triggered_hits[1].t - 500
         Δd = norm(prefit_track.dir) * t
         shifted_pos = prefit_track.pos + normalize(prefit_track.dir) * Δd
