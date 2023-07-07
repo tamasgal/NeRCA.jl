@@ -36,6 +36,7 @@ export
 include("math.jl")
 include("hits.jl")
 include("mc.jl")
+include("prefit.jl")
 include("fit.jl")
 include("plot.jl")
 include("db.jl")

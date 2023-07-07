@@ -74,3 +74,26 @@ The function to fit time residual plot distributions.
 function langauss(x, LA, Lμ, Lσ, GA, Gμ, Gσ, offset)
     LA * pdf(Landau(Lμ, Lσ), x) + GA * pdf(Normal(Gμ, Gσ), x) + offset
 end
+
+"""
+
+Creates directions (points on a unit sphere) which are quite evenly distributed
+with respect to their space angles using the Fibonacci lattice algorithm. The
+axial anisotropy is much smaller compared to a simple latitude-longitude
+lattice.
+
+"""
+function fibonaccisphere(N)
+    ϕ = π * (√5 - 1)  # golden angle in rad
+
+    directions = sizehint!(Direction[], N)
+    for i ∈ 0:N-1
+        y = 1 - 2(i / (N - 1))
+        r = √(1 - y * y)
+        θ = ϕ * i
+        x = cos(θ) * r
+        z = sin(θ) * r
+        push!(directions, Direction(x, y, z))
+    end
+    directions
+end
