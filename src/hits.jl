@@ -14,14 +14,14 @@ function combine(snapshot_hits::Vector{KM3io.SnapshotHit}, triggered_hits::Vecto
         triggermasks[(hit.channel_id, hit.dom_id, hit.t, hit.tot)] = hit.trigger_mask
     end
     n = length(snapshot_hits)
-    hits = sizehint!(Vector{Hit}(), n)
+    hits = sizehint!(Vector{TriggeredHit}(), n)
     for hit in snapshot_hits
         channel_id = hit.channel_id
         dom_id = hit.dom_id
         t = hit.t
         tot = hit.tot
         triggermask = get(triggermasks, (channel_id, dom_id, t, tot), 0)
-        push!(hits, Hit(dom_id, channel_id, t, tot, triggermask))
+        push!(hits, TriggeredHit(dom_id, channel_id, t, tot, triggermask))
     end
     hits
 end

@@ -86,7 +86,7 @@ lattice.
 function fibonaccisphere(N)
     ϕ = π * (√5 - 1)  # golden angle in rad
 
-    directions = sizehint!(Direction[], N)
+    directions = sizehint!(Vector{Direction}(), N)
     for i ∈ 0:N-1
         y = 1 - 2(i / (N - 1))
         r = √(1 - y * y)
