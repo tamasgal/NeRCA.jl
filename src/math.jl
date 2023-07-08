@@ -4,8 +4,6 @@ Base.angle(a, b::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}) = Base.angle(a, 
 Base.angle(a::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}, b) = Base.angle(a.dir, b)
 
 """
-$(SIGNATURES)
-
 Calculate the cartesian coordinates for given `ϕ`, `θ` and radius `r`.
 """
 function cartesian(ϕ, θ; r=1.0)
@@ -13,8 +11,6 @@ function cartesian(ϕ, θ; r=1.0)
 end
 
 """
-$(SIGNATURES)
-
 Calculate the distance between a point (p1) and a line (given by p2 and d2).
 """
 function pld3(p1, p2, d2)
@@ -23,8 +19,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Calculate the distance between two lines.
 """
 function lld3(P, u, Q, v)
@@ -35,8 +29,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Calculate the distance between two tracks.
 """
 function lld3(t₁::KM3io.Track, t₂::KM3io.Track)
@@ -45,8 +37,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Projects a point to a track.
 """
 function project(P, t::KM3io.Track)
@@ -57,8 +47,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Project P onto a line spanned by A and B.
 """
 function project(P, A, B)
@@ -67,8 +55,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 The function to fit time residual plot distributions.
 """
 function langauss(x, LA, Lμ, Lσ, GA, Gμ, Gσ, offset)

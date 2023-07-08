@@ -1,6 +1,4 @@
 """
-$(SIGNATURES)
-
 Combine snapshot and triggered hits to a single hits-vector.
 
 This should be used to transfer the trigger information to the
@@ -28,8 +26,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
 """
@@ -56,8 +52,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Calculate the multiplicities for a given time window. Two arrays are
 are returned, one contains the multiplicities, the second one the IDs
 of the coincidence groups.
@@ -101,8 +95,6 @@ function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:KM3io.Abstract
 end
 
 """
-$(SIGNATURES)
-
 Counts the multiplicities and modifies the .multiplicity field of the hits.
 Important: the hits have to be sorted by time and then by DOM ID first.
 """
@@ -161,24 +153,18 @@ end
 
 
 """
-$(SIGNATURES)
-
 Categorise hits by DOM ID and put them into a dictionary of DOM ID=>Vector{Hit}.
 """
 @inline domhits(hits) = categorize(:dom_id, hits)
 
 
 """
-$(SIGNATURES)
-
 Categorise hits by DU and put them into a dictionary of DU=>Vector{Hit}.
 """
 @inline duhits(hits::Vector{T}) where {T<:KM3io.XCalibratedHit} = categorize(:du, hits)
 
 
 """
-$(SIGNATURES)
-
 Return a vector of hits with ToT >= `tot`.
 """
 function totcut(hits::Vector{T}, tot) where {T<:KM3io.AbstractDAQHit}
@@ -187,8 +173,6 @@ end
 
 
 """
-$(SIGNATURES)
-
 Returns the estimated number of photoelectrons for a given ToT.
 """
 function nphes(tot)

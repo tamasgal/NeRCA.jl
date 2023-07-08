@@ -33,6 +33,23 @@ export
     SingleDUParams, SingleDURecoParams,
     initdb, streamds, detx  # db.jl
 
+
+@template (FUNCTIONS, METHODS, MACROS) =
+    """
+    $(TYPEDSIGNATURES)
+    $(DOCSTRING)
+    """
+
+@template TYPES = """
+    $(TYPEDEF)
+
+    $(DOCSTRING)
+
+    # Fields
+    $(TYPEDFIELDS)
+    """
+
+
 include("math.jl")
 include("hits.jl")
 include("mc.jl")
