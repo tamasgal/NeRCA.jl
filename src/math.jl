@@ -83,3 +83,14 @@ function fibonaccisphere(N)
     end
     directions
 end
+"""
+A rotation matrix with a given direction, which will point towards the z-axis when rotated.
+"""
+function rotator(dir::Direction)
+    ct = cos(theta(dir))
+    st = sin(theta(dir))
+    cp = cos(phi(dir))
+    sp = sin(phi(dir))
+
+    RotMatrix(ct*cp, -sp, st*cp, ct*sp, cp, st*sp, -st, 0.0, ct)
+end
