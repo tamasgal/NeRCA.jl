@@ -181,3 +181,25 @@ function nphes(tot)
     end
     return 40.0 + (255 - tot)*2.0
 end
+
+
+"""
+
+Creates a map (`Dict{Int32, Vector{T}}`) from a flat `Vector{T}` split up based
+on the `dom_id` of each element. A typical use is to split up a vector of hits
+by their optical module IDs.
+
+This function is similar to `categorize(:dom_id, Vector{T})` but this method
+is completely typesafe.
+
+"""
+function modulemap(hits::Vector{T}) where T
+    out = Dict{Int32, Vector{T}}()
+    for hit ∈ hits
+        if !(hit.dom_id ∈ keys(out))
+            out[hit.dom_id] = T[]
+        end
+        push!(out[hit.dom_id], hit)
+    end
+    out
+end
