@@ -95,11 +95,12 @@ end
 
 """
 
-Creates a map (`Dict{Int32, Vector{T}}`) from a flat `Vector{T}` split up
-based on the `dom_id`. A typical use is to split up a vector of hits
-by the optical module ID.
+Creates a map (`Dict{Int32, Vector{T}}`) from a flat `Vector{T}` split up based
+on the `dom_id` of each element. A typical use is to split up a vector of hits
+by their optical module IDs.
 
-This function is similar to `categorize(:dom_id, Vector{T})` but typesafe.
+This function is similar to `categorize(:dom_id, Vector{T})` but this method
+is completely typesafe.
 
 """
 function modulemap(hits::Vector{T}) where T
