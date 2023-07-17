@@ -33,6 +33,36 @@ end
     @test 1 == dhits[8][6].trigger_mask
 end
 
+@testset "sort hits" begin
+    rhits = [
+        HitR1(1, zero(Position), Hit(15, 0)),
+        HitR1(2, zero(Position), Hit(14, 0)),
+        HitR1(2, zero(Position), Hit(11, 0)),
+        HitR1(2, zero(Position), Hit(10, 0)),
+        HitR1(3, zero(Position), Hit(12, 0)),
+        HitR1(2, zero(Position), Hit(14, 0)),
+        HitR1(1, zero(Position), Hit(13, 0)),
+    ]
+
+    sort!(rhits)
+
+    @test 1 == rhits[1].dom_id
+    @test 1 == rhits[2].dom_id
+    @test 2 == rhits[3].dom_id
+    @test 2 == rhits[4].dom_id
+    @test 2 == rhits[5].dom_id
+    @test 2 == rhits[6].dom_id
+    @test 3 == rhits[7].dom_id
+
+    @test 13 == rhits[1].hit.t
+    @test 15 == rhits[2].hit.t
+    @test 10 == rhits[3].hit.t
+    @test 11 == rhits[4].hit.t
+    @test 14 == rhits[5].hit.t
+    @test 14 == rhits[6].hit.t
+    @test 12 == rhits[7].hit.t
+end
+
 # multiplicities
 sorted_hits = sort(hits, by=h->h.t)
 sort!(sorted_hits, by=h->h.dom_id)
