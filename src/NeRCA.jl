@@ -31,9 +31,9 @@ export
     Hit, HitR1,
     RecoTrack, NoRecoTrack, dumandfit,
     MuonScanfit, MuonScanfitParameters,
-    duhits, domhits, nfoldhits,
+    duhits, nfoldhits,
     ztplot,
-    most_frequent, categorize,
+    most_frequent, categorize, modulemap,
     SingleDUParams, SingleDURecoParams,
     initdb, streamds, detx,  # db.jl
     rotator,

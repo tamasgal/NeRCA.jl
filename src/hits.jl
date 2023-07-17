@@ -30,7 +30,7 @@ Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
 """
 function nfoldhits(hits::Vector{T}, Δt, n) where {T<:KM3io.AbstractDAQHit}
-    hit_map = domhits(hits)
+    hit_map = modulemap(hits)
     chits = Vector{T}()
     for (dom_id, dom_hits) ∈ hit_map
         bag = Vector{T}()
@@ -150,12 +150,6 @@ function count_multiplicities!(hits::Vector{KM3io.XCalibratedHit}, tmax=20)
     end
     return
 end
-
-
-"""
-Categorise hits by DOM ID and put them into a dictionary of DOM ID=>Vector{Hit}.
-"""
-@inline domhits(hits) = categorize(:dom_id, hits)
 
 
 """

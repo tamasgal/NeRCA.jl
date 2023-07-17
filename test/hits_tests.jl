@@ -18,13 +18,6 @@ hits = [TriggeredHit(8, 1, 100, 20, false),
         TriggeredHit(11, 1, 1002, 26, false)]
 
 
-# triggered()
-@testset "triggered()" begin
-    thits = filter(triggered, hits)
-    @test 4 == length(thits)
-    @test 9 == thits[1].dom_id
-end
-
 # nfoldhits()
 @testset "nfoldhits()" begin
     twofoldhits = nfoldhits(hits, 10, 2)
@@ -33,9 +26,8 @@ end
     @test 3 == length(threefoldhits)
 end
 
-# domhits()
-@testset "domhits()" begin
-    dhits = domhits(hits)
+@testset "modulemap()" begin
+    dhits = modulemap(hits)
     @test 7 == length(dhits[8])
     @test 20 == dhits[8][1].tot
     @test 1 == dhits[8][6].trigger_mask
