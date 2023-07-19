@@ -28,7 +28,7 @@ using HTTP
 import Base: read, +, -, *, getindex, length, eltype
 
 export
-    Hit, HitR1,
+    Hit, HitL0, HitL1, HitL2, HitR0, HitR1, HitR2,
     RecoTrack, NoRecoTrack, dumandfit,
     MuonScanfit, MuonScanfitParameters,
     duhits, nfoldhits,

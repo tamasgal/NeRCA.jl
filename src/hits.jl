@@ -1,17 +1,66 @@
-struct Hit
+struct Hit <: KM3io.AbstractHit
     t::Float64
     tot::Float64
 end
+Base.isless(lhs::Hit, rhs::Hit) = lhs.t < rhs.t
 
-struct HitR1
+struct HitL0 <: KM3io.AbstractHit
+    channel_id::Int8
+    t::Float64
+    tot::Float64
+    pos::Position{Float64}
+    dir::Direction{Float64}
+end
+Base.isless(lhs::HitL0, rhs::HitL0) = time(lhs) < time(rhs)
+
+abstract type AbstractSpecialHit <: KM3io.AbstractHit end  # TODO: bad naming ;)
+abstract type AbstractCoincidenceHit <: AbstractSpecialHit end
+abstract type AbstractReducedHit <: AbstractSpecialHit end
+
+struct HitL1 <: AbstractCoincidenceHit
+    dom_id::Int32
+    hits::Vector{HitL0}
+end
+struct HitL2 <: AbstractCoincidenceHit
+    dom_id::Int32
+    hits::Vector{HitL0}
+end
+HitL1(m::DetectorModule, hits) = HitL1(m.id, hits)
+HitL2(m::DetectorModule, hits) = HitL2(m.id, hits)
+Base.length(c::AbstractCoincidenceHit) = length(c.hits)
+Base.eltype(c::AbstractCoincidenceHit) = HitL0
+function Base.show(io::IO, c::AbstractCoincidenceHit)
+    times = [time(h) for h in c]
+    print(io, "$(c.dom_id) $(minimum(times)) $(length(c))")
+end
+function Base.iterate(c::AbstractCoincidenceHit, state=1)
+    @inbounds state > length(c) ? nothing : (c.hits[state], state+1)
+end
+
+struct HitR0 <: AbstractReducedHit
+    hit::Hit
+    channel_id::Int8
+end
+Base.isless(lhs::HitR0, rhs::HitR0) = lhs.hit.t < rhs.hit.t
+
+struct HitR1 <: AbstractReducedHit
     dom_id::Int32
     pos::Position{Float64}
     hit::Hit
+    n::Int
+    weight::Float64
 end
 Base.isless(lhs::HitR1, rhs::HitR1) = lhs.dom_id == rhs.dom_id ? lhs.hit.t < rhs.hit.t : lhs.dom_id < rhs.dom_id
+const HitR2 = HitR1
+function HitR1(m::DetectorModule, hits::Vector{HitL0})
+    combined_hit = combine(hits)
+    h = first(hits)
+    count = weight = length(hits)
+    HitR1(m.id, h.pos, combined_hit, count, weight)
+end
 
-starttime(hit) = hit.t
-endtime(hit) = hit.t + hit.tot
+starttime(hit) = time(hit)
+endtime(hit) = time(hit) + hit.tot
 
 """
 Combine snapshot and triggered hits to a single hits-vector.
@@ -169,6 +218,8 @@ end
 
 """
 Categorise hits by DU and put them into a dictionary of DU=>Vector{Hit}.
+
+Caveat: this function is not typesafe, only suited for high-level analysis (like plots).
 """
 @inline duhits(hits::Vector{T}) where {T<:KM3io.XCalibratedHit} = categorize(:du, hits)
 
@@ -225,17 +276,28 @@ Calibrates hits.
 function calibrate(T::Type{HitR1}, det::Detector, hits)
     rhits = sizehint!(Vector{T}(), length(hits))
     for hit ∈ hits
-        pos = det[hit.dom_id][hit.channel_id].pos
-        push!(rhits, T(hit.dom_id, pos, Hit(hit.t, hit.tot)))
+        pmt = det[hit.dom_id][hit.channel_id]
+        t = hit.t + pmt.t₀
+        push!(rhits, T(hit.dom_id, pmt.pos, Hit(t, hit.tot)))
     end
     rhits
 end
+function calibrate(T::Type{HitL0}, m::DetectorModule, hits)
+    chits = sizehint!(Vector{T}(), length(hits))
+    for hit ∈ hits
+        pmt = m[hit.channel_id]
+        t = hit.t + pmt.t₀
+        push!(chits, T(hit.channel_id, t, hit.tot, pmt.pos, pmt.dir))
+    end
+    chits
+end
+
 
 """
-Combines several hits into a single one by taking the earlierst start time,
+Combines several hits into a single one by taking the earliest start time,
 then latest endtime and a ToT which spans over the time range.
 """
-function combine(hits::Vector{Hit})
+function combine(hits::Vector{T}) where T <: KM3io.AbstractHit
     isempty(hits) && return Hit(0.0, 0.0)
 
     t1 = starttime(first(hits))
@@ -252,4 +314,89 @@ function combine(hits::Vector{Hit})
         end
     end
     Hit(t1, t2 - t1)
+end
+
+
+struct L1BuilderParameters
+    Δt::Float64
+    combine::Bool
+end
+
+struct L1Builder
+    params::L1BuilderParameters
+end
+
+"""
+Find coincidences within the time window `Δt` of the initialised `params`. The return
+value is a vector of `L1Hit`s.
+"""
+function (b::L1Builder)(::Type{H}, det::Detector, hits::Vector{T}; combine=false) where {T, H}
+    out = H[]
+    mm = modulemap(hits)
+    for (m, module_hits) ∈ mm
+        _findL1!(out, det[m], module_hits, b.params.Δt; combine=combine)
+    end
+    out
+end
+(b::L1Builder)(det::Detector, hits) = b(HitL1, det, hits)
+function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt; combine=false) where H <: AbstractSpecialHit
+    n = length(hits)
+    n < 2 && return out
+
+    chits = sort(calibrate(HitL0, m, hits))
+
+    last_coincidence_idx = 0  # used when combining
+
+    ref_idx = 1  # starting with the first hit, obviously
+    idx = 2      # first comparison is the second hit
+    while ref_idx <= n
+        restart = false
+        idx = ref_idx + 1
+        while(idx <= n+1 || restart) # n+1 to do the final loop after the last hit
+            if idx > n || (time(chits[idx]) - time(chits[ref_idx]) > Δt)
+                end_idx = idx - 1
+                # check if we have gathered some hits
+                if ref_idx != end_idx
+                    coincident_hits = [chits[i] for i ∈ ref_idx:end_idx]
+                    push!(out, H(m, coincident_hits))
+                    ref_idx = end_idx
+                end
+                restart = true
+                break
+            end
+            idx += 1
+        end
+        ref_idx += 1
+    end
+    out
+end
+
+
+struct L2BuilderParameters
+    n_hits::Int
+    Δt::Float64
+    ctmin::Float64
+end
+
+struct L2Builder
+    params::L2BuilderParameters
+end
+
+function (b::L2Builder)(hits)
+end
+
+
+const SLEWS_L1 = SVector(
+    +0.00, +0.39, +0.21, -0.59, -1.15,
+    -1.59, -1.97, -2.30, -2.56, -2.89,
+    -3.12, -3.24, -3.56, -3.69, -4.00,
+    -4.10, -4.16, -4.49, -4.71, -4.77,
+    -4.81, -4.87, -4.88, -4.83, -5.21,
+    -5.06, -5.27, -5.18, -5.24, -5.79,
+    -6.78, -6.24
+)
+
+function KM3io.slew(h::HitR1)
+    h.n > length(SLEWS_L1) && return SLEWS_L1[end]
+    SLEWS_L1[h.n]
 end

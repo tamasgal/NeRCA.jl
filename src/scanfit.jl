@@ -35,13 +35,3 @@ struct Line1Z
     pos::Position{Float64}
     t::Float64
 end
-
-struct L2BuilderParameters
-    n_hits::Int
-    Δt::Float64
-    ctmin::Float64
-end
-
-struct L2Builder
-    params::L2BuilderParameters
-end
