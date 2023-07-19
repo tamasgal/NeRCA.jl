@@ -1,5 +1,6 @@
 using NeRCA
 using KM3io
+using KM3NeTTestData
 using Test
 
 const ONLINEFILE = joinpath(@__DIR__, "data", "km3net_online.root")
@@ -89,6 +90,16 @@ for event in f.online.events
 end
 
 @testset "L1 builder" begin
+    f = ROOTFile(datapath("online", "KM3NeT_00000133_JDAQEvent.root"))
+    det = Detector(datapath("detx", "KM3NeT_00000133_20221025.detx"))
+    l1builder = L1Builder(L1BuilderParameters(25, false))
+    @test 33 == length(l1builder(HitL1, det, f.online.events[1].snapshot_hits))
+    @test 252 == length(l1builder(HitL1, det, f.online.events[2].snapshot_hits))
+    @test 65 == length(l1builder(HitL1, det, f.online.events[3].snapshot_hits))
+    @test 10 == length(l1builder(HitL1, det, f.online.events[1].snapshot_hits; combine=true))
+    @test 68 == length(l1builder(HitL1, det, f.online.events[2].snapshot_hits; combine=true))
+    @test 22 == length(l1builder(HitL1, det, f.online.events[3].snapshot_hits; combine=true))
+
 # Using
 # f = NeRCA.ROOTFile("KM3NeT_00000133_JDAQEvent.root")
 # det = KM3io.Detector("KM3NeT_00000133_20221025.detx")

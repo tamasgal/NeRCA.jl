@@ -345,8 +345,6 @@ function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt; combine=false) w
 
     chits = sort(calibrate(HitL0, m, hits))
 
-    last_coincidence_idx = 0  # used when combining
-
     ref_idx = 1  # starting with the first hit, obviously
     idx = 2      # first comparison is the second hit
     while ref_idx <= n
@@ -359,7 +357,9 @@ function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt; combine=false) w
                 if ref_idx != end_idx
                     coincident_hits = [chits[i] for i ∈ ref_idx:end_idx]
                     push!(out, H(m, coincident_hits))
-                    ref_idx = end_idx
+                    if combine
+                        ref_idx = end_idx
+                    end
                 end
                 restart = true
                 break
