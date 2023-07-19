@@ -35,13 +35,13 @@ end
 
 @testset "sort hits" begin
     rhits = [
-        HitR1(1, zero(Position), Hit(15, 0)),
-        HitR1(2, zero(Position), Hit(14, 0)),
-        HitR1(2, zero(Position), Hit(11, 0)),
-        HitR1(2, zero(Position), Hit(10, 0)),
-        HitR1(3, zero(Position), Hit(12, 0)),
-        HitR1(2, zero(Position), Hit(14, 0)),
-        HitR1(1, zero(Position), Hit(13, 0)),
+        HitR1(1, zero(Position), Hit(15, 0), 1, 1),
+        HitR1(2, zero(Position), Hit(14, 0), 1, 1),
+        HitR1(2, zero(Position), Hit(11, 0), 1, 1),
+        HitR1(2, zero(Position), Hit(10, 0), 1, 1),
+        HitR1(3, zero(Position), Hit(12, 0), 1, 1),
+        HitR1(2, zero(Position), Hit(14, 0), 1, 1),
+        HitR1(1, zero(Position), Hit(13, 0), 1, 1),
     ]
 
     sort!(rhits)
