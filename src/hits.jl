@@ -330,16 +330,16 @@ end
 Find coincidences within the time window `Δt` of the initialised `params`. The return
 value is a vector of `L1Hit`s.
 """
-function (b::L1Builder)(::Type{H}, det::Detector, hits::Vector{T}; combine=false) where {T, H}
+function (b::L1Builder)(::Type{H}, det::Detector, hits::Vector{T}; combine=true) where {T, H}
     out = H[]
     mm = modulemap(hits)
     for (m, module_hits) ∈ mm
-        _findL1!(out, det[m], module_hits, b.params.Δt; combine=combine)
+        _findL1!(out, det[m], module_hits, b.params.Δt, combine)
     end
     out
 end
 (b::L1Builder)(det::Detector, hits) = b(HitL1, det, hits)
-function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt; combine=false) where H <: AbstractSpecialHit
+function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt, combine::Bool) where H <: AbstractSpecialHit
     n = length(hits)
     n < 2 && return out
 
