@@ -440,13 +440,15 @@ function KM3io.slew(h::HitR1)
 end
 
 
+abstract type AbstractMatcher end
+
 """
 3D match criterion with road width, intended for muon signals.
 
 Source: B. Bakker, "Trigger studies for the Antares and KM3NeT detector.",
 Master thesis, University of Amsterdam.
 """
-mutable struct Match3B
+mutable struct Match3B <: AbstractMatcher
     const roadwidth::Float64
     const tmaxextra::Float64
     x::Float64
@@ -469,7 +471,7 @@ mutable struct Match3B
     const Rt::Float64
     const R2::Float64
 
-    function Match3B(roadwidth; tmaxextra=0.0)
+    function Match3B(roadwidth, tmaxextra=0.0)
         tt2 = KM3io.Constants.TAN_THETA_C_WATER^2
 
         D0 = roadwidth
@@ -521,4 +523,98 @@ function (m::Match3B)(hit1, hit2)
       end
 
       m.t >= m.dmin * KM3io.Constants.C_INVERSE - m.tmaxextra
+end
+
+
+@inline function swap!(arr::AbstractArray, i::Int, j::Int)
+    arr[i], arr[j] = arr[j], arr[i]
+    arr
+end
+
+struct Clique{T<:AbstractMatcher}
+    m::T
+    weights::Vector{Float64}
+    Clique(m::T) where T = new{T}(m, Float64[])
+end
+
+function (c::Clique)(hits::Vector{T}) where T<:AbstractSpecialHit
+    N = length(hits)
+    N == 0 && return hits
+
+    resize!(c.weights, N)
+
+    @inbounds for i ∈ 1:N
+        c.weights[i] = weight(hits[i])
+    end
+    println("starting weights: $(c.weights)")
+
+    for i ∈ 1:N
+        for j ∈ i:N
+            j == i && continue
+            if c.m(hits[i], hits[j])
+                println("     match: i=$(i-1) j=$(j-1)")
+                c.weights[i] += weight(hits[j])
+                c.weights[j] += weight(hits[i])
+            end
+        end
+    end
+    println("modified weights: $(c.weights)")
+
+    # ====================================================================
+    # above this line, everything's fine
+    # ====================================================================
+
+    # Remove hit with the smallest weight of associated hits.
+    # This procedure stops when the weight of associated hits
+    # is equal to the maximal weight of (remaining) hits.
+    n = N
+    # @show N
+    while true
+        j = 1
+        W = c.weights[j]
+        # @show W
+
+        for i ∈ 2:n
+            print("i=$(i-1)  j=$(j-1)    :  ")
+            if c.weights[i] < c.weights[j]
+                println("$(c.weights[i]) < $(c.weights[j]) = less")
+                j = i
+            elseif c.weights[i] > W
+                println("$(c.weights[i]) > $W = greater")
+                W = c.weights[i]
+            else
+                println("noop")
+            end
+        end
+        # @show j, W
+        println("  W = $W")
+
+        # end condition
+        # @show c.weights[j], W
+        c.weights[j] == W && return resize!(hits, n)
+
+        # Swap the selected hit to end.
+        # @show (j, n)
+        println(" swapping j=$(j-1) n=$(n-1)")
+        swap!(hits, j, n)
+        # @show c.weights
+        swap!(c.weights, j, n)
+        # @show c.weights
+        println("swapped weights: $(c.weights)")
+        println("swapped weights: $([h.dom_id for h in hits])")
+
+        # @show n
+
+        # Decrease weight of associated hits for each associated hit.
+        for i ∈ 1:n
+            c.weights[n] <= weight(hits[n]) && break
+            if c.m(hits[i], hits[n])
+                c.weights[i] -= weight(hits[n])
+                c.weights[n] -= weight(hits[i])
+            end
+        end
+        n -= 1
+        println("n = $n")
+        println("end weights: $(c.weights)")
+    end
 end

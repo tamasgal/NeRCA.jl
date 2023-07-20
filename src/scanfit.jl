@@ -15,6 +15,7 @@ function (mp::MuonScanfit)(hits)
     l1builder = L1Builder(L1BuilderParameters(25, false))
     rhits = l1builder(HitR1, mp.detector, hits)
     sort!(rhits)
+    unique!(h->h.dom_id, rhits)
 
     for dir ∈ mp.directions
         R = rotator(dir)
