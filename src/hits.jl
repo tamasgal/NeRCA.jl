@@ -495,29 +495,30 @@ mutable struct Match3B
         )
     end
 end
+Base.show(io::IO, m::Match3B) = print(io, "Match3B($(m.roadwidth), $(m.tmaxextra))")
 
-function (m::Match3B)(first, second)
-      x = first.pos.x - second.pos.x;
-      y = first.pos.y - second.pos.y;
-      z = first.pos.z - second.pos.z;
-      d2 = x * x + y * y + z * z;
-      t = abs(time(first) - time(second))
+function (m::Match3B)(hit1, hit2)
+      m.x = hit1.pos.x - hit2.pos.x
+      m.y = hit1.pos.y - hit2.pos.y
+      m.z = hit1.pos.z - hit2.pos.z
+      m.d₂ = m.x * m.x + m.y * m.y + m.z * m.z
+      m.t = abs(time(hit1) - time(hit2))
 
-      if (d2 < D02)
-        dmax = √d2 * KM3io.Constants.INDEX_OF_REFRACTION_WATER
+      if (m.d₂ < m.D02)
+        m.dmax = √m.d₂ * KM3io.Constants.INDEX_OF_REFRACTION_WATER
       else
-        dmax = √(d2 - Rs2) + Rst
+        m.dmax = √(m.d₂ - m.Rs2) + m.Rst
       end
 
-      t > dmax * KM3io.Constants.C_INVERSE + TMaxExtra_ns && return false
+      m.t > m.dmax * KM3io.Constants.C_INVERSE + m.tmaxextra && return false
 
-      if d2 > D22
-        dmin = √(d2 - R2) - Rt
-      elseif d2 > D12
-        dmin = √(d2 - D12)
+      if m.d₂ > m.D22
+        m.dmin = √(m.d₂ - m.R2) - m.Rt
+      elseif m.d₂ > m.D12
+        m.dmin = √(m.d₂ - m.D12)
       else
         return true
       end
 
-      t >= dmin * KM3io.Constants.C_INVERSE - TMaxExtra_ns;
+      m.t >= m.dmin * KM3io.Constants.C_INVERSE - m.tmaxextra
 end
