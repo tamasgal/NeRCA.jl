@@ -29,7 +29,7 @@ import Base: read, +, -, *, getindex, length, eltype
 
 export
     Hit, HitL0, HitL1, HitL2, HitR0, HitR1, HitR2,
-    L1Builder, L1BuilderParameters,
+    L1Builder, L1BuilderParameters, Match3B,
     RecoTrack, NoRecoTrack, dumandfit,
     MuonScanfit, MuonScanfitParameters,
     duhits, nfoldhits,
@@ -38,6 +38,7 @@ export
     SingleDUParams, SingleDURecoParams,
     initdb, streamds, detx,  # db.jl
     rotator,
+    fibonaccisphere,
     # from KM3io
     Detector, Direction, Position
 

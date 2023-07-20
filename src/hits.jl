@@ -38,25 +38,27 @@ function Base.iterate(c::AbstractCoincidenceHit, state=1)
 end
 
 struct HitR0 <: AbstractReducedHit
-    hit::Hit
+    t::Float64
+    tot::Float64
     channel_id::Int8
 end
-Base.isless(lhs::HitR0, rhs::HitR0) = lhs.hit.t < rhs.hit.t
+Base.isless(lhs::HitR0, rhs::HitR0) = time(lhs) < time(rhs)
 
 struct HitR1 <: AbstractReducedHit
     dom_id::Int32
     pos::Position{Float64}
-    hit::Hit
+    t::Float64
+    tot::Float64
     n::Int
     weight::Float64
 end
-Base.isless(lhs::HitR1, rhs::HitR1) = lhs.dom_id == rhs.dom_id ? lhs.hit.t < rhs.hit.t : lhs.dom_id < rhs.dom_id
+Base.isless(lhs::HitR1, rhs::HitR1) = lhs.dom_id == rhs.dom_id ? time(lhs) < time(rhs) : lhs.dom_id < rhs.dom_id
 const HitR2 = HitR1
 function HitR1(m::DetectorModule, hits::Vector{HitL0})
     combined_hit = combine(hits)
     h = first(hits)
     count = weight = length(hits)
-    HitR1(m.id, h.pos, combined_hit, count, weight)
+    HitR1(m.id, h.pos, combined_hit.t, combined_hit.tot, count, weight)
 end
 
 starttime(hit) = time(hit)
@@ -343,7 +345,8 @@ function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt, combine::Bool) w
     n = length(hits)
     n < 2 && return out
 
-    chits = sort(calibrate(HitL0, m, hits))
+    chits = calibrate(HitL0, m, hits)
+    sort!(chits)
 
     ref_idx = 1  # starting with the first hit, obviously
     idx = 2      # first comparison is the second hit
@@ -383,6 +386,41 @@ struct L2Builder
 end
 
 function (b::L2Builder)(hits)
+    out = []
+    for hit ∈ hits
+    end
+
+      # const JSuperFrameClone2D<JHit> clone(inputL0);
+
+      # for (typename std::vector<JHit>::const_iterator p = inputL2.begin(); p != inputL2.end(); ++p)
+      # {
+
+      #   JHitR2 hit(inputL0.getModuleID(),
+      #              inputL0.getPosition());
+
+      #   clone.fast_forward(*p);
+
+      #   for (typename JSuperFrameClone2D<JHit>::const_iterator i = clone.begin(); i != clone.end(); ++i)
+      #   {
+
+      #     if (i->getTimeDifference(*p) <= TMaxLocal_ns)
+      #     {
+
+      #       if (hit.getN() == 0)
+      #         hit.set(i->getJHit());
+      #       else
+      #         hit.add(i->getJHit());
+
+      #       if (i->getT() < hit.getT())
+      #       {
+      #         hit.setPosition(i->getPosition());
+      #       }
+      #     }
+      #   }
+
+      #   *out = hit;
+      #   ++out;
+      # }
 end
 
 
@@ -399,4 +437,87 @@ const SLEWS_L1 = SVector(
 function KM3io.slew(h::HitR1)
     h.n > length(SLEWS_L1) && return SLEWS_L1[end]
     SLEWS_L1[h.n]
+end
+
+
+"""
+3D match criterion with road width, intended for muon signals.
+
+Source: B. Bakker, "Trigger studies for the Antares and KM3NeT detector.",
+Master thesis, University of Amsterdam.
+"""
+mutable struct Match3B
+    const roadwidth::Float64
+    const tmaxextra::Float64
+    x::Float64
+    y::Float64
+    z::Float64
+    d::Float64
+    t::Float64
+    dmin::Float64
+    dmax::Float64
+    d₂::Float64
+
+    const D0::Float64
+    const D1::Float64
+    const D2::Float64
+    const D02::Float64
+    const D12::Float64
+    const D22::Float64
+    const Rs2::Float64
+    const Rst::Float64
+    const Rt::Float64
+    const R2::Float64
+
+    function Match3B(roadwidth; tmaxextra=0.0)
+        tt2 = KM3io.Constants.TAN_THETA_C_WATER^2
+
+        D0 = roadwidth
+        D1 = roadwidth * 2.0
+        # calculation D2 in thesis is wrong, here correct (taken from Jpp/JMatch3B)
+        D2 = roadwidth * 0.5 * sqrt(tt2 + 10.0 + 9.0 / tt2)
+
+        D02 = D0 * D0
+        D12 = D1 * D1
+        D22 = D2 * D2
+
+        R = roadwidth
+        Rs = R * KM3io.Constants.SIN_THETA_C_WATER
+
+        R2 = R * R;
+        Rs2 = Rs * Rs;
+        Rst = Rs * KM3io.Constants.TAN_THETA_C_WATER
+        Rt = R * KM3io.Constants.TAN_THETA_C_WATER
+
+        new(
+            roadwidth, tmaxextra, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            D0, D1, D2, D02, D12, D22, Rs2, Rst, Rt, R2,
+        )
+    end
+end
+
+function (m::Match3B)(first, second)
+      x = first.pos.x - second.pos.x;
+      y = first.pos.y - second.pos.y;
+      z = first.pos.z - second.pos.z;
+      d2 = x * x + y * y + z * z;
+      t = abs(time(first) - time(second))
+
+      if (d2 < D02)
+        dmax = √d2 * KM3io.Constants.INDEX_OF_REFRACTION_WATER
+      else
+        dmax = √(d2 - Rs2) + Rst
+      end
+
+      t > dmax * KM3io.Constants.C_INVERSE + TMaxExtra_ns && return false
+
+      if d2 > D22
+        dmin = √(d2 - R2) - Rt
+      elseif d2 > D12
+        dmin = √(d2 - D12)
+      else
+        return true
+      end
+
+      t >= dmin * KM3io.Constants.C_INVERSE - TMaxExtra_ns;
 end

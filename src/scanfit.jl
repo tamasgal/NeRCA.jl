@@ -11,7 +11,10 @@ function Base.show(io::IO, mp::MuonScanfit)
 end
 
 function (mp::MuonScanfit)(hits)
-    rhits = calibrate(HitR1, mp.detector, hits)
+    # TODO: make it user-definable
+    l1builder = L1Builder(L1BuilderParameters(25, false))
+    rhits = l1builder(HitR1, mp.detector, hits)
+    sort!(rhits)
 
     for dir ∈ mp.directions
         R = rotator(dir)
