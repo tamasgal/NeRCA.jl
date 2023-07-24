@@ -25,14 +25,10 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     clusterize!(rhits, clique)
 
 
-
-    clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxextra))
-
-    match_test = Match1D(msf.params.roadwidth, msf.params.tmax)
-
-
-    for dir ∈ msf.directions
+    Threads.@threads for dir ∈ msf.directions
         rhits_copy = copy(rhits)
+
+        clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxextra))
         R = rotator(dir)
 
         # rotate hits
@@ -42,10 +38,8 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
         length(rhits_copy) > msf.params.nmaxhits && resize!(rhits_copy, msf.params.nmaxhits)
         sort!(rhits_copy; by=timetoz)
-        println("...")
-        @show length(rhits_copy)
+
         clusterize!(rhits_copy, clique1D)
-        @show length(rhits_copy)
 
         length(rhits_copy) <= 3 && continue  # TODO 3 comes from the number of parameters, retrieve from Line1Z fitter via type!
 
