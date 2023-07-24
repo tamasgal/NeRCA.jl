@@ -9,6 +9,7 @@ using DocStringExtensions
 using KM3io
 
 using Parameters
+using Combinatorics
 using StaticArrays
 using Rotations
 using Setfield
@@ -29,9 +30,9 @@ import Base: read, +, -, *, getindex, length, eltype
 
 export
     Hit, HitL0, HitL1, HitL2, HitR0, HitR1, HitR2,
-    L1Builder, L1BuilderParameters, Match3B,
+    L1Builder, L1BuilderParameters, Match3B, Match1D,
     RecoTrack, NoRecoTrack, dumandfit,
-    MuonScanfit, MuonScanfitParameters,
+    MuonScanfit, MuonScanfitParameters, timetoz,
     duhits, nfoldhits,
     ztplot,
     most_frequent, categorize, modulemap,

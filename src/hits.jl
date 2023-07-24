@@ -440,13 +440,21 @@ function KM3io.slew(h::HitR1)
 end
 
 
+"""
+Calculates the time to reach the z-position of the `hit` along the z-axis.
+"""
+function timetoz(hit)
+    time(hit) * KM3io.Constants.C - hit.pos.z
+end
+
+
 abstract type AbstractMatcher end
 
 """
 3D match criterion with road width, intended for muon signals.
 
-Source: B. Bakker, "Trigger studies for the Antares and KM3NeT detector.",
-Master thesis, University of Amsterdam.
+Origin: B. Bakker, "Trigger studies for the Antares and KM3NeT detector.",
+Master thesis, University of Amsterdam. With modifications from Jpp (M. de Jong).
 """
 mutable struct Match3B <: AbstractMatcher
     const roadwidth::Float64
@@ -525,19 +533,65 @@ function (m::Match3B)(hit1, hit2)
       m.t >= m.dmin * KM3io.Constants.C_INVERSE - m.tmaxextra
 end
 
+"""
+Simple Cherenkov matcher for muon signals. The muon is assumed to travel parallel
+to the Z-axis.
+"""
+mutable struct Match1D <: AbstractMatcher
+    const roadwidth::Float64  # maximal road width [ns]
+    const tmaxextra::Float64  # maximal extra time [ns]
+    const tmax::Float64
+    x::Float64
+    y::Float64
+    z::Float64
+    d::Float64
+    t::Float64
+
+    function Match1D(roadwidth, tmaxextra=0.0)
+        tmax = 0.5 * roadwidth * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  tmaxextra
+        new(roadwidth, tmaxextra, tmax, 0.0, 0.0, 0.0, 0.0, 0.0)
+    end
+end
+
+function (m::Match1D)(hit1, hit2)
+
+      m.z = hit1.pos.z - hit2.pos.z
+      m.t = abs(time(hit1) - time(hit2) - m.z * KM3io.Constants.C_INVERSE)
+
+      m.t > m.tmax && return false
+
+      x = hit1.pos.x - hit2.pos.x
+      y = hit1.pos.y - hit2.pos.y
+      d = √(m.x*m.x + m.y*m.y);
+
+      if m.d <= 0.5 * m.roadwidth
+          return m.t <=  m.d  * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
+      elseif m.d <= m.roadwidth
+          return m.t <= (m.roadwidth - m.d) * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
+      end
+
+      false
+end
 
 @inline function swap!(arr::AbstractArray, i::Int, j::Int)
     arr[i], arr[j] = arr[j], arr[i]
     arr
 end
 
+"""
+Clique clusterizer which takes a matcher algorithm like `Match3B` as input.
+"""
 struct Clique{T<:AbstractMatcher}
     m::T
     weights::Vector{Float64}
     Clique(m::T) where T = new{T}(m, Float64[])
 end
 
-function (c::Clique)(hits::Vector{T}) where T<:AbstractSpecialHit
+"""
+Applies the clique clusterization algorithm and leaves only the best matching
+hits in the input array.
+"""
+function clusterize!(hits::Vector{T}, c::Clique) where T<:AbstractSpecialHit
     N = length(hits)
     N == 0 && return hits
 
