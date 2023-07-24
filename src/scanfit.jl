@@ -47,7 +47,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         clusterize!(rhits_copy, clique1D)
         @show length(rhits_copy)
 
-        length(rhits_copy) <= 3 continue  # TODO 3 comes from the number of parameters, retrieve from Line1Z fitter via type!
+        length(rhits_copy) <= 3 && continue  # TODO 3 comes from the number of parameters, retrieve from Line1Z fitter via type!
 
         # TODO x-y scane
 
