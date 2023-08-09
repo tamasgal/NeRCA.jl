@@ -10,6 +10,7 @@ struct MuonScanfit
     detector::Detector
     directions::Vector{Direction{Float64}}
 end
+MuonScanfit(det::Detector) = MuonScanfit(MuonScanfitParameters(), det, fibonaccisphere(1000))
 function Base.show(io::IO, m::MuonScanfit)
    print(io, "$(typeof(m)) in $(length(m.directions)) directions")
 end
