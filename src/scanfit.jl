@@ -25,8 +25,11 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxextra))
     clusterize!(rhits, clique)
 
+    candidates = Vector{Tuple{Int, Direction}}()
 
-    Threads.@threads for dir ∈ msf.directions
+    # TODO threading is bugged
+    # Threads.@threads for dir ∈ msf.directions
+    for dir ∈ msf.directions
         rhits_copy = copy(rhits)
 
         clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxextra))
@@ -45,12 +48,37 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         length(rhits_copy) <= 3 && continue  # TODO 3 comes from the number of parameters, retrieve from Line1Z fitter via type!
 
         # TODO x-y scane
+        push!(candidates, (length(rhits_copy), dir))
 
     end
-    rhits
+    candidates
 end
 
-struct Line1Z
+abstract type EstimatorModel end
+
+"""
+
+A straight line parallel to the z-axis.
+
+"""
+struct Line1Z <: EstimatorModel
     pos::Position{Float64}
     t::Float64
+end
+Line1Z() = Line1Z(Position(0.0, 0.0, 0.0), 0.0)
+"""
+
+Calculate the Chernkov arrival tive for a given position.
+
+"""
+function Base.time(lz::Line1Z, pos::Position)
+    v = pos - lz.pos
+    R = √(v.x*v.x + v.y*v.y)
+    lz.t + (v.z + R * KM3io.Constants.KAPPA_WATER) * KM3io.Constants.C_INVERSE
+end
+
+
+struct Line1ZEstimator
+    model::Line1Z
+    V::
 end
