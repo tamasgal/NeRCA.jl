@@ -80,5 +80,5 @@ end
 
 struct Line1ZEstimator
     model::Line1Z
-    V::
+#    V::
 end

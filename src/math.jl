@@ -83,6 +83,40 @@ function fibonaccisphere(N)
     end
     directions
 end
+
+
+"""
+Creates directions with a given angular spacing in rad.
+"""
+omega3d(grid::Float64) = omega3d(Direction(0.0, 0.0, 0.0), (0.0, π), grid)
+
+"""
+Creates directions with a principal direction `dir`, a polar angle range `θ` [rad] and
+an angular spacing `grid` [rad].
+"""
+function omega3d(dir::Direction{Float64}, θ::Tuple{Float64, Float64}, grid::Float64)
+    directions = Vector{Direction}()
+
+    θ_min = first(θ)
+    θ_max = last(θ)
+
+    if (θ_min < 0.0)
+      θ_min = 0.0
+    end
+    if (θ_min > π)
+      θ_min = π
+    end
+    if (θ_max < 0.0)
+      θ_max = 0.0
+    end
+    if (θ_max > π)
+      θ_max = π
+    end
+
+    error("Not implemented yet")
+end
+
+
 """
 A rotation matrix with a given direction, which will point towards the z-axis when rotated.
 """

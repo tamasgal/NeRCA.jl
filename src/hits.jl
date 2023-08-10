@@ -21,6 +21,18 @@ struct HitL1 <: AbstractCoincidenceHit
     dom_id::Int32
     hits::Vector{HitL0}
 end
+# function Base.time(h::HitL1)
+#     # n = length(h)
+#     # n > length(SLEWS_L1) && return SLEWS_L1[end]
+#     # time(first(h.hits)) - SLEWS_L1[n-1]
+#     time(first(h.hits))
+# end
+# position(h::HitL1) = first(h.hits).pos
+# function tot(h::HitL1)
+#     combined_hit = combine(h.hits)
+#     combined_hit.tot
+# end
+
 struct HitL2 <: AbstractCoincidenceHit
     dom_id::Int32
     hits::Vector{HitL0}
@@ -60,6 +72,11 @@ function HitR1(m::DetectorModule, hits::Vector{HitL0})
     count = weight = length(hits)
     HitR1(m.id, h.pos, combined_hit.t, combined_hit.tot, count, weight)
 end
+# function HitR1(m::DetectorModule, hit::HitL1)
+#     count = weight = length(hit)
+#     HitR1(m.id, position(hit), time(hit), tot(hit), count, weight)
+# end
+weight(h::HitR1) = h.weight
 
 starttime(hit) = time(hit)
 endtime(hit) = time(hit) + hit.tot
@@ -359,6 +376,7 @@ function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt, combine::Bool) w
                 # check if we have gathered some hits
                 if ref_idx != end_idx
                     coincident_hits = [chits[i] for i ∈ ref_idx:end_idx]
+                    # push!(out, H(m, HitL1(m.id, coincident_hits)))
                     push!(out, H(m, coincident_hits))
                     if combine
                         ref_idx = end_idx
@@ -390,37 +408,7 @@ function (b::L2Builder)(hits)
     for hit ∈ hits
     end
 
-      # const JSuperFrameClone2D<JHit> clone(inputL0);
-
-      # for (typename std::vector<JHit>::const_iterator p = inputL2.begin(); p != inputL2.end(); ++p)
-      # {
-
-      #   JHitR2 hit(inputL0.getModuleID(),
-      #              inputL0.getPosition());
-
-      #   clone.fast_forward(*p);
-
-      #   for (typename JSuperFrameClone2D<JHit>::const_iterator i = clone.begin(); i != clone.end(); ++i)
-      #   {
-
-      #     if (i->getTimeDifference(*p) <= TMaxLocal_ns)
-      #     {
-
-      #       if (hit.getN() == 0)
-      #         hit.set(i->getJHit());
-      #       else
-      #         hit.add(i->getJHit());
-
-      #       if (i->getT() < hit.getT())
-      #       {
-      #         hit.setPosition(i->getPosition());
-      #       }
-      #     }
-      #   }
-
-      #   *out = hit;
-      #   ++out;
-      # }
+    error("Not implemented yet")
 end
 
 
