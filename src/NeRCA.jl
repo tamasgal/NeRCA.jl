@@ -31,6 +31,7 @@ import Base: read, +, -, *, getindex, length, eltype
 export
     Hit, HitL0, HitL1, HitL2, HitR0, HitR1, HitR2,
     L1Builder, L1BuilderParameters, Match3B, Match1D,
+    Line1Z, Line1ZEstimator,
     RecoTrack, NoRecoTrack, dumandfit,
     MuonScanfit, MuonScanfitParameters, timetoz,
     duhits, nfoldhits,
