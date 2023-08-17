@@ -66,11 +66,11 @@ struct HitR1 <: AbstractReducedHit
 end
 Base.isless(lhs::HitR1, rhs::HitR1) = lhs.dom_id == rhs.dom_id ? time(lhs) < time(rhs) : lhs.dom_id < rhs.dom_id
 const HitR2 = HitR1
-function HitR1(m::DetectorModule, hits::Vector{HitL0})
+function HitR1(dom_id::Integer, hits::Vector{HitL0})
     combined_hit = combine(hits)
     h = first(hits)
     count = weight = length(hits)
-    HitR1(m.id, h.pos, combined_hit.t, combined_hit.tot, count, weight)
+    HitR1(dom_id, h.pos, combined_hit.t, combined_hit.tot, count, weight)
 end
 # function HitR1(m::DetectorModule, hit::HitL1)
 #     count = weight = length(hit)
@@ -292,16 +292,16 @@ end
 """
 Calibrates hits.
 """
-function calibrate(T::Type{HitR1}, det::Detector, hits)
+function KM3io.calibrate(T::Type{HitR1}, det::Detector, hits)
     rhits = sizehint!(Vector{T}(), length(hits))
     for hit ∈ hits
         pmt = det[hit.dom_id][hit.channel_id]
         t = hit.t + pmt.t₀
-        push!(rhits, T(hit.dom_id, pmt.pos, Hit(t, hit.tot)))
+        push!(rhits, T(hit.dom_id, pmt.pos, t, hit.tot, 1, 0))
     end
     rhits
 end
-function calibrate(T::Type{HitL0}, m::DetectorModule, hits)
+function KM3io.calibrate(T::Type{HitL0}, m::DetectorModule, hits)
     chits = sizehint!(Vector{T}(), length(hits))
     for hit ∈ hits
         pmt = m[hit.channel_id]
@@ -377,7 +377,7 @@ function _findL1!(out::Vector{H}, m::DetectorModule, hits, Δt, combine::Bool) w
                 if ref_idx != end_idx
                     coincident_hits = [chits[i] for i ∈ ref_idx:end_idx]
                     # push!(out, H(m, HitL1(m.id, coincident_hits)))
-                    push!(out, H(m, coincident_hits))
+                    push!(out, H(m.id, coincident_hits))
                     if combine
                         ref_idx = end_idx
                     end
