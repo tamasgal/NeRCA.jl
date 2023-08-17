@@ -1,7 +1,6 @@
 Base.@kwdef struct MuonScanfitParameters
-    tmax::Float64 = 25.0  # [ns]
+    tmaxlocal::Float64 = 18.0  # [ns]
     roadwidth::Float64 = 200.0  # [m]
-    tmaxextra::Float64 = 18.0  # [ns]
     nmaxhits::Int = 50  # maximum number of hits to use
 end
 

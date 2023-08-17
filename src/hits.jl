@@ -41,10 +41,6 @@ HitL1(m::DetectorModule, hits) = HitL1(m.id, hits)
 HitL2(m::DetectorModule, hits) = HitL2(m.id, hits)
 Base.length(c::AbstractCoincidenceHit) = length(c.hits)
 Base.eltype(c::AbstractCoincidenceHit) = HitL0
-function Base.show(io::IO, c::AbstractCoincidenceHit)
-    times = [time(h) for h in c]
-    print(io, "$(c.dom_id) $(minimum(times)) $(length(c))")
-end
 function Base.iterate(c::AbstractCoincidenceHit, state=1)
     @inbounds state > length(c) ? nothing : (c.hits[state], state+1)
 end
@@ -570,7 +566,7 @@ end
 Clique clusterizer which takes a matcher algorithm like `Match3B` as input.
 """
 struct Clique{T<:AbstractMatcher}
-    m::T
+    match::T
     weights::Vector{Float64}
     Clique(m::T) where T = new{T}(m, Float64[])
 end
@@ -626,7 +622,7 @@ function clusterize!(hits::Vector{T}, c::Clique) where T<:AbstractSpecialHit
         # Decrease weight of associated hits for each associated hit.
         @inbounds for i ∈ 1:n
             c.weights[n] <= weight(hits[n]) && break
-            if c.m(hits[i], hits[n])
+            if c.match(hits[i], hits[n])
                 c.weights[i] -= weight(hits[n])
                 c.weights[n] -= weight(hits[i])
             end
