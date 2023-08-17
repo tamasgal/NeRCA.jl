@@ -550,12 +550,12 @@ function (m::Match1D)(hit1, hit2)
 
       x = hit1.pos.x - hit2.pos.x
       y = hit1.pos.y - hit2.pos.y
-      d = √(m.x*m.x + m.y*m.y);
+      d = √(x^2 + y^2)
 
-      if m.d <= 0.5 * m.roadwidth
-          return m.t <=  m.d  * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
-      elseif m.d <= m.roadwidth
-          return m.t <= (m.roadwidth - m.d) * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
+      if d <= 0.5 * m.roadwidth
+          return m.t <=  d  * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
+      elseif d <= m.roadwidth
+          return m.t <= (m.roadwidth - d) * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
       end
 
       false
