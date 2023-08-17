@@ -195,3 +195,61 @@ function estimate!(est::Line1ZEstimator, hits)
 
     est
 end
+
+struct Variance <: FieldVector{4, Float64}
+    x::Float64
+    y::Float64
+    v::Float64
+    w::Float64
+end
+
+# TODO: generalise hits parameter
+function covmatrix(pos::Position, hits; α=1.0, σ=5.0)
+    N = length(hits)
+    M = Matrix{Float64}(undef, N, N)
+    variances = sizehint!(Vector{Variance}(), N)
+
+    ta = deg2rad(α)
+    ct = cos(ta)
+    st = sin(ta)
+
+    for hit ∈ hits
+        dx, dy, dz = hit.pos - pos
+        R = √(dx^2 + dy^2)
+
+        x = ta * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE
+        y = ta * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE
+        v = ta * KM3io.Constants.C_INVERSE
+        w = ta * KM3io.Constants.C_INVERSE
+
+        if R != 0.0
+          x *= dx / R
+          y *= dy / R
+        end
+
+        x *= (dz * ct - dx * st)
+        y *= (dz * ct - dy * st)
+        v *= -(dx * ct + dz * st)
+        w *= -(dy * ct + dz * st)
+
+        push!(variances, Variance(x, y, v, w))
+    end
+
+    for i ∈ 1:N
+        for j ∈ 1:i
+            M[i, j] = variances[i] ⋅ variances[j]
+            M[j, i] = M[i, j]
+        end
+        M[i, i] = variances[i] ⋅ variances[i] + σ^2
+    end
+    M
+end
+
+# TODO: generalise hits parameter
+function timeresvec(lz::Line1Z, hits)
+    V = Float64[]
+    for hit ∈ hits
+        push!(V, time(hit) - time(lz, hit.pos))
+    end
+    V
+end
