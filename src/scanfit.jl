@@ -15,7 +15,7 @@ function Base.show(io::IO, m::MuonScanfit)
 end
 
 function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
-    l1builder = L1Builder(L1BuilderParameters(msf.params.tmax, false))
+    l1builder = L1Builder(L1BuilderParameters(msf.params.tmaxlocal, false))
     rhits = l1builder(HitR1, msf.detector, hits)
 
     sort!(rhits)
