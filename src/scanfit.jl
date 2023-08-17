@@ -21,10 +21,10 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     sort!(rhits)
     unique!(h->h.dom_id, rhits)
 
-    clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxextra))
+    clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
     clusterize!(rhits, clique)
 
-    candidates = Vector{Tuple{Int, Direction}}()
+    candidates = MuonScanFitResult[]
 
     # TODO threading is bugged
     # Threads.@threads for dir ∈ msf.directions
@@ -58,13 +58,34 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
             continue
         end
 
+        # TODO: consider creating a "pos()" getter for everything
+        # TODO: pass alpha and sigma, like V.set(*this, data.begin(), __end1, gridAngle_deg, sigma_ns);  // JMatrixNZ
+        V = covmatrix(est.model.pos, rhits_copy)
+        Y = timeresvec(est.model, rhits_copy)
 
+        V⁻¹ = inv(V)
 
+        χ² = transpose(Y) * V⁻¹ * Y
 
-        push!(candidates, (length(rhits_copy), dir))
+        NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
+        N = length(rhits_copy)
+
+        fit_pos = R \ est.model.pos
+
+        push!(candidates, MuonScanFitResult(fit_pos, dir, quality(χ², N, NDF), NDF))
     end
+    sort!(candidates, by=m->m.Q; rev=true)
     candidates
 end
+
+struct MuonScanFitResult
+    pos::Position
+    dir::Direction
+    Q::Float64
+    NDF::Int
+end
+
+quality(χ², N, NDF) = N / 4.0 * χ² / NDF
 
 abstract type EstimatorModel end
 
