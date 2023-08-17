@@ -33,7 +33,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
         rhits_copy = copy(rhits)
 
-        clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxextra))
+        clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxlocal))
         R = rotator(dir)
 
         # rotate hits
@@ -41,8 +41,11 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
             rhits_copy[idx] = @set rhit.pos = R * rhit.pos
         end
 
-        length(rhits_copy) > msf.params.nmaxhits && resize!(rhits_copy, msf.params.nmaxhits)
-        sort!(rhits_copy; by=timetoz)
+        if length(rhits_copy) > msf.params.nmaxhits
+            # TODO: review this block, here we may need a partial sort
+            resize!(rhits_copy, msf.params.nmaxhits)
+            sort!(rhits_copy; by=timetoz)
+        end
 
         clusterize!(rhits_copy, clique1D)
 
