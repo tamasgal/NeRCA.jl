@@ -588,7 +588,7 @@ function clusterize!(hits::Vector{T}, c::Clique) where T<:AbstractSpecialHit
     @inbounds for i ∈ 1:N
         @inbounds for j ∈ i:N
             j == i && continue
-            if c.m(hits[i], hits[j])
+            if c.match(hits[i], hits[j])
                 c.weights[i] += weight(hits[j])
                 c.weights[j] += weight(hits[i])
             end
