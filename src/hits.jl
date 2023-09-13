@@ -40,7 +40,7 @@ end
 HitL1(m::DetectorModule, hits) = HitL1(m.id, hits)
 HitL2(m::DetectorModule, hits) = HitL2(m.id, hits)
 Base.length(c::AbstractCoincidenceHit) = length(c.hits)
-Base.eltype(c::AbstractCoincidenceHit) = HitL0
+Base.eltype(::AbstractCoincidenceHit) = HitL0
 function Base.iterate(c::AbstractCoincidenceHit, state=1)
     @inbounds state > length(c) ? nothing : (c.hits[state], state+1)
 end
