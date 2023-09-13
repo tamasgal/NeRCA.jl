@@ -206,11 +206,8 @@ function estimate!(est::Line1ZEstimator, hits)
     est.V[3, 1] = est.V[1, 3]
     est.V[3, 2] = est.V[2, 3]
 
-    F = svd(est.V)
 
-    abs(F.S[2]) <  est.MINIMAL_SVD_WEIGHT * abs(F.S[1]) && throw(SingularSVDException("$F.S"))
-
-    est.V .= F.U * diagm(1 ./ F.S) * F.Vt
+    invert!(est.V, est.MINIMAL_SVD_WEIGHT)
 
     est.model = Line1Z(
         Position(
@@ -222,6 +219,24 @@ function estimate!(est::Line1ZEstimator, hits)
     )
 
     est
+end
+
+"""
+Invert matrix in-place with a given precision (clamps eigenvalues to 0 below that).
+"""
+function invert!(V, precision)
+    F = svd(V)
+
+    abs(F.S[2]) <  precision * abs(F.S[1]) && throw(SingularSVDException("$F.S"))
+
+    w = max(map(abs, F.S)...) * precision
+
+    @inbounds for idx in eachindex(F.S)
+        F.S[idx] = abs(F.S[idx]) >= w ? 1.0 / F.S[idx] : 0.0
+    end
+
+    V .= F.U * diagm(F.S) * F.Vt
+    V
 end
 
 struct Variance <: FieldVector{4, Float64}
