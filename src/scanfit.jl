@@ -184,7 +184,7 @@ function estimate!(est::Line1ZEstimator, hits)
         dy *= 2
         dt *= 2
 
-        est.V[1, 2] += dx * dx
+        est.V[1, 1] += dx * dx
         est.V[1, 2] += dx * dy
         est.V[1, 3] += dx * dt
         est.V[2, 2] += dy * dy
