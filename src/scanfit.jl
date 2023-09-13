@@ -30,6 +30,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     # Threads.@threads for dir ∈ msf.directions
     for dir ∈ msf.directions
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
+        χ² = Inf
 
         rhits_copy = copy(rhits)
 
@@ -50,6 +51,13 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         clusterize!(rhits_copy, clique1D)
 
         length(rhits_copy) < est.NUMBER_OF_PARAMETERS && continue
+        NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
+        N = hitcount(rhits_copy)
+        if length(rhits_copy) <= est.NUMBER_OF_PARAMETERS
+            continue
+        end
+
+        sort!(rhits_copy)
 
         try
             estimate!(est, rhits_copy)
@@ -67,8 +75,6 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
         χ² = transpose(Y) * V⁻¹ * Y
 
-        NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
-        N = length(rhits_copy)
 
         fit_pos = R \ est.model.pos
 
@@ -149,6 +155,7 @@ function estimate!(est::Line1ZEstimator, hits)
 
     pos = sum(h.pos for h ∈ hits) * W
     t = 0.0
+    lz = Line1Z(pos, t)
 
     t₀ = sum(time(h) for h ∈ hits) * W * KM3io.Constants.C
 
@@ -156,16 +163,16 @@ function estimate!(est::Line1ZEstimator, hits)
 
     y₀ = y₁ = y₂ = 0.0
     hit₀ = first(hits)
-    xi = hit₀.pos.x - posx(est)
-    yi = hit₀.pos.y - posy(est)
-    ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(est)) / KM3io.Constants.KAPPA_WATER
+    xi = hit₀.pos.x - posx(lz)
+    yi = hit₀.pos.y - posy(lz)
+    ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER
 
     # starting from the second hit and including the first in the last iteration
     for idx ∈ 2:N+1
         @inbounds hit = idx > N ? first(hits) : hits[idx]
-        xj = hit.pos.x - posx(est)
-        yj = hit.pos.y - posy(est)
-        tj = (time(hit) * KM3io.Constants.C - t₀ - hit.pos.z + posz(est)) / KM3io.Constants.KAPPA_WATER
+        xj = hit.pos.x - posx(lz)
+        yj = hit.pos.y - posy(lz)
+        tj = (time(hit) * KM3io.Constants.C - t₀ - hit.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER
 
         dx = xj - xi
         dy = yj - yi
@@ -209,7 +216,7 @@ function estimate!(est::Line1ZEstimator, hits)
         Position(
             est.V[1, 1] * y₀ + est.V[1, 2] * y₁ + est.V[1, 3] * y₂,
             est.V[2, 1] * y₀ + est.V[2, 2] * y₁ + est.V[2, 3] * y₂,
-            pos.z
+            posz(lz)
         ),
         (est.V[3, 1] * y₀ + est.V[3, 2] * y₁ + est.V[3, 3] * y₂) * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE + t₀
     )
