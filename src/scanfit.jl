@@ -200,7 +200,7 @@ function estimate!(est::Line1ZEstimator, hits)
         ti = tj
     end
 
-    t₀ = KM3io.Constants.C_INVERSE
+    t₀ *= KM3io.Constants.C_INVERSE
 
     est.V[2, 1] = est.V[1, 2]
     est.V[3, 1] = est.V[1, 3]
