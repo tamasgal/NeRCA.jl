@@ -78,6 +78,11 @@ starttime(hit) = time(hit)
 endtime(hit) = time(hit) + hit.tot
 
 """
+Return the total number of hits for a collection of reduced hits.
+"""
+hitcount(hits::Vector{T}) where T<:AbstractReducedHit = sum(h.n for h in hits)
+
+"""
 Combine snapshot and triggered hits to a single hits-vector.
 
 This should be used to transfer the trigger information to the
