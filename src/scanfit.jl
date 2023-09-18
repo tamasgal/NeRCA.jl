@@ -50,12 +50,10 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
         clusterize!(rhits_copy, clique1D)
 
-        length(rhits_copy) < est.NUMBER_OF_PARAMETERS && continue
         NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
         N = hitcount(rhits_copy)
-        if length(rhits_copy) <= est.NUMBER_OF_PARAMETERS
-            continue
-        end
+
+        length(rhits_copy) <= est.NUMBER_OF_PARAMETERS && continue
 
         sort!(rhits_copy)
 
