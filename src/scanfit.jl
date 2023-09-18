@@ -68,15 +68,10 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         # TODO: pass alpha and sigma, like V.set(*this, data.begin(), __end1, gridAngle_deg, sigma_ns);  // JMatrixNZ
         V = covmatrix(est.model.pos, rhits_copy)
         Y = timeresvec(est.model, rhits_copy)
-
         V⁻¹ = inv(V)
-
         χ² = transpose(Y) * V⁻¹ * Y
-
-
         fit_pos = R \ est.model.pos
-
-        push!(candidates, MuonScanFitResult(fit_pos, dir, quality(χ², N, NDF), NDF))
+        push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
     end
     sort!(candidates, by=m->m.Q; rev=true)
     candidates
@@ -85,11 +80,15 @@ end
 struct MuonScanFitResult
     pos::Position
     dir::Direction
+    t::Float64
     Q::Float64
     NDF::Int
 end
 
-quality(χ², N, NDF) = N / 4.0 * χ² / NDF
+"""
+The quality of the fit, the larger the better, as used in e.g. Jpp.
+"""
+quality(χ², N, NDF) = N  -  0.25 * χ² / NDF
 
 abstract type EstimatorModel end
 
