@@ -149,3 +149,16 @@ function rotator(dir::Direction)
 
     RotMatrix(ct*cp, -sp, st*cp, ct*sp, cp, st*sp, -st, 0.0, ct)
 end
+
+"""
+A rotation matrix which rotates `from_dir` to `to_dir`
+"""
+function rotator(from_dir::T, to_dir::T) where T<:AbstractVector{Float64}
+    v = from_dir × to_dir
+    c = from_dir ⋅ to_dir
+    u = [   0 -v[3]  v[2];
+         v[3]     0 -v[1];
+        -v[2]  v[1]     0]
+    E = Matrix{Float64}(I, 3, 3)
+    (c ≈ -1.0) ? (-E) : (E + u + u * u / (1 + c))
+end
