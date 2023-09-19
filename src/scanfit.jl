@@ -90,6 +90,69 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     isempty(candidates) && return candidates
 
     sort!(candidates, by=m->m.Q; rev=true)
+
+
+    # TODO: refactor, so that the second call is not duplicated!
+
+    most_likely_dir = first(candidates).dir
+    directions = fibonaccicone(most_likely_dir, 500, deg2rad(7))
+
+    candidates = MuonScanFitResult[]
+
+    # Threads.@threads for dir ∈ msf.directions
+    for dir ∈ directions
+        est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
+        χ² = Inf
+
+        rhits_copy = copy(rhits)
+
+        clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxlocal))
+        R = rotator(dir)
+
+        # rotate hits
+        for (idx, rhit) ∈ enumerate(rhits_copy)
+            rhits_copy[idx] = @set rhit.pos = R * rhit.pos
+        end
+
+        if length(rhits_copy) > msf.params.nmaxhits
+            # TODO: review this block, here we may need a partial sort
+            resize!(rhits_copy, msf.params.nmaxhits)
+            sort!(rhits_copy; by=timetoz)
+        end
+
+        clusterize!(rhits_copy, clique1D)
+
+        NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
+        N = hitcount(rhits_copy)
+
+        length(rhits_copy) <= est.NUMBER_OF_PARAMETERS && continue
+
+        sort!(rhits_copy)
+
+        try
+            estimate!(est, rhits_copy)
+        catch ex
+            # if isa(ex, SingularSVDException)
+            # @warn "Singular SVD"
+            continue
+        end
+
+        # TODO: consider creating a "pos()" getter for everything
+        # TODO: pass alpha and sigma, like V.set(*this, data.begin(), __end1, gridAngle_deg, sigma_ns);  // JMatrixNZ
+        V = covmatrix(est.model.pos, rhits_copy)
+        Y = timeresvec(est.model, rhits_copy)
+        V⁻¹ = inv(V)
+        χ² = transpose(Y) * V⁻¹ * Y
+        fit_pos = R \ est.model.pos
+
+        # push!(candidates_pool[Threads.threadid()], MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
+        push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
+    end
+    # candidates = vcat(values(candidates_pool)...)
+    isempty(candidates) && return candidates
+
+    sort!(candidates, by=m->m.Q; rev=true)
+
     candidates[1:msf.params.number_of_fits_to_keep]
 end
 
