@@ -89,7 +89,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     # candidates = vcat(values(candidates_pool)...)
     isempty(candidates) && return candidates
 
-    # sort!(candidates, by=m->m.Q; rev=true)
+    sort!(candidates, by=m->m.Q; rev=true)
     candidates[1:msf.params.number_of_fits_to_keep]
 end
 
