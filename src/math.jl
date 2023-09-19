@@ -85,6 +85,26 @@ function fibonaccisphere(N)
     directions
 end
 
+"""
+Create `S` directions inside a cone with an opening angle of `θ` which points towards `dir`.
+"""
+function fibonaccicone(dir::Direction{Float64}, S::Integer, θ)
+    N = Int(ceil(S / sin(θ/2)^2))
+    R = rotator(Direction(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
+
+    ϕ = π * (√5 - 1)  # golden angle in rad
+    directions = sizehint!(Vector{Direction}(), S)
+    for i ∈ 0:S-1
+        y = 1 - 2(i / (N - 1))
+        r = √(1 - y * y)
+        θ = ϕ * i
+        x = cos(θ) * r
+        z = sin(θ) * r
+        push!(directions, R * Direction(x, y, z))
+    end
+    directions
+end
+
 
 """
 Creates directions with a given angular spacing in rad.
