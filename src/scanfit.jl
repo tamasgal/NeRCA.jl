@@ -2,6 +2,7 @@ Base.@kwdef struct MuonScanfitParameters
     tmaxlocal::Float64 = 18.0  # [ns]
     roadwidth::Float64 = 200.0  # [m]
     nmaxhits::Int = 50  # maximum number of hits to use
+    number_of_fits_to_keep::Int = 1
 end
 
 struct MuonScanfit
@@ -14,6 +15,9 @@ function Base.show(io::IO, m::MuonScanfit)
    print(io, "$(typeof(m)) in $(length(m.directions)) directions")
 end
 
+"""
+Performs a Muon track fit for a given set of hits (usually snapshot hits).
+"""
 function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     l1builder = L1Builder(L1BuilderParameters(msf.params.tmaxlocal, false))
     rhits = l1builder(HitR1, msf.detector, hits)
@@ -24,9 +28,15 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
     clusterize!(rhits, clique)
 
+    # candidates_pool = let candidates_dict = Dict{Int, Vector{MuonScanFitResult}}()
+    #     n_candidates_per_thread = Int(ceil((length(msf.directions) / Threads.nthreads())))
+    #     for thread_id ∈ 1:Threads.nthreads()
+    #         candidates_dict[thread_id] = sizehint!(MuonScanFitResult[], n_candidates_per_thread)
+    #     end
+    #     candidates_dict
+    # end
     candidates = MuonScanFitResult[]
 
-    # TODO threading is bugged
     # Threads.@threads for dir ∈ msf.directions
     for dir ∈ msf.directions
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
@@ -61,6 +71,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
             estimate!(est, rhits_copy)
         catch ex
             # if isa(ex, SingularSVDException)
+            # @warn "Singular SVD"
             continue
         end
 
@@ -71,10 +82,15 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         V⁻¹ = inv(V)
         χ² = transpose(Y) * V⁻¹ * Y
         fit_pos = R \ est.model.pos
+
+        # push!(candidates_pool[Threads.threadid()], MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
         push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
     end
-    sort!(candidates, by=m->m.Q; rev=true)
-    candidates
+    # candidates = vcat(values(candidates_pool)...)
+    isempty(candidates) && return candidates
+
+    # sort!(candidates, by=m->m.Q; rev=true)
+    candidates[1:msf.params.number_of_fits_to_keep]
 end
 
 struct MuonScanFitResult
