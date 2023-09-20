@@ -73,7 +73,7 @@ lattice.
 function fibonaccisphere(N)
     ϕ = π * (√5 - 1)  # golden angle in rad
 
-    directions = sizehint!(Vector{Direction}(), N)
+    directions = sizehint!(Vector{Direction{Float64}}(), N)
     for i ∈ 0:N-1
         y = 1 - 2(i / (N - 1))
         r = √(1 - y * y)
@@ -88,12 +88,12 @@ end
 """
 Create `S` directions inside a cone with an opening angle of `θ` which points towards `dir`.
 """
-function fibonaccicone(dir::Direction{Float64}, S::Integer, θ)
+function fibonaccicone(dir::Direction{Float64}, S::Integer, θ::Float64)
     N = Int(ceil(S / sin(θ/2)^2))
-    R = rotator(Direction(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
+    R = rotation_between(Direction(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
 
     ϕ = π * (√5 - 1)  # golden angle in rad
-    directions = sizehint!(Vector{Direction}(), S)
+    directions = sizehint!(Vector{Direction{Float64}}(), S)
     for i ∈ 0:S-1
         y = 1 - 2(i / (N - 1))
         r = √(1 - y * y)
@@ -116,7 +116,7 @@ Creates directions with a principal direction `dir`, a polar angle range `θ` [r
 an angular spacing `grid` [rad].
 """
 function omega3d(dir::Direction{Float64}, θ::Tuple{Float64, Float64}, grid::Float64)
-    directions = Vector{Direction}()
+    directions = Vector{Direction{Float64}}()
 
     θ_min = first(θ)
     θ_max = last(θ)
@@ -148,17 +148,4 @@ function rotator(dir::Direction)
     sp = sin(phi(dir))
 
     RotMatrix(ct*cp, -sp, st*cp, ct*sp, cp, st*sp, -st, 0.0, ct)
-end
-
-"""
-A rotation matrix which rotates `from_dir` to `to_dir`
-"""
-function rotator(from_dir::T, to_dir::T) where T<:AbstractVector{Float64}
-    v = from_dir × to_dir
-    c = from_dir ⋅ to_dir
-    u = [   0 -v[3]  v[2];
-         v[3]     0 -v[1];
-        -v[2]  v[1]     0]
-    E = Matrix{Float64}(I, 3, 3)
-    (c ≈ -1.0) ? (-E) : (E + u + u * u / (1 + c))
 end

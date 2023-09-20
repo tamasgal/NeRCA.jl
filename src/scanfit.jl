@@ -157,8 +157,8 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 end
 
 struct MuonScanFitResult
-    pos::Position
-    dir::Direction
+    pos::Position{Float64}
+    dir::Direction{Float64}
     t::Float64
     Q::Float64
     NDF::Int
