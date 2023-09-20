@@ -90,7 +90,7 @@ Create `S` directions inside a cone with an opening angle of `θ` which points t
 """
 function fibonaccicone(dir::Direction{Float64}, S::Integer, θ::Float64)
     N = Int(ceil(S / sin(θ/2)^2))
-    R = rotation_between(Direction(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
+    R = rotation_between(SVector(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
 
     ϕ = π * (√5 - 1)  # golden angle in rad
     directions = sizehint!(Vector{Direction{Float64}}(), S)
