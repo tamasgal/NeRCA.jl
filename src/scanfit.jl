@@ -38,8 +38,7 @@ Performs a Muon track fit for a given event.
 Performs a Muon track fit for a given set of hits (usually snapshot hits).
 """
 function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
-    l1builder = L1Builder(L1BuilderParameters(msf.params.tmaxlocal, false))
-    rhits = l1builder(HitR1, msf.detector, hits)
+    rhits = msf.coincidencebuilder(HitR1, msf.detector, hits)
 
     sort!(rhits)
     unique!(h->h.dom_id, rhits)
@@ -114,11 +113,10 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     # TODO: refactor, so that the second call is not duplicated!
 
     most_likely_dir = first(candidates).dir
-    directions = fibonaccicone(most_likely_dir, 500, deg2rad(7))
+    directions = fibonaccicone(most_likely_dir, msf.params.nfinedirections, deg2rad(msf.params.θ))
 
     candidates = MuonScanFitResult[]
 
-    # Threads.@threads for dir ∈ msf.directions
     for dir ∈ directions
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
         χ² = Inf
@@ -172,7 +170,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
     sort!(candidates, by=m->m.Q; rev=true)
 
-    candidates[1:msf.params.number_of_fits_to_keep]
+    candidates[1:msf.params.nfits]
 end
 
 struct MuonScanFitResult
