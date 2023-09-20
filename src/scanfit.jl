@@ -46,16 +46,8 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
     clusterize!(rhits, clique)
 
-    # candidates_pool = let candidates_dict = Dict{Int, Vector{MuonScanFitResult}}()
-    #     n_candidates_per_thread = Int(ceil((length(msf.directions) / Threads.nthreads())))
-    #     for thread_id ∈ 1:Threads.nthreads()
-    #         candidates_dict[thread_id] = sizehint!(MuonScanFitResult[], n_candidates_per_thread)
-    #     end
-    #     candidates_dict
-    # end
     candidates = MuonScanFitResult[]
 
-    # Threads.@threads for dir ∈ msf.directions
     for dir ∈ msf.directions
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
         χ² = Inf
@@ -101,10 +93,8 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         χ² = transpose(Y) * V⁻¹ * Y
         fit_pos = R \ est.model.pos
 
-        # push!(candidates_pool[Threads.threadid()], MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
         push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
     end
-    # candidates = vcat(values(candidates_pool)...)
     isempty(candidates) && return candidates
 
     sort!(candidates, by=m->m.Q; rev=true)
@@ -162,10 +152,8 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         χ² = transpose(Y) * V⁻¹ * Y
         fit_pos = R \ est.model.pos
 
-        # push!(candidates_pool[Threads.threadid()], MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
         push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
     end
-    # candidates = vcat(values(candidates_pool)...)
     isempty(candidates) && return candidates
 
     sort!(candidates, by=m->m.Q; rev=true)
