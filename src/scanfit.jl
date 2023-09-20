@@ -2,17 +2,31 @@ Base.@kwdef struct MuonScanfitParameters
     tmaxlocal::Float64 = 18.0  # [ns]
     roadwidth::Float64 = 200.0  # [m]
     nmaxhits::Int = 50  # maximum number of hits to use
-    number_of_fits_to_keep::Int = 1
+    nfits::Int = 1
+    ndirections::Int = 1000  # the number of directions to scan over 4π
+    nfinedirections::Int = 500  # number of directions in the cone of the fine scan
+    θ::Float64 = 7.0  # opening angle of the fine-scan cone
 end
 
 struct MuonScanfit
     params::MuonScanfitParameters
     detector::Detector
     directions::Vector{Direction{Float64}}
+    coincidencebuilder::L1Builder
+    function MuonScanfit(params::MuonScanfitParameters, detector::Detector, directions::Vector{Direction{Float64}})
+        coincidencebuilder = L1Builder(L1BuilderParameters(params.tmaxlocal, false))
+        new(params, detector, directions, coincidencebuilder)
+    end
 end
-MuonScanfit(det::Detector) = MuonScanfit(MuonScanfitParameters(), det, fibonaccisphere(1000))
+function MuonScanfit(params::MuonScanfitParameters, det::Detector)
+    MuonScanfit(params, det, fibonaccisphere(params.ndirections))
+end
+function MuonScanfit(det::Detector)
+    params = MuonScanfitParameters()
+    MuonScanfit(params, det, fibonaccisphere(params.ndirections))
+end
 function Base.show(io::IO, m::MuonScanfit)
-   print(io, "$(typeof(m)) in $(length(m.directions)) directions")
+   print(io, "$(typeof(m)) in $(length(m.directions)) directions.")
 end
 
 """
