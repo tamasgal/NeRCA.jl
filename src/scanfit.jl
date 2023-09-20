@@ -16,6 +16,11 @@ function Base.show(io::IO, m::MuonScanfit)
 end
 
 """
+Performs a Muon track fit for a given event.
+"""
+(msf::MuonScanfit)(event::DAQEvent) = msf(event.snapshot_hits)
+
+"""
 Performs a Muon track fit for a given set of hits (usually snapshot hits).
 """
 function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
