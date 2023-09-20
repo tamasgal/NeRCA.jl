@@ -68,6 +68,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
             sort!(rhits_copy; by=timetoz)
         end
 
+        # TODO: caveat! mutates both rhits_copy and clicke1D, this needs a better interface
         clusterize!(rhits_copy, clique1D)
 
         NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
