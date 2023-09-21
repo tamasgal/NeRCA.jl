@@ -46,66 +46,31 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
     clusterize!(rhits, clique)
 
-    candidates = MuonScanFitResult[]
+    # First round on 4π
+    candidates = scanfit(msf.params, rhits, msf.directions)
 
-    for dir ∈ msf.directions
-        est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
-        χ² = Inf
-
-        rhits_copy = copy(rhits)
-
-        clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxlocal))
-        R = rotator(dir)
-
-        # rotate hits
-        for (idx, rhit) ∈ enumerate(rhits_copy)
-            rhits_copy[idx] = @set rhit.pos = R * rhit.pos
-        end
-
-        if length(rhits_copy) > msf.params.nmaxhits
-            # TODO: review this block, here we may need a partial sort
-            resize!(rhits_copy, msf.params.nmaxhits)
-            sort!(rhits_copy; by=timetoz)
-        end
-
-        # TODO: caveat! mutates both rhits_copy and clicke1D, this needs a better interface
-        clusterize!(rhits_copy, clique1D)
-
-        NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
-        N = hitcount(rhits_copy)
-
-        length(rhits_copy) <= est.NUMBER_OF_PARAMETERS && continue
-
-        sort!(rhits_copy)
-
-        try
-            estimate!(est, rhits_copy)
-        catch ex
-            # if isa(ex, SingularSVDException)
-            # @warn "Singular SVD"
-            continue
-        end
-
-        # TODO: consider creating a "pos()" getter for everything
-        # TODO: pass alpha and sigma, like V.set(*this, data.begin(), __end1, gridAngle_deg, sigma_ns);  // JMatrixNZ
-        V = covmatrix(est.model.pos, rhits_copy)
-        Y = timeresvec(est.model, rhits_copy)
-        V⁻¹ = inv(V)
-        χ² = transpose(Y) * V⁻¹ * Y
-        fit_pos = R \ est.model.pos
-
-        push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
-    end
     isempty(candidates) && return candidates
-
     sort!(candidates, by=m->m.Q; rev=true)
 
-
-    # TODO: refactor, so that the second call is not duplicated!
-
+    # Second round on a directed cone pointing towards the previous best direction
     most_likely_dir = first(candidates).dir
     directions = fibonaccicone(most_likely_dir, msf.params.nfinedirections, deg2rad(msf.params.θ))
+    candidates = scanfit(msf.params, rhits, directions)
 
+    isempty(candidates) && return candidates
+    sort!(candidates, by=m->m.Q; rev=true)
+
+    candidates[1:msf.params.nfits]
+end
+
+"""
+
+Performs the scanfit for each given direction and returns a
+`Vector{MuonScanfitResult}` with all successful fits. The resulting vector can
+be empty if none of the directions had enough hits to perform the algorithm.
+
+"""
+function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Vector{Direction{Float64}}) where T<:AbstractReducedHit
     candidates = MuonScanFitResult[]
 
     for dir ∈ directions
@@ -114,7 +79,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
         rhits_copy = copy(rhits)
 
-        clique1D = Clique(Match1D(msf.params.roadwidth, msf.params.tmaxlocal))
+        clique1D = Clique(Match1D(params.roadwidth, params.tmaxlocal))
         R = rotator(dir)
 
         # rotate hits
@@ -122,12 +87,13 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
             rhits_copy[idx] = @set rhit.pos = R * rhit.pos
         end
 
-        if length(rhits_copy) > msf.params.nmaxhits
+        if length(rhits_copy) > params.nmaxhits
             # TODO: review this block, here we may need a partial sort
-            resize!(rhits_copy, msf.params.nmaxhits)
+            resize!(rhits_copy, params.nmaxhits)
             sort!(rhits_copy; by=timetoz)
         end
 
+        # TODO: caveat! mutates both rhits_copy and clique1D, this needs a better interface
         clusterize!(rhits_copy, clique1D)
 
         NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
@@ -155,11 +121,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
         push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
     end
-    isempty(candidates) && return candidates
-
-    sort!(candidates, by=m->m.Q; rev=true)
-
-    candidates[1:msf.params.nfits]
+    candidates
 end
 
 struct MuonScanFitResult
