@@ -100,11 +100,6 @@ function single_du_params(track::NeRCA.Track)
     d_closest, t_closest, z_closest, dir.z, t₀
 end
 
-# TODO: delete this function
-function cherenkov_plausible(Δt, Δz; time_extra=10, n=KM3io.Constants.INDEX_OF_REFRACTION_WATER)
-    Δt < Δz * n / KM3io.Constants.c*1e9 + time_extra
-end
-
 
 function create_hit_pool(hits::T) where T<:Vector{KM3io.XCalibratedHit}
     hit_pool = Dict{Int, T}()
