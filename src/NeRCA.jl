@@ -33,7 +33,7 @@ export
     L1Builder, L1BuilderParameters, Match3B, Match1D,
     Line1Z, Line1ZEstimator,
     RecoTrack, NoRecoTrack, dumandfit,
-    MuonScanfit, MuonScanfitParameters, timetoz,
+    MuonScanfit, MuonScanfitCandidate, MuonScanfitParameters, timetoz,
     duhits, nfoldhits,
     ztplot,
     most_frequent, categorize, modulemap,

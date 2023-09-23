@@ -68,12 +68,12 @@ end
 """
 
 Performs the scanfit for each given direction and returns a
-`Vector{MuonScanfitResult}` with all successful fits. The resulting vector can
+`Vector{MuonScanfitCandidate}` with all successful fits. The resulting vector can
 be empty if none of the directions had enough hits to perform the algorithm.
 
 """
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Vector{Direction{Float64}}) where T<:AbstractReducedHit
-    candidates = MuonScanFitResult[]
+    candidates = MuonScanfitCandidate[]
 
     for dir ∈ directions
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
@@ -121,12 +121,12 @@ function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Ve
         χ² = transpose(Y) * V⁻¹ * Y
         fit_pos = R \ est.model.pos
 
-        push!(candidates, MuonScanFitResult(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
+        push!(candidates, MuonScanfitCandidate(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
     end
     candidates
 end
 
-struct MuonScanFitResult
+struct MuonScanfitCandidate
     pos::Position{Float64}
     dir::Direction{Float64}
     t::Float64
