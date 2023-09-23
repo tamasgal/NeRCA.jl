@@ -214,8 +214,8 @@ function estimate!(est::Line1ZEstimator, hits)
     ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER
 
     # starting from the second hit and including the first in the last iteration
-    for idx ∈ 2:N+1
-        @inbounds hit = idx > N ? first(hits) : hits[idx]
+    @inbounds for idx ∈ 2:N+1
+        hit = idx > N ? first(hits) : hits[idx]
         xj = hit.pos.x - posx(lz)
         yj = hit.pos.y - posy(lz)
         tj = (time(hit) * KM3io.Constants.C - t₀ - hit.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER
@@ -248,21 +248,25 @@ function estimate!(est::Line1ZEstimator, hits)
 
     t₀ *= KM3io.Constants.C_INVERSE
 
-    est.V[2, 1] = est.V[1, 2]
-    est.V[3, 1] = est.V[1, 3]
-    est.V[3, 2] = est.V[2, 3]
+    @inbounds begin
+        est.V[2, 1] = est.V[1, 2]
+        est.V[3, 1] = est.V[1, 3]
+        est.V[3, 2] = est.V[2, 3]
+    end
 
 
     invert!(est.V, est.MINIMAL_SVD_WEIGHT)
 
-    est.model = Line1Z(
-        Position(
-            pos.x + est.V[1, 1] * y₀ + est.V[1, 2] * y₁ + est.V[1, 3] * y₂,
-            pos.y + est.V[2, 1] * y₀ + est.V[2, 2] * y₁ + est.V[2, 3] * y₂,
-            posz(lz)
-        ),
-        (est.V[3, 1] * y₀ + est.V[3, 2] * y₁ + est.V[3, 3] * y₂) * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE + t₀
-    )
+    @inbounds begin
+        est.model = Line1Z(
+            Position(
+                pos.x + est.V[1, 1] * y₀ + est.V[1, 2] * y₁ + est.V[1, 3] * y₂,
+                pos.y + est.V[2, 1] * y₀ + est.V[2, 2] * y₁ + est.V[2, 3] * y₂,
+                posz(lz)
+            ),
+            (est.V[3, 1] * y₀ + est.V[3, 2] * y₁ + est.V[3, 3] * y₂) * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE + t₀
+        )
+    end
 
     est
 end
@@ -306,10 +310,8 @@ function covmatrix(pos::Position, hits; α=1.0, σ=5.0)
         dx, dy, dz = hit.pos - pos
         R = √(dx^2 + dy^2)
 
-        x = ta * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE
-        y = ta * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE
-        v = ta * KM3io.Constants.C_INVERSE
-        w = ta * KM3io.Constants.C_INVERSE
+        x = y = ta * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE
+        v = w = ta * KM3io.Constants.C_INVERSE
 
         if R != 0.0
           x *= dx / R
@@ -324,8 +326,8 @@ function covmatrix(pos::Position, hits; α=1.0, σ=5.0)
         push!(variances, Variance(x, y, v, w))
     end
 
-    for i ∈ 1:N
-        for j ∈ 1:i
+    @inbounds for i ∈ 1:N
+        @inbounds for j ∈ 1:i
             M[i, j] = variances[i] ⋅ variances[j]
             M[j, i] = M[i, j]
         end
@@ -335,10 +337,4 @@ function covmatrix(pos::Position, hits; α=1.0, σ=5.0)
 end
 
 # TODO: generalise hits parameter
-function timeresvec(lz::Line1Z, hits)
-    V = Float64[]
-    for hit ∈ hits
-        push!(V, time(hit) - time(lz, hit.pos))
-    end
-    V
-end
+timeresvec(lz::Line1Z, hits) = [time(hit) - time(lz, hit.pos) for hit ∈ hits]
