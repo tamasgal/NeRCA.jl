@@ -10,13 +10,17 @@ makedocs(;
         collapselevel = 4,
         warn_outdated = true,
     ),
+    warnonly = [:missing_docs],
     pages = [
         "Home" => "index.md",
         "I/O" => "io.md",
         "Hits" => "hits.md",
         "ROyFit" => "fit.md",
     ],
-    repo = "https://git.km3net.de/tgal/NeRCA.jl/blob/{commit}{path}#L{line}",
+    repo = Documenter.Remotes.URL(
+        "https://git.km3net.de/tgal/NeRCA.jl/blob/{commit}{path}#L{line}",
+        "https://git.km3net.de/tgal/NeRCA.jl"
+    ),
 )
 
 deploydocs(;
