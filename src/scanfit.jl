@@ -53,12 +53,14 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     sort!(candidates, by=m->m.Q; rev=true)
 
     # Second round on a directed cone pointing towards the previous best direction
-    most_likely_dir = first(candidates).dir
-    directions = fibonaccicone(most_likely_dir, msf.params.nfinedirections, deg2rad(msf.params.θ))
-    candidates = scanfit(msf.params, rhits, directions)
+    if msf.params.nfinedirections > 0
+        most_likely_dir = first(candidates).dir
+        directions = fibonaccicone(most_likely_dir, msf.params.nfinedirections, deg2rad(msf.params.θ))
+        candidates = scanfit(msf.params, rhits, directions)
 
-    isempty(candidates) && return candidates
-    sort!(candidates, by=m->m.Q; rev=true)
+        isempty(candidates) && return candidates
+        sort!(candidates, by=m->m.Q; rev=true)
+    end
 
     candidates[1:msf.params.nfits]
 end
