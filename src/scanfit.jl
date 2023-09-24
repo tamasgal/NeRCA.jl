@@ -73,9 +73,13 @@ be empty if none of the directions had enough hits to perform the algorithm.
 
 """
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Vector{Direction{Float64}}) where T<:AbstractReducedHit
-    candidates = MuonScanfitCandidate[]
+    candidates = Vector{Vector{MuonScanfitCandidate}}()
 
-    for dir ∈ directions
+    for i in 1:Threads.nthreads()
+        push!(candidates, MuonScanfitCandidate[])
+    end
+
+    Threads.@threads for dir ∈ directions
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
         χ² = Inf
 
@@ -121,9 +125,11 @@ function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Ve
         χ² = transpose(Y) * V⁻¹ * Y
         fit_pos = R \ est.model.pos
 
-        push!(candidates, MuonScanfitCandidate(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF))
+        push!(candidates[Threads.threadid()],
+              MuonScanfitCandidate(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF)
+        )
     end
-    candidates
+    vcat(candidates...)
 end
 
 struct MuonScanfitCandidate
