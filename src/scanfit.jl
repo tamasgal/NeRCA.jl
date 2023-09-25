@@ -75,7 +75,7 @@ be empty if none of the directions had enough hits to perform the algorithm.
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Vector{Direction{Float64}}) where T<:AbstractReducedHit
     candidates = Vector{Vector{MuonScanfitCandidate}}()
 
-    for i in 1:Threads.nthreads()
+    for _ in 1:Threads.nthreads()
         push!(candidates, MuonScanfitCandidate[])
     end
 
