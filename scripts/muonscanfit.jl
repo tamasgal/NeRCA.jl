@@ -2,14 +2,15 @@
 doc = """Muon Scanfit
 
 Usage:
-  muonscanfit.jl -a DETECTORFILE -i INPUTFILE -o OUTPUTFILE
+  muonscanfit.jl [options] -a DETECTORFILE -i INPUTFILE -o OUTPUTFILE
   muonscanfit.jl -h | --help
   muonscanfit.jl --version
 
 Options:
-  -a DETECTORFILE  The DETX file containing geometry and time calibration.
-  -i INPUTFILE     ROOT file containing "online" events.
-  -o OUTPUTFILE    The HDF5 file to write the output into.
+  -a DETECTORFILE      The DETX file containing geometry and time calibration.
+  -i INPUTFILE         ROOT file containing "online" events.
+  -n NUMBER_OF_EVENTS  The number of events to process [default: 999999999].
+  -o OUTPUTFILE        The HDF5 file to write the output into.
 """
 using DocOpt
 const args = docopt(doc)  # fail early ;)
@@ -42,6 +43,7 @@ end
 function main()
     f = NeRCA.ROOTFile(args["-i"])
     det = KM3io.Detector(args["-a"])
+    n_events = parse(Int, args["-n"])
 
     msfparams = MuonScanfitParameters(;tmaxlocal=18.0, roadwidth=200.0)
     msfit = MuonScanfit(msfparams, det)
@@ -49,13 +51,15 @@ function main()
     outfile = H5File(args["-o"], "w")
     dset = create_dataset(outfile, "reco/muonscanfit", MuonScanfitResult)
 
-    n_events = 0
+    n = 0
     n_muons = 0
     n_failed = 0
-    @showprogress 1 for event ∈ f.online.events
+    @showprogress 1 for event_idx in 1:min(length(f.online.events), n_events)
+        event = f.online.events[event_idx]
+
         walltime = @elapsed muons = msfit(event.snapshot_hits)
 
-        n_events += 1
+        n += 1
         n_muons += length(muons)
 
         if length(muons) == 0
@@ -90,7 +94,7 @@ function main()
     end
     close(outfile)
 
-    println("Total number of events processed: $n_events")
+    println("Total number of events processed: $n")
     println("Number of muon candidates: $n_muons")
     println("Failed reconstructions: $n_failed")
 end
