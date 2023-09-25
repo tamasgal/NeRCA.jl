@@ -580,7 +580,8 @@ end
 Applies the clique clusterization algorithm and leaves only the best matching
 hits in the input array.
 """
-function clusterize!(hits::AbstractArray{T}, c::Clique) where T<:AbstractSpecialHit
+function clusterize!(hits::AbstractArray{T}, m::AbstractMatcher) where T<:AbstractSpecialHit
+    c = Clique(m)
     N = length(hits)
     N == 0 && return hits
 

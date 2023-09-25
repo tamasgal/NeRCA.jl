@@ -37,17 +37,17 @@ Performs a Muon track fit for a given event.
 """
 Performs a Muon track fit for a given set of hits (usually snapshot hits).
 """
-function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
-    rhits = msf.coincidencebuilder(HitR1, msf.detector, hits)
+function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit  # 35206 allocations, 10.65 MiB
+
+    rhits = msf.coincidencebuilder(HitR1, msf.detector, hits)  # 1201 allocations, 314.61 KiB
 
     sort!(rhits)
-    unique!(h->h.dom_id, rhits)
+    unique!(h->h.dom_id, rhits)  # 7 allocations
 
-    clique = Clique(Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
-    clusterize!(rhits, clique)
+    clusterize!(rhits, Match3B(msf.params.roadwidth, msf.params.tmaxlocal))  # 3 allocations, 400 bytes (mutates)
 
     # First round on 4π
-    candidates = scanfit(msf.params, rhits, msf.directions)
+    candidates = scanfit(msf.params, rhits, msf.directions)  # 19277 allocations
 
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
@@ -56,7 +56,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     if msf.params.nfinedirections > 0
         most_likely_dir = first(candidates).dir
         directions = fibonaccicone(most_likely_dir, msf.params.nfinedirections, deg2rad(msf.params.θ))
-        candidates = scanfit(msf.params, rhits, directions)
+        candidates = scanfit(msf.params, rhits, directions)  # 5312 allocations, 1000.02 KiB
 
         isempty(candidates) && return candidates
         sort!(candidates, by=m->m.Q; rev=true)
@@ -73,63 +73,69 @@ be empty if none of the directions had enough hits to perform the algorithm.
 
 """
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Vector{Direction{Float64}}) where T<:AbstractReducedHit
-    candidates = Vector{Vector{MuonScanfitCandidate}}()
+    candidates = Vector{MuonScanfitCandidate}(undef, length(directions))
+    hit_buffers = Vector{Vector{HitR1}}()
+    covmatrices = Vector{CovMatrix}()
 
     for _ in 1:Threads.nthreads()
-        push!(candidates, MuonScanfitCandidate[])
+        push!(hit_buffers, Vector{HitR1}())
+        push!(covmatrices, CovMatrix(1.0, 5.0, params.nmaxhits))  # TODO: hardcoded values for alpha and sigma
     end
 
-    Threads.@threads for dir ∈ directions
+    Threads.@threads :static for (c_idx, dir) ∈ collect(enumerate(directions))
         est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
         χ² = Inf
 
-        rhits_copy = copy(rhits)
-
-        clique1D = Clique(Match1D(params.roadwidth, params.tmaxlocal))
         R = rotator(dir)
+
+        rhits_copy = hit_buffers[Threads.threadid()]
+        length(rhits) > length(rhits_copy) && resize!(rhits_copy, length(rhits))
 
         # rotate hits
         for (idx, rhit) ∈ enumerate(rhits_copy)
+            rhit = rhits[idx]
             rhits_copy[idx] = @set rhit.pos = R * rhit.pos
         end
 
         if length(rhits_copy) > params.nmaxhits
             # TODO: review this block, here we may need a partial sort
-            resize!(rhits_copy, params.nmaxhits)
             sort!(rhits_copy; by=timetoz)
+            resize!(rhits_copy, params.nmaxhits)
         end
 
-        # TODO: caveat! mutates both rhits_copy and clique1D, this needs a better interface
-        clusterize!(rhits_copy, clique1D)
+        clusterize!(rhits_copy, Match1D(params.roadwidth, params.tmaxlocal))  # 3053 allocations until here
 
         NDF = length(rhits_copy) - est.NUMBER_OF_PARAMETERS
         N = hitcount(rhits_copy)
 
-        length(rhits_copy) <= est.NUMBER_OF_PARAMETERS && continue
+        if length(rhits_copy) <= est.NUMBER_OF_PARAMETERS
+            candidates[c_idx] = MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
+            continue
+        end
 
         sort!(rhits_copy)
 
         try
-            estimate!(est, rhits_copy)
+            estimate!(est, rhits_copy)  # +11700 allocations
         catch ex
             # if isa(ex, SingularSVDException)
             # @warn "Singular SVD"
+            candidates[c_idx] = MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
             continue
         end
 
         # TODO: consider creating a "pos()" getter for everything
-        # TODO: pass alpha and sigma, like V.set(*this, data.begin(), __end1, gridAngle_deg, sigma_ns);  // JMatrixNZ
-        V = covmatrix(est.model.pos, rhits_copy)
-        Y = timeresvec(est.model, rhits_copy)
-        V⁻¹ = inv(V)
-        χ² = transpose(Y) * V⁻¹ * Y
-        fit_pos = R \ est.model.pos
+        C = covmatrix!(covmatrices[Threads.threadid()], est.model.pos, rhits_copy)  # 0 allocations
+        # TODO: this is really ugly... make covmatrix!() return the view itself
+        V = view(C.M, 1:length(rhits_copy), 1:length(rhits_copy))
+        Y = timeresvec(est.model, rhits_copy)  # about 700 extra allocations here
+        V⁻¹ = inv(V)  # +3000 allocations
+        χ² = transpose(Y) * V⁻¹ * Y  # +700 allocations
+        fit_pos = R \ est.model.pos  # 0 allocations
 
-        push!(candidates[Threads.threadid()],
-              MuonScanfitCandidate(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF)
-        )
+        candidates[c_idx] = MuonScanfitCandidate(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF)
     end
-    vcat(candidates...)
+    candidates
 end
 
 struct MuonScanfitCandidate
@@ -205,19 +211,19 @@ function estimate!(est::Line1ZEstimator, hits)
 
     W = 1.0 / N
 
-    pos = sum(h.pos for h ∈ hits) * W
+    pos = sum(h.pos for h ∈ hits) * W  # 0 allocations
     t = 0.0
-    lz = Line1Z(pos, t)
+    lz = Line1Z(pos, t)  # 0 allocations
 
-    t₀ = sum(time(h) for h ∈ hits) * W * KM3io.Constants.C
+    t₀ = sum(time(h) for h ∈ hits) * W * KM3io.Constants.C  # +2000 allocations!
 
-    reset!(est)
+    reset!(est)  # 0 allocations
 
     y₀ = y₁ = y₂ = 0.0
     hit₀ = first(hits)
     xi = hit₀.pos.x - posx(lz)
     yi = hit₀.pos.y - posy(lz)
-    ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER
+    ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER  # 0 allocations
 
     # starting from the second hit and including the first in the last iteration
     @inbounds for idx ∈ 2:N+1
@@ -261,7 +267,7 @@ function estimate!(est::Line1ZEstimator, hits)
     end
 
 
-    invert!(est.V, est.MINIMAL_SVD_WEIGHT)
+    invert!(est.V, est.MINIMAL_SVD_WEIGHT)  # 9000 allocations
 
     @inbounds begin
         est.model = Line1Z(
@@ -302,17 +308,23 @@ struct Variance <: FieldVector{4, Float64}
     w::Float64
 end
 
+struct CovMatrix
+    α::Float64
+    σ::Float64
+    M::Matrix{Float64}
+    V::Vector{Variance}
+    CovMatrix(α, σ, N::Int) = new(α, σ, MMatrix{N, N, Float64, N*N}(undef), MVector{N, Variance}(undef))
+end
+
 # TODO: generalise hits parameter
-function covmatrix(pos::Position, hits; α=1.0, σ=5.0)
+function covmatrix!(C::CovMatrix, pos::Position, hits; α=1.0, σ=5.0)
     N = length(hits)
-    M = Matrix{Float64}(undef, N, N)
-    variances = sizehint!(Vector{Variance}(), N)
 
     ta = deg2rad(α)
     ct = cos(ta)
     st = sin(ta)
 
-    for hit ∈ hits
+    for (idx, hit) ∈ enumerate(hits)
         dx, dy, dz = hit.pos - pos
         R = √(dx^2 + dy^2)
 
@@ -329,17 +341,17 @@ function covmatrix(pos::Position, hits; α=1.0, σ=5.0)
         v *= -(dx * ct + dz * st)
         w *= -(dy * ct + dz * st)
 
-        push!(variances, Variance(x, y, v, w))
+        C.V[idx] = Variance(x, y, v, w)
     end
 
     @inbounds for i ∈ 1:N
         @inbounds for j ∈ 1:i
-            M[i, j] = variances[i] ⋅ variances[j]
-            M[j, i] = M[i, j]
+            C.M[i, j] = C.V[i] ⋅ C.V[j]
+            C.M[j, i] = C.M[i, j]
         end
-        M[i, i] = variances[i] ⋅ variances[i] + σ^2
+        C.M[i, i] = C.V[i] ⋅ C.V[i] + σ^2
     end
-    M
+    C
 end
 
 # TODO: generalise hits parameter
