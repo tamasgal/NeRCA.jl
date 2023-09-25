@@ -80,7 +80,7 @@ endtime(hit) = time(hit) + hit.tot
 """
 Return the total number of hits for a collection of reduced hits.
 """
-hitcount(hits::Vector{T}) where T<:AbstractReducedHit = sum(h.n for h in hits)
+hitcount(hits::AbstractArray{T}) where T<:AbstractReducedHit = sum(h.n for h in hits)
 
 """
 Combine snapshot and triggered hits to a single hits-vector.
@@ -580,7 +580,7 @@ end
 Applies the clique clusterization algorithm and leaves only the best matching
 hits in the input array.
 """
-function clusterize!(hits::Vector{T}, c::Clique) where T<:AbstractSpecialHit
+function clusterize!(hits::AbstractArray{T}, c::Clique) where T<:AbstractSpecialHit
     N = length(hits)
     N == 0 && return hits
 
