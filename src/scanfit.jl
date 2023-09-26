@@ -6,6 +6,9 @@ Base.@kwdef struct MuonScanfitParameters
     ndirections::Int = 1000  # the number of directions to scan over 4π
     nfinedirections::Int = 500  # number of directions in the cone of the fine scan
     θ::Float64 = 7.0  # opening angle of the fine-scan cone
+    σ::Float64 = 5.0  # [ns]
+    α₁::Float64 = 1.0  # grid angle of the coarse scan
+    α₂::Float64 = 0.5  # grid angle of the fine scan
 end
 
 struct MuonScanfit
