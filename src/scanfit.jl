@@ -247,14 +247,16 @@ function invert!(V, precision)
 
     abs(F.S[2]) <  precision * abs(F.S[1]) && throw(SingularSVDException("$F.S"))
 
-    w = max(map(abs, F.S)...) * precision
+    w1 = abs(F.S[1])
+    w2 = abs(F.S[2])
+    w3 = abs(F.S[3])
+    w = max(w1, w2, w3) * precision
 
     @inbounds for idx in eachindex(F.S)
         F.S[idx] = abs(F.S[idx]) >= w ? 1.0 / F.S[idx] : 0.0
     end
 
-    V .= F.U * diagm(F.S) * F.Vt
-    V
+    mul!(V, F.U, diagm(F.S) * F.Vt)
 end
 
 struct Variance <: FieldVector{4, Float64}
