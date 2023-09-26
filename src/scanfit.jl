@@ -125,8 +125,8 @@ function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Ve
         end
 
         # TODO: consider creating a "pos()" getter for everything
-        C = covmatrix!(covmatrices[Threads.threadid()], est.model.pos, rhits_copy)  # 0 allocations
-        # TODO: this is really ugly... make covmatrix!() return the view itself
+        C = update!(covmatrices[Threads.threadid()], est.model.pos, rhits_copy)  # 0 allocations
+        # TODO: this is really ugly... make update!() return the view itself
         V = view(C.M, 1:length(rhits_copy), 1:length(rhits_copy))
         Y = timeresvec(est.model, rhits_copy)  # about 700 extra allocations here
         V⁻¹ = inv(V)  # +3000 allocations
@@ -317,7 +317,7 @@ struct CovMatrix
 end
 
 # TODO: generalise hits parameter
-function covmatrix!(C::CovMatrix, pos::Position, hits; α=1.0, σ=5.0)
+function update!(C::CovMatrix, pos::Position, hits; α=1.0, σ=5.0)
     N = length(hits)
 
     ta = deg2rad(α)
