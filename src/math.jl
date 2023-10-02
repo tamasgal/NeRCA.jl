@@ -70,7 +70,7 @@ axial anisotropy is much smaller compared to a simple latitude-longitude
 lattice.
 
 """
-function fibonaccisphere(N)
+function fibonaccisphere(N::Int)
     ϕ = π * (√5 - 1)  # golden angle in rad
 
     directions = sizehint!(Vector{Direction{Float64}}(), N)
@@ -86,10 +86,18 @@ function fibonaccisphere(N)
 end
 
 """
-Create `S` directions inside a cone with an opening angle of `θ` which points towards `dir`.
+
+Creates directions which with a median angular separation of `α` [deg] using
+the Fibonacci lattice.
+
+"""
+fibonaccisphere(α::Float64) = fibonaccisphere(Int(ceil((195.39/α)^2)))
+
+"""
+Create `S` directions inside a cone with an opening angle of `θ` [deg] which points towards `dir`.
 """
 function fibonaccicone(dir::Direction{Float64}, S::Integer, θ::Float64)
-    N = Int(ceil(S / sin(θ/2)^2))
+    N = Int(ceil(S / sin(deg2rad(θ)/2)^2))
     R = rotation_between(SVector(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
 
     ϕ = π * (√5 - 1)  # golden angle in rad
@@ -103,6 +111,19 @@ function fibonaccicone(dir::Direction{Float64}, S::Integer, θ::Float64)
         push!(directions, R * Direction(x, y, z))
     end
     directions
+end
+
+"""
+
+Creates directions with a median angular separation of `α` [deg] inside a cone with an
+opening angle of `θ` [deg] pointing towards `dir`.
+
+"""
+function fibonaccicone(dir::Direction{Float64}, α::Float64, θ::Float64)
+    α > θ && error("The angular separation needs to be less than the opening angle of the cone.")
+    N = (195.39 / α)^2  # total number of points on a full sphere, so that we have α separation
+    S = Int(ceil(N * sin(deg2rad(θ)/2)^2))
+    fibonaccicone(dir, S, θ)
 end
 
 

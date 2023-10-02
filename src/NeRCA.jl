@@ -40,7 +40,7 @@ export
     SingleDUParams, SingleDURecoParams,
     initdb, streamds, detx,  # db.jl
     rotator,
-    fibonaccisphere,
+    fibonaccisphere, fibonaccicone,
     # from KM3io
     Detector, Direction, Position
 
