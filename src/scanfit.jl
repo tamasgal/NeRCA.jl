@@ -314,6 +314,12 @@ end
 
 # TODO: generalise hits parameter
 timeresvec(lz::Line1Z, hits) = [time(hit) - time(lz, hit.pos) for hit ∈ hits]
+function timeresvec!(v::AbstractArray{Float64}, lz::Line1Z, hits)
+    for (idx, hit) ∈ enumerate(hits)
+        v[idx] = time(hit) - time(lz, hit.pos)
+    end
+    v
+end
 
 
 """
