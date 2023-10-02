@@ -3,33 +3,37 @@ Base.@kwdef struct MuonScanfitParameters
     roadwidth::Float64 = 200.0  # [m]
     nmaxhits::Int = 50  # maximum number of hits to use
     nfits::Int = 1
-    ndirections::Int = 1000  # the number of directions to scan over 4π
-    nfinedirections::Int = 500  # number of directions in the cone of the fine scan
-    θ::Float64 = 7.0  # opening angle of the fine-scan cone
     σ::Float64 = 5.0  # [ns]
-    α₁::Float64 = 1.0  # grid angle of the coarse scan
-    α₂::Float64 = 0.5  # grid angle of the fine scan
+    α₁::Float64 = 5.0  # grid angle of the coarse scan
+    α₂::Float64 = 0.3  # grid angle of the fine scan
+    θ::Float64 = 3.5  # opening angle of the fine-scan cone
+end
+
+
+"""
+
+A container of directions with additionial information about their median
+angular separation.
+
+"""
+struct DirectionSet
+    directions::Vector{Direction{Float64}}
+    angular_separation::Float64
 end
 
 struct MuonScanfit
     params::MuonScanfitParameters
     detector::Detector
-    directions::Vector{Direction{Float64}}
+    directionset::DirectionSet
     coincidencebuilder::L1Builder
-    function MuonScanfit(params::MuonScanfitParameters, detector::Detector, directions::Vector{Direction{Float64}})
+    function MuonScanfit(params::MuonScanfitParameters, detector::Detector)
         coincidencebuilder = L1Builder(L1BuilderParameters(params.tmaxlocal, false))
-        new(params, detector, directions, coincidencebuilder)
+        new(params, detector, DirectionSet(fibonaccisphere(params.α₁), params.α₁), coincidencebuilder)
     end
 end
-function MuonScanfit(params::MuonScanfitParameters, det::Detector)
-    MuonScanfit(params, det, fibonaccisphere(params.ndirections))
-end
-function MuonScanfit(det::Detector)
-    params = MuonScanfitParameters()
-    MuonScanfit(params, det, fibonaccisphere(params.ndirections))
-end
+MuonScanfit(det::Detector) = MuonScanfit(MuonScanfitParameters(), det)
 function Base.show(io::IO, m::MuonScanfit)
-   print(io, "$(typeof(m)) in $(length(m.directions)) directions.")
+    print(io, "$(typeof(m)) with a coarse scan of $(m.params.α₁)ᵒ and a fine scan of $(m.params.α₂)ᵒ.")
 end
 
 """
@@ -56,14 +60,12 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     sort!(candidates, by=m->m.Q; rev=true)
 
     # Second round on a directed cone pointing towards the previous best direction
-    if msf.params.nfinedirections > 0
-        most_likely_dir = first(candidates).dir
-        directions = fibonaccicone(most_likely_dir, msf.params.nfinedirections, deg2rad(msf.params.θ))
-        candidates = scanfit(msf.params, rhits, directions)  # 5312 allocations, 1000.02 KiB
+    most_likely_dir = first(candidates).dir
+    directionset = DirectionSet(fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ), msf.params.α₂)
+    candidates = scanfit(msf.params, rhits, directionset)
 
-        isempty(candidates) && return candidates
-        sort!(candidates, by=m->m.Q; rev=true)
-    end
+    isempty(candidates) && return candidates
+    sort!(candidates, by=m->m.Q; rev=true)
 
     candidates[1:msf.params.nfits]
 end
@@ -75,18 +77,18 @@ Performs the scanfit for each given direction and returns a
 be empty if none of the directions had enough hits to perform the algorithm.
 
 """
-function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directions::Vector{Direction{Float64}}) where T<:AbstractReducedHit
+function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directionset::DirectionSet) where T<:AbstractReducedHit
     xytsolvers = Channel{XYTSolver}(Threads.nthreads())
     for _ in Threads.nthreads()
-        put!(xytsolvers, XYTSolver(params, 1.0))
+        put!(xytsolvers, XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ))
     end
-    chunk_size = max(1, length(directions) ÷ Threads.nthreads())
-    chunks = Iterators.partition(directions, chunk_size)
+    chunk_size = max(1, length(directionset.directions) ÷ Threads.nthreads())
+    chunks = Iterators.partition(directionset.directions, chunk_size)
 
     tasks = map(chunks) do chunk
         Threads.@spawn begin
             xytsolver = take!(xytsolvers)
-            results = map(c -> xytsolver(rhits, c), chunk)
+            results = map(c -> xytsolver(rhits, c, directionset.angular_separation), chunk)
             put!(xytsolvers, xytsolver)
             results
         end
@@ -267,15 +269,14 @@ struct Variance <: FieldVector{4, Float64}
 end
 
 struct CovMatrix
-    α::Float64
-    σ::Float64
     M::Matrix{Float64}
     V::Vector{Variance}
-    CovMatrix(α, σ, N::Int) = new(α, σ, MMatrix{N, N, Float64, N*N}(undef), MVector{N, Variance}(undef))
+    σ::Float64
+    CovMatrix(N::Int, σ::Float64) = new(MMatrix{N, N, Float64, N*N}(undef), MVector{N, Variance}(undef), σ)
 end
 
 # TODO: generalise hits parameter
-function update!(C::CovMatrix, pos::Position, hits; α=1.0, σ=5.0)
+function update!(C::CovMatrix, pos::Position, hits, α::Float64)
     N = length(hits)
 
     ta = deg2rad(α)
@@ -307,7 +308,7 @@ function update!(C::CovMatrix, pos::Position, hits; α=1.0, σ=5.0)
             C.M[i, j] = C.V[i] ⋅ C.V[j]
             C.M[j, i] = C.M[i, j]
         end
-        C.M[i, i] = C.V[i] ⋅ C.V[i] + σ^2
+        C.M[i, i] = C.V[i] ⋅ C.V[i] + C.σ^2
     end
     C
 end
@@ -328,18 +329,19 @@ A task worker whichs solves for x, y an t for a given set of hits and a directio
 struct XYTSolver
     hits_buffer::Vector{HitR1}
     covmatrix::CovMatrix
-    N::Int
+    timeresvec::Vector{Float64}
+    nmaxhits::Int
     matcher::Match1D
+    est::Line1ZEstimator
     # TODO: revise passing params since α is redundant
-    function XYTSolver(params::MuonScanfitParameters, α::Float64)
-        N = params.nmaxhits
-        new(Vector{HitR1}(), CovMatrix(α, params.σ, N), N, Match1D(params.roadwidth, params.tmaxlocal))
+    function XYTSolver(nmaxhits::Int, roadwidth::Float64, tmaxlocal::Float64, σ::Float64)
+        new(Vector{HitR1}(), CovMatrix(nmaxhits, σ), Vector{Float64}(), nmaxhits, Match1D(roadwidth, tmaxlocal),
+            Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
+        )
     end
 end
 
-# TODO: revise if we really need to pass params here
-function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}) where T<:AbstractReducedHit
-    est = Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))
+function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) where T<:AbstractReducedHit
     χ² = Inf
     R = rotator(dir)
     n_initial_hits = length(hits)
@@ -349,37 +351,42 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}) where T<:Abstr
         s.hits_buffer[idx] = @set hit.pos = R * hit.pos
     end
 
-    if n_initial_hits > s.N
-        # TODO: review this block, here we may need a partial sort
-        sort!(s.hits_buffer; by=timetoz)
-        resize!(s.hits_buffer, s.N)
+    if n_initial_hits > s.nmaxhits
+        sort!(s.hits_buffer; by=timetoz, alg=PartialQuickSort(s.nmaxhits))
+        resize!(s.hits_buffer, s.nmaxhits)
     end
 
-    clusterize!(s.hits_buffer, s.matcher)  # 3053 allocations until here
+    clusterize!(s.hits_buffer, s.matcher)
 
-    NDF = length(s.hits_buffer) - est.NUMBER_OF_PARAMETERS
-    N = hitcount(s.hits_buffer)
+    hits = s.hits_buffer  # just for convenience
+    n_final_hits = length(hits)
 
-    length(s.hits_buffer) <= est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
+    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
 
-    sort!(s.hits_buffer)
+    NDF = n_final_hits - s.est.NUMBER_OF_PARAMETERS
+    N = hitcount(hits)
+    sort!(hits)
 
     try
-        estimate!(est, s.hits_buffer)  # +11700 allocations
+        estimate!(s.est, hits)
     catch ex
-        # if isa(ex, SingularSVDException)
-        # @warn "Singular SVD"
+        # isa(ex, SingularSVDException) && @warn "Singular SVD"
         return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
     end
 
     # TODO: consider creating a "pos()" getter for everything
-    update!(s.covmatrix, est.model.pos, s.hits_buffer)  # 0 allocations
-    # TODO: this is really ugly... make update!() return the view itself
-    V = view(s.covmatrix.M, 1:length(s.hits_buffer), 1:length(s.hits_buffer))
-    Y = timeresvec(est.model, s.hits_buffer)  # about 700 extra allocations here
-    V⁻¹ = inv(V)  # +3000 allocations
-    χ² = transpose(Y) * V⁻¹ * Y  # +700 allocations
-    fit_pos = R \ est.model.pos  # 0 allocations
+    update!(s.covmatrix, s.est.model.pos, hits, α)
+    # TODO: this is really ugly... make update!() return the view itself maybe?
+    V = view(s.covmatrix.M, 1:n_final_hits, 1:n_final_hits)
 
-    MuonScanfitCandidate(fit_pos, dir, est.model.t, quality(χ², N, NDF), NDF)
+    n_final_hits > length(s.timeresvec) && resize!(s.timeresvec, n_final_hits)
+    # TODO: better name for this function
+    timeresvec!(s.timeresvec, s.est.model, hits)
+
+    V⁻¹ = inv(V)
+    Y = view(s.timeresvec, 1:n_final_hits)  # only take the relevant part of the buffer
+    χ² = transpose(Y) * V⁻¹ * Y
+    fit_pos = R \ s.est.model.pos
+
+    MuonScanfitCandidate(fit_pos, dir, s.est.model.t, quality(χ², N, NDF), NDF)
 end
