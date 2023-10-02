@@ -40,17 +40,17 @@ Performs a Muon track fit for a given event.
 """
 Performs a Muon track fit for a given set of hits (usually snapshot hits).
 """
-function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit  # 35206 allocations, 10.65 MiB
+function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
-    rhits = msf.coincidencebuilder(HitR1, msf.detector, hits)  # 1201 allocations, 314.61 KiB
+    rhits = msf.coincidencebuilder(HitR1, msf.detector, hits)
 
     sort!(rhits)
-    unique!(h->h.dom_id, rhits)  # 7 allocations
+    unique!(h->h.dom_id, rhits)
 
-    clusterize!(rhits, Match3B(msf.params.roadwidth, msf.params.tmaxlocal))  # 3 allocations, 400 bytes (mutates)
+    clusterize!(rhits, Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
 
     # First round on 4π
-    candidates = scanfit(msf.params, rhits, msf.directions)  # 19277 allocations
+    candidates = scanfit(msf.params, rhits, msf.directionset)
 
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
@@ -167,19 +167,19 @@ function estimate!(est::Line1ZEstimator, hits)
 
     W = 1.0 / N
 
-    pos = sum(h.pos for h ∈ hits) * W  # 0 allocations
+    pos = sum(h.pos for h ∈ hits) * W
     t = 0.0
-    lz = Line1Z(pos, t)  # 0 allocations
+    lz = Line1Z(pos, t)
 
-    t₀ = sum(time(h) for h ∈ hits) * W * KM3io.Constants.C  # +2000 allocations!
+    t₀ = sum(time(h) for h ∈ hits) * W * KM3io.Constants.C
 
-    reset!(est)  # 0 allocations
+    reset!(est)
 
     y₀ = y₁ = y₂ = 0.0
     hit₀ = first(hits)
     xi = hit₀.pos.x - posx(lz)
     yi = hit₀.pos.y - posy(lz)
-    ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER  # 0 allocations
+    ti = (time(hit₀) * KM3io.Constants.C - t₀ - hit₀.pos.z + posz(lz)) / KM3io.Constants.KAPPA_WATER
 
     # starting from the second hit and including the first in the last iteration
     @inbounds for idx ∈ 2:N+1
@@ -223,7 +223,7 @@ function estimate!(est::Line1ZEstimator, hits)
     end
 
 
-    invert!(est.V, est.MINIMAL_SVD_WEIGHT)  # 9000 allocations
+    invert!(est.V, est.MINIMAL_SVD_WEIGHT)
 
     @inbounds begin
         est.model = Line1Z(
