@@ -9,7 +9,10 @@ using DocStringExtensions
 using KM3io
 
 using Parameters
+using Combinatorics
 using StaticArrays
+using Rotations
+using Setfield
 using PGFPlotsX
 using Colors
 using RecipesBase
@@ -26,12 +29,21 @@ using HTTP
 import Base: read, +, -, *, getindex, length, eltype
 
 export
+    Hit, HitL0, HitL1, HitL2, HitR0, HitR1, HitR2,
+    L1Builder, L1BuilderParameters, Match3B, Match1D,
+    Line1Z, Line1ZEstimator,
     RecoTrack, NoRecoTrack, dumandfit,
-    duhits, domhits, nfoldhits,
+    MuonScanfit, MuonScanfitCandidate, MuonScanfitParameters, timetoz,
+    duhits, nfoldhits,
     ztplot,
-    most_frequent, categorize,
+    most_frequent, categorize, modulemap,
     SingleDUParams, SingleDURecoParams,
-    initdb, streamds, detx  # db.jl
+    initdb, streamds, detx,  # db.jl
+    rotator,
+    fibonaccisphere, fibonaccicone,
+    # from KM3io
+    Detector, Direction, Position
+
 
 
 @template (FUNCTIONS, METHODS, MACROS) =
@@ -53,8 +65,9 @@ export
 include("math.jl")
 include("hits.jl")
 include("mc.jl")
-include("prefit.jl")
-include("fit.jl")
+include("scanfit.jl")
+include("royfit.jl")
+include("dumandfit.jl")
 include("plot.jl")
 include("db.jl")
 

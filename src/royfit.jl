@@ -27,42 +27,12 @@ end
 
 
 """
-Performs the prefit algorithm which was used in DUMAND II.
-"""
-function dumandfit(hits::Vector{T}) where T <: AbstractCalibratedHit
-    N = length(hits)
-    D = 0.0
-    dir = Direction(0.0, 0.0, 0.0)
-    pos = Position(0.0, 0.0, 0.0)
-    pes = [max(1, (h.tot - 26.3) / 4.5) for h in hits]
-    # pes = [h.tot for h in hits]
-    # pes = [h.multiplicity.count for h in hits]
-    @inbounds for i ∈ 1:N
-        @inbounds for k ∈ 1:N
-            if i == k
-                continue
-            end
-            t_i = hits[i].t
-            t_k = hits[k].t
-            q_ik = pes[i] * pes[k]
-            t_ik = t_i * t_k
-            pos += q_ik * (hits[i].pos*(t_k^2 - t_ik) + hits[k].pos*(t_i^2 - t_ik))
-            dir += q_ik * (hits[i].pos - hits[k].pos) * (t_i - t_k)
-            D += q_ik * (t_i - t_k)^2
-        end
-    end
-    dir = normalize(dir/D)
-    return Track(dir, pos/D, 0)
-end
-
-
-"""
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=KM3io.INDEX_OF_REFRACTION_WATER)
-    c_medium = KM3io.c/n
-    β = v/KM3io.c
+function make_cherenkov_calculator(track::Track; v=2.99792458e8, n=KM3io.Constants.INDEX_OF_REFRACTION_WATER)
+    c_medium = KM3io.Constants.c/n
+    β = v/KM3io.Constants.c
     θ = acos(min(1/(β*n), 1))
     θ′ = π - θ
     track_dir = normalize(track.dir)
@@ -93,8 +63,8 @@ end
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀; n=KM3io.INDEX_OF_REFRACTION_WATER)
-    c_ns = KM3io.c / 1e9
+function make_cherenkov_calculator(d_closest, t_closest, z_closest, dir_z, t₀; n=KM3io.Constants.INDEX_OF_REFRACTION_WATER)
+    c_ns = KM3io.Constants.c / 1e9
     d_γ(z) = n/√(n^2 - 1) * √(d_closest^2 + (z-z_closest)^2 * (1 - dir_z^2))
     t(z) = (t₀) + 1/c_ns * ((z - z_closest)*dir_z + (n^2 - 1)/n * d_γ(z))
     d_γ, t
@@ -104,8 +74,8 @@ end
 Returns a function which calculates the arrival time of a Cherenkov photon
 at a given position.
 """
-function make_cherenkov_calculator(sdp::SingleDUParams; n=KM3io.INDEX_OF_REFRACTION_WATER)
-    c_ns = KM3io.c / 1e9
+function make_cherenkov_calculator(sdp::SingleDUParams; n=KM3io.Constants.INDEX_OF_REFRACTION_WATER)
+    c_ns = KM3io.Constants.c / 1e9
     d_γ(z) = n/√(n^2 - 1) * √(sdp.d^2 + (z-sdp.z)^2 * (1 - sdp.dz^2))
     t(z) = (sdp.t₀) + 1/c_ns * ((z - sdp.z)*sdp.dz + (n^2 - 1)/n * d_γ(z))
     d_γ, t
@@ -117,7 +87,7 @@ end
 Calculates five parameters to describe a track for a single DU case.
 """
 function single_du_params(track::NeRCA.Track)
-    c_ns = KM3io.c / 1e9
+    c_ns = KM3io.Constants.c / 1e9
     pos = track.pos
     dir = Direction(normalize(track.dir))
     t₀ = track.time
@@ -128,11 +98,6 @@ function single_du_params(track::NeRCA.Track)
     d_closest = √(p_t_closest[1]^2 + p_t_closest[2]^2)
 
     d_closest, t_closest, z_closest, dir.z, t₀
-end
-
-# TODO: delete this function
-function cherenkov_plausible(Δt, Δz; time_extra=10, n=KM3io.INDEX_OF_REFRACTION_WATER)
-    Δt < Δz * n / KM3io.c*1e9 + time_extra
 end
 
 
@@ -169,7 +134,7 @@ function select_hits(du_hits, hit_pool; Δt₋=10, Δz=9, new_hits=nothing)
     
     function time_interval(t₀, tₜ, Δfloor)
         t₋ = tₜ - Δfloor*Δt₋
-        t₊ = max(t₀ + Δfloor*Δz*KM3io.INDEX_OF_REFRACTION_WATER/KM3io.c*1e9 + Δt₋, tₜ + Δfloor*Δt₋)
+        t₊ = max(t₀ + Δfloor*Δz*KM3io.Constants.INDEX_OF_REFRACTION_WATER/KM3io.Constants.c*1e9 + Δt₋, tₜ + Δfloor*Δt₋)
         # @show t₊-t₋
         @interval(t₋, t₊)
     end
@@ -482,7 +447,7 @@ function estimate_azimuth(
     sdp::SingleDUParams,
     direct_hits::Vector{KM3io.XCalibratedHit},
     hit_pool::Dict{Int, Vector{KM3io.XCalibratedHit}};
-    Δt=20, n=KM3io.INDEX_OF_REFRACTION_WATER
+    Δt=20, n=KM3io.Constants.INDEX_OF_REFRACTION_WATER
 )
     ϕ = azimuth(sum([-h.dir for h in direct_hits]) ./ length(direct_hits))
 

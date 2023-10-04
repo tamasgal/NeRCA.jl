@@ -1,4 +1,5 @@
 Base.angle(d1, d2) = acos(min(dot(normalize(d1), normalize(d2)), 1))
+# TODO: type piracy: this needs to go to KM3io
 Base.angle(a::T, b::T) where {T<:Union{KM3io.AbstractCalibratedHit, KM3io.PMT}} = Base.angle(a.dir, b.dir)
 Base.angle(a, b::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}) = Base.angle(a, b.dir)
 Base.angle(a::Union{KM3io.AbstractCalibratedHit, KM3io.PMT}, b) = Base.angle(a.dir, b)
@@ -69,10 +70,10 @@ axial anisotropy is much smaller compared to a simple latitude-longitude
 lattice.
 
 """
-function fibonaccisphere(N)
+function fibonaccisphere(N::Int)
     ϕ = π * (√5 - 1)  # golden angle in rad
 
-    directions = sizehint!(Vector{Direction}(), N)
+    directions = sizehint!(Vector{Direction{Float64}}(), N)
     for i ∈ 0:N-1
         y = 1 - 2(i / (N - 1))
         r = √(1 - y * y)
@@ -82,4 +83,58 @@ function fibonaccisphere(N)
         push!(directions, Direction(x, y, z))
     end
     directions
+end
+
+"""
+
+Creates directions which with a median angular separation of `α` [deg] using
+the Fibonacci lattice.
+
+"""
+fibonaccisphere(α::Float64) = fibonaccisphere(Int(ceil((195.39/α)^2)))
+
+"""
+Create `S` directions inside a cone with an opening angle of `θ` [deg] which points towards `dir`.
+"""
+function fibonaccicone(dir::Direction{Float64}, S::Integer, θ::Float64)
+    N = Int(ceil(S / sin(deg2rad(θ)/2)^2))
+    R = rotation_between(SVector(0.0, 1.0, 0.0), dir)  # the Fibonacci lattice starts spiraling around (0, 1, 0)
+
+    ϕ = π * (√5 - 1)  # golden angle in rad
+    directions = sizehint!(Vector{Direction{Float64}}(), S)
+    for i ∈ 0:S-1
+        y = 1 - 2(i / (N - 1))
+        r = √(1 - y * y)
+        θ = ϕ * i
+        x = cos(θ) * r
+        z = sin(θ) * r
+        push!(directions, R * Direction(x, y, z))
+    end
+    directions
+end
+
+"""
+
+Creates directions with a median angular separation of `α` [deg] inside a cone with an
+opening angle of `θ` [deg] pointing towards `dir`.
+
+"""
+function fibonaccicone(dir::Direction{Float64}, α::Float64, θ::Float64)
+    α > θ && error("The angular separation needs to be less than the opening angle of the cone.")
+    N = (195.39 / α)^2  # total number of points on a full sphere, so that we have α separation
+    S = Int(ceil(N * sin(deg2rad(θ)/2)^2))
+    fibonaccicone(dir, S, θ)
+end
+
+
+"""
+A rotation matrix with a given direction, which will point towards the z-axis when rotated.
+"""
+function rotator(dir::Direction)
+    ct = cos(theta(dir))
+    st = sin(theta(dir))
+    cp = cos(phi(dir))
+    sp = sin(phi(dir))
+
+    RotMatrix(ct*cp, -sp, st*cp, ct*sp, cp, st*sp, -st, 0.0, ct)
 end
