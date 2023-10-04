@@ -3,6 +3,7 @@ Base.@kwdef struct MuonScanfitParameters
     roadwidth::Float64 = 200.0  # [m]
     nmaxhits::Int = 50  # maximum number of hits to use
     nfits::Int = 1
+    nprefits::Int = 10
     σ::Float64 = 5.0  # [ns]
     α₁::Float64 = 5.0  # grid angle of the coarse scan
     α₂::Float64 = 0.3  # grid angle of the fine scan
@@ -55,13 +56,18 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
     # First round on 4π
     candidates = scanfit(msf.params, rhits, msf.directionset)
-
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
 
     # Second round on a directed cone pointing towards the previous best direction
-    most_likely_dir = first(candidates).dir
-    directionset = DirectionSet(fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ), msf.params.α₂)
+    # TODO: take the X best fits from the previous step and repeat the cone fit in each direction
+    # e.g. bei concatenating the fibonaccicone directions
+    directions = Vector{Vector{Direction{Float64}}}()
+    for idx in 1:min(msf.params.nprefits, length(candidates))
+        most_likely_dir = candidates[idx].dir
+        push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
+    end
+    directionset = DirectionSet(vcat(directions...), msf.params.α₂)
     candidates = scanfit(msf.params, rhits, directionset)
 
     isempty(candidates) && return candidates
@@ -79,7 +85,7 @@ be empty if none of the directions had enough hits to perform the algorithm.
 """
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directionset::DirectionSet) where T<:AbstractReducedHit
     xytsolvers = Channel{XYTSolver}(Threads.nthreads())
-    for _ in Threads.nthreads()
+    for _ in 1:Threads.nthreads()
         put!(xytsolvers, XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ))
     end
     chunk_size = max(1, length(directionset.directions) ÷ Threads.nthreads())
@@ -93,7 +99,8 @@ function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directionset::
             results
         end
     end
-    collect(Iterators.flatten(fetch.(tasks)))
+
+    mapreduce(fetch, vcat, tasks)
 end
 
 struct MuonScanfitCandidate
@@ -333,7 +340,7 @@ struct XYTSolver
     nmaxhits::Int
     matcher::Match1D
     est::Line1ZEstimator
-    # TODO: revise passing params since α is redundant
+
     function XYTSolver(nmaxhits::Int, roadwidth::Float64, tmaxlocal::Float64, σ::Float64)
         new(Vector{HitR1}(), CovMatrix(nmaxhits, σ), Vector{Float64}(), nmaxhits, Match1D(roadwidth, tmaxlocal),
             Line1ZEstimator(Line1Z(Position(0, 0, 0), 0))

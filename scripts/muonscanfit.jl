@@ -1,4 +1,8 @@
 #!/usr/bin/env julia
+
+using LinearAlgebra
+BLAS.set_num_threads(1)
+
 doc = """Muon Scanfit
 
 Usage:
@@ -45,7 +49,7 @@ function main()
     det = KM3io.Detector(args["-a"])
     n_events = parse(Int, args["-n"])
 
-    msfparams = MuonScanfitParameters(;tmaxlocal=18.0, roadwidth=200.0)
+    msfparams = MuonScanfitParameters(;tmaxlocal=18.0, roadwidth=200.0, nfits=12)
     msfit = MuonScanfit(msfparams, det)
 
     outfile = H5File(args["-o"], "w")
@@ -67,30 +71,32 @@ function main()
             continue
         end
 
-        best_muon = first(muons)
+        nu = f.online !== nothing ? neutrino = first(f.offline[event.header.trigger_counter + 1].mc_trks) : missing
 
-        mc_angular_error = NaN
-        mc_energy = NaN
-        if f.online !== nothing
-            neutrino = first(f.offline[event.header.trigger_counter + 1].mc_trks)
-            mc_angular_error = rad2deg(angle(best_muon.dir, neutrino.dir))
-            mc_energy = neutrino.E
+        for idx in 1:max(msfparams.nfits, length(muons))
+            muon = muons[idx]
+            mc_angular_error = NaN
+            mc_energy = NaN
+            if !ismissing(nu)
+                mc_angular_error = rad2deg(angle(muon.dir, nu.dir))
+                mc_energy = nu.E
+            end
+
+            push!(dset, MuonScanfitResult(
+                event.header.detector_id,
+                event.header.run,
+                event.header.frame_index,
+                event.header.trigger_counter,
+                muon.pos...,
+                muon.dir...,
+                muon.t,
+                muon.Q,
+                muon.NDF,
+                walltime,
+                mc_angular_error,
+                mc_energy,
+            ))
         end
-
-        push!(dset, MuonScanfitResult(
-            event.header.detector_id,
-            event.header.run,
-            event.header.frame_index,
-            event.header.trigger_counter,
-            best_muon.pos...,
-            best_muon.dir...,
-            best_muon.t,
-            best_muon.Q,
-            best_muon.NDF,
-            walltime,
-            mc_angular_error,
-            mc_energy,
-        ))
     end
     close(outfile)
 
