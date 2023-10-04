@@ -44,6 +44,7 @@ struct MuonScanfitResult
     mc_energy::Float64
 end
 
+
 function main()
     f = NeRCA.ROOTFile(args["-i"])
     det = KM3io.Detector(args["-a"])
@@ -54,6 +55,8 @@ function main()
 
     outfile = H5File(args["-o"], "w")
     dset = create_dataset(outfile, "reco/muonscanfit", MuonScanfitResult)
+
+    addmeta(dset, msfparams)
 
     n = 0
     n_muons = 0
@@ -71,7 +74,7 @@ function main()
             continue
         end
 
-        nu = f.online !== nothing ? neutrino = first(f.offline[event.header.trigger_counter + 1].mc_trks) : missing
+        nu = f.online !== nothing ? first(f.offline[event.header.trigger_counter + 1].mc_trks) : missing
 
         for idx in 1:max(msfparams.nfits, length(muons))
             muon = muons[idx]
