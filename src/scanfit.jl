@@ -5,8 +5,8 @@ Base.@kwdef struct MuonScanfitParameters
     nfits::Int = 1
     nprefits::Int = 10
     σ::Float64 = 5.0  # [ns]
-    α₁::Float64 = 5.0  # grid angle of the coarse scan
-    α₂::Float64 = 0.3  # grid angle of the fine scan
+    α₁::Float64 = 7.0  # grid angle of the coarse scan
+    α₂::Float64 = 0.5  # grid angle of the fine scan
     θ::Float64 = 3.5  # opening angle of the fine-scan cone
 end
 
@@ -25,7 +25,7 @@ end
 struct MuonScanfit
     params::MuonScanfitParameters
     detector::Detector
-    directionset::DirectionSet
+    coarsedirections::DirectionSet
     coincidencebuilder::L1Builder
     function MuonScanfit(params::MuonScanfitParameters, detector::Detector)
         coincidencebuilder = L1Builder(L1BuilderParameters(params.tmaxlocal, false))
@@ -55,23 +55,24 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     clusterize!(rhits, Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
 
     # First round on 4π
-    candidates = scanfit(msf.params, rhits, msf.directionset)
+    candidates = scanfit(msf.params, rhits, msf.coarsedirections)
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
 
-    # Second round on a directed cone pointing towards the previous best direction
-    # TODO: take the X best fits from the previous step and repeat the cone fit in each direction
-    # e.g. bei concatenating the fibonaccicone directions
-    directions = Vector{Vector{Direction{Float64}}}()
-    for idx in 1:min(msf.params.nprefits, length(candidates))
-        most_likely_dir = candidates[idx].dir
-        push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
-    end
-    directionset = DirectionSet(vcat(directions...), msf.params.α₂)
-    candidates = scanfit(msf.params, rhits, directionset)
+    # Second round on directed cones pointing towards the previous best directions
+    # TODO: currently disabled until all the allocations are minimised
+    # here, reusing a Vector{Direction} (attached to msf as buffer) might be a good idea.
+    # By doing so, we need `fibonaccicone!` and `fibonaccisphere!` as mutating functions
+    # directions = Vector{Vector{Direction{Float64}}}()
+    # for idx in 1:min(msf.params.nprefits, length(candidates))
+    #     most_likely_dir = candidates[idx].dir
+    #     push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
+    # end
+    # directionset = DirectionSet(vcat(directions...), msf.params.α₂)
+    # candidates = scanfit(msf.params, rhits, directionset)
 
-    isempty(candidates) && return candidates
-    sort!(candidates, by=m->m.Q; rev=true)
+    # isempty(candidates) && return candidates
+    # sort!(candidates, by=m->m.Q; rev=true)
 
     candidates[1:msf.params.nfits]
 end
@@ -84,18 +85,13 @@ be empty if none of the directions had enough hits to perform the algorithm.
 
 """
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directionset::DirectionSet) where T<:AbstractReducedHit
-    xytsolvers = Channel{XYTSolver}(Threads.nthreads())
-    for _ in 1:Threads.nthreads()
-        put!(xytsolvers, XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ))
-    end
     chunk_size = max(1, length(directionset.directions) ÷ Threads.nthreads())
     chunks = Iterators.partition(directionset.directions, chunk_size)
 
     tasks = map(chunks) do chunk
         Threads.@spawn begin
-            xytsolver = take!(xytsolvers)
-            results = map(c -> xytsolver(rhits, c, directionset.angular_separation), chunk)
-            put!(xytsolvers, xytsolver)
+            xytsolver = XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ)
+            results = [xytsolver(rhits, c, directionset.angular_separation) for c in chunk]
             results
         end
     end
