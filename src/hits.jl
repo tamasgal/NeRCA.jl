@@ -553,7 +553,7 @@ function (m::Match1D)(hit1, hit2)
       y = hit1.pos.y - hit2.pos.y
       d = √(x^2 + y^2)
 
-      if d <= 0.5 * m.roadwidth
+      if d <= m.roadwidth/2
           return m.t <=  d  * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
       elseif d <= m.roadwidth
           return m.t <= (m.roadwidth - d) * KM3io.Constants.TAN_THETA_C_WATER * KM3io.Constants.C_INVERSE  +  m.tmaxextra
