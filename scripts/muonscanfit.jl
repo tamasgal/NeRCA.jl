@@ -46,8 +46,8 @@ end
 
 
 function main()
-    f = NeRCA.ROOTFile(args["-i"])
-    det = KM3io.Detector(args["-a"])
+    f = ROOTFile(args["-i"])
+    det = Detector(args["-a"])
     n_events = parse(Int, args["-n"])
 
     msfparams = MuonScanfitParameters(;tmaxlocal=18.0, roadwidth=200.0, nfits=12)
