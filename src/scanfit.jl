@@ -180,7 +180,7 @@ function estimate!(est::Line1ZEstimator, hits)
 
     reset!(est)
 
-    y₀ = y₁ = y₂ = 0.0
+    yvec = zeros(MVector{3})
     hit₀ = first(hits)
     xi = hit₀.pos.x - posx(lz)
     yi = hit₀.pos.y - posy(lz)
@@ -210,9 +210,9 @@ function estimate!(est::Line1ZEstimator, hits)
         est.V[2, 3] += dy * dt
         est.V[3, 3] += dt * dt
 
-        y₀ += dx * y
-        y₁ += dy * y
-        y₂ += dt * y
+        yvec[1] += dx * y
+        yvec[2] += dy * y
+        yvec[3] += dt * y
 
         xi = xj
         yi = yj
@@ -228,16 +228,21 @@ function estimate!(est::Line1ZEstimator, hits)
     end
 
 
-    invert!(est.V, est.MINIMAL_SVD_WEIGHT)
+    # Hermitian is needed for typestability!
+    wvec, evecs = invert2!(Hermitian(est.V), est.MINIMAL_SVD_WEIGHT)
+    yvec2 = (evecs' * yvec)
+    yvec2 .*= wvec
+    mul!(yvec, evecs, yvec2)
+    #yvec = evecs * (diagm(wvec) * (evecs' * yvec))
 
     @inbounds begin
         est.model = Line1Z(
             Position(
-                pos.x + est.V[1, 1] * y₀ + est.V[1, 2] * y₁ + est.V[1, 3] * y₂,
-                pos.y + est.V[2, 1] * y₀ + est.V[2, 2] * y₁ + est.V[2, 3] * y₂,
+                pos.x + yvec[1],
+                pos.y + yvec[2],
                 posz(lz)
             ),
-            (est.V[3, 1] * y₀ + est.V[3, 2] * y₁ + est.V[3, 3] * y₂) * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE + t₀
+            yvec[3] * KM3io.Constants.KAPPA_WATER * KM3io.Constants.C_INVERSE + t₀
         )
     end
 
@@ -262,6 +267,19 @@ function invert!(V, precision)
     end
 
     mul!(V, F.U, diagm(F.S) * F.Vt)
+end
+
+@inline function invert2!(V, precision)
+    evals, evecs = eigen(V)
+
+    abs(evals[2]) <  precision * abs(evals[1]) && throw(SingularSVDException("$evals"))
+
+    w = maximum(abs, evals) * precision
+
+    wvec = ifelse.(abs.(evals) .>= w, inv.(evals), zero(float(eltype(evals))))
+
+    return wvec, evecs
+    #mul!(V, evecs, diagm(wvec) * evecs')
 end
 
 struct Variance <: FieldVector{4, Float64}
@@ -386,9 +404,8 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
     # TODO: better name for this function
     timeresvec!(s.timeresvec, s.est.model, hits)
 
-    V⁻¹ = inv(V)
     Y = view(s.timeresvec, 1:n_final_hits)  # only take the relevant part of the buffer
-    χ² = transpose(Y) * V⁻¹ * Y
+    χ² = dot(Y, V \ Y)
     fit_pos = R \ s.est.model.pos
 
     MuonScanfitCandidate(fit_pos, dir, s.est.model.t, quality(χ², N, NDF), NDF)
