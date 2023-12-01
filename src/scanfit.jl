@@ -63,16 +63,18 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     # TODO: currently disabled until all the allocations are minimised
     # here, reusing a Vector{Direction} (attached to msf as buffer) might be a good idea.
     # By doing so, we need `fibonaccicone!` and `fibonaccisphere!` as mutating functions
-    directions = Vector{Vector{Direction{Float64}}}()
-    for idx in 1:min(msf.params.nprefits, length(candidates))
-        most_likely_dir = candidates[idx].dir
-        push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
-    end
-    directionset = DirectionSet(vcat(directions...), msf.params.α₂)
-    candidates = scanfit(msf.params, rhits, directionset)
+    if msf.params.nprefits > 0
+        directions = Vector{Vector{Direction{Float64}}}()
+        for idx in 1:min(msf.params.nprefits, length(candidates))
+            most_likely_dir = candidates[idx].dir
+            push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
+        end
+        directionset = DirectionSet(vcat(directions...), msf.params.α₂)
+        candidates = scanfit(msf.params, rhits, directionset)
 
-    isempty(candidates) && return candidates
-    sort!(candidates, by=m->m.Q; rev=true)
+        isempty(candidates) && return candidates
+        sort!(candidates, by=m->m.Q; rev=true)
+    end
 
     candidates[1:msf.params.nfits]
 end
