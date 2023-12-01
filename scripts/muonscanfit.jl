@@ -1,7 +1,6 @@
 #!/usr/bin/env julia
 
 using LinearAlgebra
-BLAS.set_num_threads(1)
 
 doc = """Muon Scanfit
 
