@@ -10,6 +10,7 @@ using KM3io
 
 using StaticArrays
 using Rotations
+using Combinatorics
 using Setfield
 using Colors
 using LandauDistribution
@@ -30,8 +31,7 @@ export
     duhits, nfoldhits,
     most_frequent, categorize, modulemap,
     initdb, streamds, detx,  # db.jl
-    rotator,
-    fibonaccisphere, fibonaccicone,
+    fibonaccisphere, fibonaccicone, rotator, spread,
     # re-export from KM3io
     Detector, Direction, Position
 

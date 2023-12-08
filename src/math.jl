@@ -138,3 +138,15 @@ function rotator(dir::Direction)
 
     RotMatrix(ct*cp, -sp, st*cp, ct*sp, cp, st*sp, -st, 0.0, ct)
 end
+
+"""
+
+Calculates the maximum angle between the given objects which have a direction.
+
+"""
+function spread(objects::Vector{T}) where T
+    angles = map(combinations(objects, 2)) do obj_pair
+        angle(obj_pair...)
+    end
+    maximum(angles)
+end
