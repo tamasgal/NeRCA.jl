@@ -37,6 +37,8 @@ struct MuonScanfitResult
     dir_z::Float64
     t::Float64
     Q::Float64
+    S1::Float64
+    S2::Float64
     NDF::Int
     walltime::Float64
     mc_angular_error::Float64
@@ -93,6 +95,8 @@ function main()
                 muon.dir...,
                 muon.t,
                 muon.Q,
+                muon.S1,
+                muon.S2,
                 muon.NDF,
                 walltime,
                 mc_angular_error,

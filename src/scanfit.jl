@@ -1,3 +1,6 @@
+const N_FITS_SPREAD = 10  # number of prefits to calculate the spread of the fit
+
+
 Base.@kwdef struct MuonScanfitParameters
     tmaxlocal::Float64 = 18.0  # [ns]
     roadwidth::Float64 = 200.0  # [m]
@@ -59,6 +62,8 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
 
+    S1 = spread(candidates[1:min(N_FITS_SPREAD, length(candidates))])
+
     # Second round on directed cones pointing towards the previous best directions
     # TODO: currently disabled until all the allocations are minimised
     # here, reusing a Vector{Direction} (attached to msf as buffer) might be a good idea.
@@ -76,8 +81,11 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
         sort!(candidates, by=m->m.Q; rev=true)
     end
 
-    candidates[1:msf.params.nfits]
+    S2 = spread(candidates[1:min(N_FITS_SPREAD, length(candidates))])
+
+    [setproperties(c, (S1=S1, S2=S2)) for c in candidates[1:msf.params.nfits]]
 end
+
 
 """
 
@@ -105,9 +113,14 @@ struct MuonScanfitCandidate
     pos::Position{Float64}
     dir::Direction{Float64}
     t::Float64
-    Q::Float64
+    Q::Float64  # quality of the fit
+    S1::Float64  # spread of the prefits, the smaller the better
+    S2::Float64  # spread of the last fits, the smaller the better
     NDF::Int
 end
+MuonScanfitCandidate(pos::Position{Float64}, dir::Direction{Float64}, t::Float64, Q::Float64, NDF::Int) = MuonScanfitCandidate(pos, dir, t, Q, π, π, NDF)
+MuonScanfitCandidate() = MuonScanfitCandidate(Position(0.0, 0.0, 0.0), Direction(0.0, 0.0, 1.0), NaN, NaN, NaN, NaN, 0)
+Base.angle(m1::T, m2::T) where T<:MuonScanfitCandidate = angle(m1.dir, m2.dir)
 
 """
 The quality of the fit, the larger the better, as used in e.g. Jpp.
@@ -384,7 +397,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
     hits = s.hits_buffer  # just for convenience
     n_final_hits = length(hits)
 
-    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
+    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate()
 
     NDF = n_final_hits - s.est.NUMBER_OF_PARAMETERS
     N = hitcount(hits)
@@ -394,7 +407,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
         estimate!(s.est, hits)
     catch ex
         # isa(ex, SingularSVDException) && @warn "Singular SVD"
-        return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, 0)
+        return MuonScanfitCandidate()
     end
 
     # TODO: consider creating a "pos()" getter for everything
