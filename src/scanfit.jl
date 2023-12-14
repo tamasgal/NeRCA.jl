@@ -119,7 +119,6 @@ struct MuonScanfitCandidate
     NDF::Int
 end
 MuonScanfitCandidate(pos::Position{Float64}, dir::Direction{Float64}, t::Float64, Q::Float64, NDF::Int) = MuonScanfitCandidate(pos, dir, t, Q, π, π, NDF)
-MuonScanfitCandidate() = MuonScanfitCandidate(Position(0.0, 0.0, 0.0), Direction(0.0, 0.0, 1.0), NaN, NaN, NaN, NaN, 0)
 Base.angle(m1::T, m2::T) where T<:MuonScanfitCandidate = angle(m1.dir, m2.dir)
 
 """
@@ -397,7 +396,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
     hits = s.hits_buffer  # just for convenience
     n_final_hits = length(hits)
 
-    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate()
+    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 0)
 
     NDF = n_final_hits - s.est.NUMBER_OF_PARAMETERS
     N = hitcount(hits)
@@ -407,7 +406,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
         estimate!(s.est, hits)
     catch ex
         # isa(ex, SingularSVDException) && @warn "Singular SVD"
-        return MuonScanfitCandidate()
+        return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 0)
     end
 
     # TODO: consider creating a "pos()" getter for everything
