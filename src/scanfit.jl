@@ -377,6 +377,7 @@ struct XYTSolver
 end
 
 function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) where T<:AbstractReducedHit
+    # TODO: implement outliers of hits by doing permuations of N, N-1, ..., m hits
     χ² = Inf
     R = rotator(dir)
     n_initial_hits = length(hits)
