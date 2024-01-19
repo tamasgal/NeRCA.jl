@@ -145,7 +145,7 @@ posz(l::Line1Z) = l.pos.z
 posz(l::Line1Z, pos::Position) = l.pos.z - distance(l, pos) / KM3io.Constants.TAN_THETA_C_WATER
 """
 
-Calculate the Chernkov arrival tive for a given position.
+Calculate the Cherenkov arrival tive for a given position.
 
 """
 function Base.time(lz::Line1Z, pos::Position)
