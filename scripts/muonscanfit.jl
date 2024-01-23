@@ -43,6 +43,9 @@ struct MuonScanfitResult
     walltime::Float64
     mc_angular_error::Float64
     mc_energy::Float64
+    mc_nu_dir_x::Float64
+    mc_nu_dir_y::Float64
+    mc_nu_dir_z::Float64
 end
 
 
@@ -81,9 +84,11 @@ function main()
             muon = muons[idx]
             mc_angular_error = NaN
             mc_energy = NaN
+            nu_dir = Direction(0.0, 0.0, 0.0)
             if !ismissing(nu)
                 mc_angular_error = rad2deg(angle(muon.dir, nu.dir))
                 mc_energy = nu.E
+                nu_dir = nu.dir
             end
 
             push!(dset, MuonScanfitResult(
@@ -101,6 +106,7 @@ function main()
                 walltime,
                 mc_angular_error,
                 mc_energy,
+                nu.dir...,
             ))
         end
     end
