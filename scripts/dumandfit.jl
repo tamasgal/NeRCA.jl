@@ -21,8 +21,6 @@ end
 
 struct RecoPerformance
     walltime::Float32
-    n_dus::Int32
-    n_modules::Int32
     angular_error::Float32
     mc_zenith::Float32
     reco_zenith::Float32
@@ -49,10 +47,8 @@ function main()
 
         ν = first(mc_event.mc_trks)  # primary neutrino by definition the first MC track
         ξ = angle(track.dir, ν.dir)
-        n_dus = length(unique([h.du for h ∈ thits]))
-        n_modules = length(unique([h.dom_id for h ∈ thits]))
 
-        rp = RecoPerformance(walltime, n_dus, n_modules, ξ, zenith(ν.dir), zenith(track.dir), ν.E, length(thits))
+        rp = RecoPerformance(walltime, ξ, zenith(ν.dir), zenith(track.dir), ν.E, length(thits))
 
         push!(reco_dset, DumandFit(track.pos..., track.dir...))
         push!(reco_performance_dset, rp)
