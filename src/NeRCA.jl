@@ -58,6 +58,7 @@ include("hits.jl")
 include("mc.jl")
 include("scanfit.jl")
 include("dumandfit.jl")
+include("royfit.jl")
 include("db.jl")
 
 end
