@@ -5,8 +5,8 @@ Base.@kwdef struct MuonScanfitParameters
     tmaxlocal::Float64 = 18.0  # [ns]
     roadwidth::Float64 = 200.0  # [m]
     nmaxhits::Int = 50  # maximum number of hits to use
-    nfits::Int = 1
-    nprefits::Int = 10
+    nfits::Int = 1  # number of total fits (all stages) to keep
+    nprefits::Int = 10  # number of fits to use in the second stage
     σ::Float64 = 5.0  # [ns]
     α₁::Float64 = 7.0  # grid angle of the coarse scan
     α₂::Float64 = 0.5  # grid angle of the fine scan
@@ -57,17 +57,14 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
     clusterize!(rhits, Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
 
-    # First round on 4π
+    # First stage on 4π
     candidates = scanfit(msf.params, rhits, msf.coarsedirections)
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
 
     S1 = spread(candidates[1:min(N_FITS_SPREAD, length(candidates))])
 
-    # Second round on directed cones pointing towards the previous best directions
-    # TODO: currently disabled until all the allocations are minimised
-    # here, reusing a Vector{Direction} (attached to msf as buffer) might be a good idea.
-    # By doing so, we need `fibonaccicone!` and `fibonaccisphere!` as mutating functions
+    # Second stage on directed cones pointing towards the previous best directions
     if msf.params.nprefits > 0
         directions = Vector{Vector{Direction{Float64}}}()
         for idx in 1:min(msf.params.nprefits, length(candidates))
@@ -75,7 +72,10 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
             push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
         end
         directionset = DirectionSet(vcat(directions...), msf.params.α₂)
-        candidates = scanfit(msf.params, rhits, directionset)
+        # TODO: setting the stage field here is maybe a bit awkward
+        for candidate in scanfit(msf.params, rhits, directionset)
+            push!(candidates, @set candidate.stage = 2)
+        end
 
         isempty(candidates) && return candidates
         sort!(candidates, by=m->m.Q; rev=true)
@@ -83,7 +83,7 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
     S2 = spread(candidates[1:min(N_FITS_SPREAD, length(candidates))])
 
-    [setproperties(c, (S1=S1, S2=S2)) for c in candidates[1:msf.params.nfits]]
+    [setproperties(c, (S1=S1, S2=S2)) for c in candidates[1:min(length(candidates), msf.params.nfits)]]
 end
 
 
@@ -95,18 +95,8 @@ be empty if none of the directions had enough hits to perform the algorithm.
 
 """
 function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directionset::DirectionSet) where T<:AbstractReducedHit
-    chunk_size = max(1, length(directionset.directions) ÷ Threads.nthreads())
-    chunks = Iterators.partition(directionset.directions, chunk_size)
-
-    tasks = map(chunks) do chunk
-        Threads.@spawn begin
-            xytsolver = XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ)
-            results = [xytsolver(rhits, c, directionset.angular_separation) for c in chunk]
-            results
-        end
-    end
-
-    mapreduce(fetch, vcat, tasks)
+    xytsolver = XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ)
+    [xytsolver(rhits, dir, directionset.angular_separation) for dir in directionset.directions]
 end
 
 struct MuonScanfitCandidate
@@ -116,9 +106,10 @@ struct MuonScanfitCandidate
     Q::Float64  # quality of the fit
     S1::Float64  # spread of the prefits, the smaller the better
     S2::Float64  # spread of the last fits, the smaller the better
+    stage::Int   # stage number (1 for the first stage, 2 for the second one...)
     NDF::Int
 end
-MuonScanfitCandidate(pos::Position{Float64}, dir::Direction{Float64}, t::Float64, Q::Float64, NDF::Int) = MuonScanfitCandidate(pos, dir, t, Q, π, π, NDF)
+MuonScanfitCandidate(pos::Position{Float64}, dir::Direction{Float64}, t::Float64, Q::Float64, NDF::Int) = MuonScanfitCandidate(pos, dir, t, Q, π, π, 1, NDF)
 Base.angle(m1::T, m2::T) where T<:MuonScanfitCandidate = angle(m1.dir, m2.dir)
 
 """
@@ -399,7 +390,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
     hits = s.hits_buffer  # just for convenience
     n_final_hits = length(hits)
 
-    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 0)
+    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 1, 0)
 
     NDF = n_final_hits - s.est.NUMBER_OF_PARAMETERS
     N = hitcount(hits)
