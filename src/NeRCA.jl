@@ -4,8 +4,6 @@ using LinearAlgebra
 using Statistics
 using Printf
 
-using DocStringExtensions
-
 using KM3io
 
 using StaticArrays
@@ -34,23 +32,6 @@ export
     fibonaccisphere, fibonaccicone, rotator, spread,
     # re-export from KM3io
     Detector, Direction, Position
-
-
-
-@template (FUNCTIONS, METHODS, MACROS) =
-    """
-    $(TYPEDSIGNATURES)
-    $(DOCSTRING)
-    """
-
-@template TYPES = """
-    $(TYPEDEF)
-
-    $(DOCSTRING)
-
-    # Fields
-    $(TYPEDFIELDS)
-    """
 
 
 include("math.jl")

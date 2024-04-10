@@ -11,11 +11,10 @@ makedocs(;
         warn_outdated = true,
     ),
     warnonly = [:missing_docs],
+    checkdocs = :exports,
     pages = [
         "Home" => "index.md",
-        "I/O" => "io.md",
         "Hits" => "hits.md",
-        "ROyFit" => "fit.md",
     ],
     repo = Documenter.Remotes.URL(
         "https://git.km3net.de/tgal/NeRCA.jl/blob/{commit}{path}#L{line}",

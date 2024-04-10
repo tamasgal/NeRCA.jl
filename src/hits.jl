@@ -85,11 +85,15 @@ starttime(hit) = time(hit)
 endtime(hit) = time(hit) + hit.tot
 
 """
+  hitcount(hits::AbstractArray{T}) where T<:AbstractReducedHit
+
 Return the total number of hits for a collection of reduced hits.
 """
 hitcount(hits::AbstractArray{T}) where T<:AbstractReducedHit = sum(h.n for h in hits)
 
 """
+  function combine(snapshot_hits::Vector{KM3io.SnapshotHit}, triggered_hits::Vector{KM3io.TriggeredHit})
+
 Combine snapshot and triggered hits to a single hits-vector.
 
 This should be used to transfer the trigger information to the
@@ -117,6 +121,8 @@ end
 
 
 """
+  function nfoldhits(hits::Vector{T}, Δt, n) where {T<:KM3io.AbstractDAQHit}
+
 Create a `Vector` with hits contributing to `n`-fold coincidences within a time
 window of Δt.
 """
@@ -143,12 +149,15 @@ end
 
 
 """
+
+  function count_multiplicities(hits::Vector{T}; tmax=20) where {T<:KM3io.AbstractHit}
+
 Calculate the multiplicities for a given time window. Two arrays are
 are returned, one contains the multiplicities, the second one the IDs
 of the coincidence groups.
 The hits should be sorted by time and then by dom_id.
 """
-function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:KM3io.AbstractHit}
+function count_multiplicities(hits::Vector{T}; tmax=20) where {T<:KM3io.AbstractHit}
     n = length(hits)
     mtp = ones(Int32, n)
     cid = zeros(Int32, n)
@@ -186,10 +195,12 @@ function count_multiplicities(hits::Vector{T}, tmax=20) where {T<:KM3io.Abstract
 end
 
 """
+  function count_multiplicities!(hits::Vector{KM3io.XCalibratedHit}; tmax=20)
+
 Counts the multiplicities and modifies the .multiplicity field of the hits.
 Important: the hits have to be sorted by time and then by DOM ID first.
 """
-function count_multiplicities!(hits::Vector{KM3io.XCalibratedHit}, tmax=20)
+function count_multiplicities!(hits::Vector{KM3io.XCalibratedHit}; tmax=20)
     _mtp = 0
     _cid = 0
     t0 = 0
@@ -244,6 +255,8 @@ end
 
 
 """
+    duhits(hits::Vector{T}) where {T<:KM3io.XCalibratedHit}
+
 Categorise hits by DU and put them into a dictionary of DU=>Vector{Hit}.
 
 Caveat: this function is not typesafe, only suited for high-level analysis (like plots).
@@ -252,6 +265,8 @@ Caveat: this function is not typesafe, only suited for high-level analysis (like
 
 
 """
+    totcut(hits::Vector{T}, tot) where {T<:KM3io.AbstractDAQHit}
+
 Return a vector of hits with ToT >= `tot`.
 """
 function totcut(hits::Vector{T}, tot) where {T<:KM3io.AbstractDAQHit}
@@ -260,6 +275,8 @@ end
 
 
 """
+    nphes(tot)
+
 Returns the estimated number of photoelectrons for a given ToT.
 """
 function nphes(tot)
@@ -277,6 +294,7 @@ end
 
 
 """
+    modulemap(hits::Vector{T}) where T
 
 Creates a map (`Dict{Int32, Vector{T}}`) from a flat `Vector{T}` split up based
 on the `dom_id` of each element. A typical use is to split up a vector of hits
@@ -298,6 +316,8 @@ function modulemap(hits::Vector{T}) where T
 end
 
 """
+    KM3io.calibrate(T::Type{HitR1}, det::Detector, hits)
+
 Calibrates hits.
 """
 function KM3io.calibrate(T::Type{HitR1}, det::Detector, hits)
@@ -321,6 +341,8 @@ end
 
 
 """
+    combine(hits::Vector{T}) where T <: KM3io.AbstractHit
+
 Combines several hits into a single one by taking the earliest start time,
 then latest endtime and a ToT which spans over the time range.
 """
@@ -354,8 +376,10 @@ struct L1Builder
 end
 
 """
+
 Find coincidences within the time window `Δt` of the initialised `params`. The return
-value is a vector of `L1Hit`s.
+value is a vector of `L1Hit`.
+
 """
 function (b::L1Builder)(::Type{H}, det::Detector, hits::Vector{T}; combine=true) where {T, H}
     out = H[]
@@ -437,6 +461,8 @@ end
 
 
 """
+    timetoz(hit)
+
 Calculates the time to reach the z-position of the `hit` along the z-axis.
 """
 function timetoz(hit)
@@ -504,9 +530,7 @@ end
 Base.show(io::IO, m::Match3B) = print(io, "Match3B($(m.roadwidth), $(m.tmaxextra))")
 
 """
-
 The Match3B algorithm.
-
 """
 (m::Match3B)(hit1, hit2) = m(hit1, hit2, time(hit1), time(hit2))
 """
