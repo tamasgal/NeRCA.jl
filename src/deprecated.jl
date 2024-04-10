@@ -1,0 +1,5 @@
+export MuonScanfit, MuonScanfitCandidate, MuonScanfitParameters
+
+Base.@deprecate_binding MuonScanfit FibonacciFit
+Base.@deprecate_binding MuonScanfitParameters FibonacciFitParameters
+Base.@deprecate_binding MuonScanfitCandidate FibonacciFitCandidate
