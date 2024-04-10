@@ -14,11 +14,9 @@ The I/O for KM3NeT related data is provided by [KM3io.jl](https://git.km3net.de/
 
 ## Installation
 
-`NeRCA.jl` was initially registered on the officially Julia package registry but since version 0.11.0, it resides in the [KM3NeT Julia Registry](https://git.km3net.de/common/julia-registry). To install the latest version, you first need to add the KM3NeT Julia Registry to your local registries. Follow the instructions in its README or simply do
+`NeRCA.jl` was initially registered on the officially Julia package registry but since version 0.11.0, it resides in the [KM3NeT Julia Registry](https://git.km3net.de/common/julia-registry). To install the latest version, you first need to add the KM3NeT Julia Registry to your local registries. Follow the instructions in its README!
 
-    git clone https://git.km3net.de/common/julia-registry ~/.julia/registries/KM3NeT
-
-After that, you can install `NeRCA.jl` just like any other Julia package with `Pkg`:
+*After that*, you can install `NeRCA.jl` just like any other Julia package with `Pkg`:
 
 ```julia-repl
 using Pkg
