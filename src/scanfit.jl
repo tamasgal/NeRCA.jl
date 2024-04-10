@@ -152,6 +152,7 @@ struct SingularSVDException <: Exception
     message::String
 end
 
+# TODO: currently NUMBER_OF_PARAMETERS and MINIMAL_SVD_WEIGHT are fixed parameters
 mutable struct Line1ZEstimator
     model::Line1Z
     V::MMatrix{3, 3, Float64, 9}
