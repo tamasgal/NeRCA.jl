@@ -15,6 +15,7 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "Hits" => "hits.md",
+        "FibonacciFit" => "ffit.md",
     ],
     repo = Documenter.Remotes.URL(
         "https://git.km3net.de/tgal/NeRCA.jl/blob/{commit}{path}#L{line}",
