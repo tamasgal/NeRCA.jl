@@ -1,7 +1,7 @@
 const N_FITS_SPREAD = 10  # number of prefits to calculate the spread of the fit
 
 
-Base.@kwdef struct MuonScanfitParameters
+Base.@kwdef struct FibonacciFitParameters
     tmaxlocal::Float64 = 18.0  # [ns]
     roadwidth::Float64 = 200.0  # [m]
     nmaxhits::Int = 50  # maximum number of hits to use
@@ -25,55 +25,55 @@ struct DirectionSet
     angular_separation::Float64
 end
 
-struct MuonScanfit
-    params::MuonScanfitParameters
+struct FibonacciFit
+    params::FibonacciFitParameters
     detector::Detector
     coarsedirections::DirectionSet
     coincidencebuilder::L1Builder
-    function MuonScanfit(params::MuonScanfitParameters, detector::Detector)
+    function FibonacciFit(params::FibonacciFitParameters, detector::Detector)
         coincidencebuilder = L1Builder(L1BuilderParameters(params.tmaxlocal, false))
         new(params, detector, DirectionSet(fibonaccisphere(params.α₁), params.α₁), coincidencebuilder)
     end
 end
-MuonScanfit(det::Detector) = MuonScanfit(MuonScanfitParameters(), det)
-function Base.show(io::IO, m::MuonScanfit)
+FibonacciFit(det::Detector) = FibonacciFit(FibonacciFitParameters(), det)
+function Base.show(io::IO, m::FibonacciFit)
     print(io, "$(typeof(m)) with a coarse scan of $(m.params.α₁)ᵒ and a fine scan of $(m.params.α₂)ᵒ.")
 end
 
 """
 Performs a Muon track fit for a given event.
 """
-(msf::MuonScanfit)(event::DAQEvent) = msf(event.snapshot_hits)
+(ff::FibonacciFit)(event::DAQEvent) = ff(event.snapshot_hits)
 
 """
 Performs a Muon track fit for a given set of hits (usually snapshot hits).
 """
-function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
+function (ff::FibonacciFit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
-    rhits = msf.coincidencebuilder(HitR1, msf.detector, hits)
+    rhits = ff.coincidencebuilder(HitR1, ff.detector, hits)
 
     sort!(rhits)
     unique!(h->h.dom_id, rhits)
 
-    clusterize!(rhits, Match3B(msf.params.roadwidth, msf.params.tmaxlocal))
+    clusterize!(rhits, Match3B(ff.params.roadwidth, ff.params.tmaxlocal))
 
     # First stage on 4π
-    candidates = scanfit(msf.params, rhits, msf.coarsedirections)
+    candidates = scanfit(ff.params, rhits, ff.coarsedirections)
     isempty(candidates) && return candidates
     sort!(candidates, by=m->m.Q; rev=true)
 
     S1 = spread(candidates[1:min(N_FITS_SPREAD, length(candidates))])
 
     # Second stage on directed cones pointing towards the previous best directions
-    if msf.params.nprefits > 0
+    if ff.params.nprefits > 0
         directions = Vector{Vector{Direction{Float64}}}()
-        for idx in 1:min(msf.params.nprefits, length(candidates))
+        for idx in 1:min(ff.params.nprefits, length(candidates))
             most_likely_dir = candidates[idx].dir
-            push!(directions, fibonaccicone(most_likely_dir, msf.params.α₂, msf.params.θ))
+            push!(directions, fibonaccicone(most_likely_dir, ff.params.α₂, ff.params.θ))
         end
-        directionset = DirectionSet(vcat(directions...), msf.params.α₂)
+        directionset = DirectionSet(vcat(directions...), ff.params.α₂)
         # TODO: setting the stage field here is maybe a bit awkward
-        for candidate in scanfit(msf.params, rhits, directionset)
+        for candidate in scanfit(ff.params, rhits, directionset)
             push!(candidates, @set candidate.stage = 2)
         end
 
@@ -83,23 +83,23 @@ function (msf::MuonScanfit)(hits::Vector{T}) where T<:KM3io.AbstractHit
 
     S2 = spread(candidates[1:min(N_FITS_SPREAD, length(candidates))])
 
-    [setproperties(c, (S1=S1, S2=S2)) for c in candidates[1:min(length(candidates), msf.params.nfits)]]
+    [setproperties(c, (S1=S1, S2=S2)) for c in candidates[1:min(length(candidates), ff.params.nfits)]]
 end
 
 
 """
 
 Performs the scanfit for each given direction and returns a
-`Vector{MuonScanfitCandidate}` with all successful fits. The resulting vector can
+`Vector{FibonacciFitCandidate}` with all successful fits. The resulting vector can
 be empty if none of the directions had enough hits to perform the algorithm.
 
 """
-function scanfit(params::MuonScanfitParameters, rhits::Vector{T}, directionset::DirectionSet) where T<:AbstractReducedHit
+function scanfit(params::FibonacciFitParameters, rhits::Vector{T}, directionset::DirectionSet) where T<:AbstractReducedHit
     xytsolver = XYTSolver(params.nmaxhits, params.roadwidth, params.tmaxlocal, params.σ)
     [xytsolver(rhits, dir, directionset.angular_separation) for dir in directionset.directions]
 end
 
-struct MuonScanfitCandidate
+struct FibonacciFitCandidate
     pos::Position{Float64}
     dir::Direction{Float64}
     t::Float64
@@ -109,8 +109,8 @@ struct MuonScanfitCandidate
     stage::Int   # stage number (1 for the first stage, 2 for the second one...)
     NDF::Int
 end
-MuonScanfitCandidate(pos::Position{Float64}, dir::Direction{Float64}, t::Float64, Q::Float64, NDF::Int) = MuonScanfitCandidate(pos, dir, t, Q, π, π, 1, NDF)
-Base.angle(m1::T, m2::T) where T<:MuonScanfitCandidate = angle(m1.dir, m2.dir)
+FibonacciFitCandidate(pos::Position{Float64}, dir::Direction{Float64}, t::Float64, Q::Float64, NDF::Int) = FibonacciFitCandidate(pos, dir, t, Q, π, π, 1, NDF)
+Base.angle(m1::T, m2::T) where T<:FibonacciFitCandidate = angle(m1.dir, m2.dir)
 
 """
 The quality of the fit, the larger the better, as used in e.g. Jpp.
@@ -391,7 +391,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
     hits = s.hits_buffer  # just for convenience
     n_final_hits = length(hits)
 
-    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 1, 0)
+    n_final_hits <= s.est.NUMBER_OF_PARAMETERS && return FibonacciFitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 1, 0)
 
     NDF = n_final_hits - s.est.NUMBER_OF_PARAMETERS
     N = hitcount(hits)
@@ -401,7 +401,7 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
         estimate!(s.est, hits)
     catch ex
         # isa(ex, SingularSVDException) && @warn "Singular SVD"
-        return MuonScanfitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 0)
+        return FibonacciFitCandidate(Position(0, 0, 0), dir, 0, -Inf, π, π, 0)
     end
 
     # TODO: consider creating a "pos()" getter for everything
@@ -417,5 +417,5 @@ function (s::XYTSolver)(hits::Vector{T}, dir::Direction{Float64}, α::Float64) w
     χ² = dot(Y, V \ Y)
     fit_pos = R \ s.est.model.pos
 
-    MuonScanfitCandidate(fit_pos, dir, s.est.model.t, quality(χ², N, NDF), NDF)
+    FibonacciFitCandidate(fit_pos, dir, s.est.model.t, quality(χ², N, NDF), NDF)
 end

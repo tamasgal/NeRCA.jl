@@ -25,7 +25,8 @@ export
     L1Builder, L1BuilderParameters, Match3B, Match1D,
     Line1Z, Line1ZEstimator,
     dumandfit,
-    MuonScanfit, MuonScanfitCandidate, MuonScanfitParameters, timetoz,
+    FibonacciFit, FibonacciFitCandidate, FibonacciFitParameters,
+    timetoz,
     duhits, nfoldhits,
     most_frequent, categorize, modulemap,
     initdb, streamds, detx,  # db.jl
@@ -37,9 +38,10 @@ export
 include("math.jl")
 include("hits.jl")
 include("mc.jl")
-include("scanfit.jl")
+include("ffit.jl")
 include("dumandfit.jl")
 include("royfit.jl")
 include("db.jl")
+include("deprecated.jl")
 
 end
