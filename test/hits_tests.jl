@@ -67,7 +67,7 @@ end
 # multiplicities
 sorted_hits = sort(hits, by=h->h.t)
 sort!(sorted_hits, by=h->h.dom_id)
-mtps, mtp_ids = NeRCA.count_multiplicities(sorted_hits, 10)
+mtps, mtp_ids = NeRCA.count_multiplicities(sorted_hits; tmax=10)
 @test (1, 1) == (mtps[1], mtp_ids[1])
 @test (2, 2) == (mtps[2], mtp_ids[2])
 @test (2, 2) == (mtps[3], mtp_ids[3])
