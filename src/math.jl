@@ -14,11 +14,18 @@ end
 
 
 """
-Calculate the distance between two lines.
+
+Calculate the distance between two lines. `P` is a point on the first line,
+`u` is the vector of direction of the same. `Q` and `v` in the same manner for the
+second line.
+
 """
 function lld3(P, u, Q, v)
-    R = Q - P
     n = cross(u, v)
+    # parallel lines, use point to line distance
+    all(iszero, n) && return pld3(P, Q, v)
+
+    R = Q - P
     return norm(R⋅n) / norm(n)
 end
 
