@@ -95,7 +95,10 @@ the Fibonacci lattice.
 fibonaccisphere(α::Float64) = fibonaccisphere(Int(ceil((195.39/α)^2)))
 
 """
-Create `S` directions inside a cone with an opening angle of `θ` [deg] which points towards `dir`.
+
+Create `S` directions inside a cone with an opening angle of `θ` [deg] (angle
+between cone axis and its surface) which points towards `dir`.
+
 """
 function fibonaccicone(dir::Direction{Float64}, S::Integer, θ::Float64)
     N = Int(ceil(S / sin(deg2rad(θ)/2)^2))
@@ -116,8 +119,9 @@ end
 
 """
 
-Creates directions with a median angular separation of `α` [deg] inside a cone with an
-opening angle of `θ` [deg] pointing towards `dir`.
+Creates directions with a median angular separation of `α` [deg] inside a cone
+with an opening angle of `θ` [deg] (angle between the cone axis and its surface)
+pointing towards `dir`.
 
 """
 function fibonaccicone(dir::Direction{Float64}, α::Float64, θ::Float64)
