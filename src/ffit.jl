@@ -117,7 +117,7 @@ The quality of the fit, the larger the better, as used in e.g. Jpp.
 """
 quality(χ², N, NDF) = N  -  0.25 * χ² / NDF
 quality(χ², NDF) = NDF  -  0.25 * χ² / NDF
-quality(χ²) = -χ^2
+quality(χ²) = -χ²^2
 
 abstract type EstimatorModel end
 
