@@ -1,14 +1,24 @@
 stages:
   - test
+  - benchmarks
   - docs
   - deploy
+
+variables:
+  JULIA_DEPOT_PATH: "$CI_PROJECT_DIR/.julia"
+
+cache:
+  paths:
+    - $JULIA_DEPOT_PATH
+  key: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+
 
 before_script:
   # workaround for https://github.com/JuliaDocs/Documenter.jl/issues/686
   - apt-get -qq update; apt-get -y install git
   - mkdir -p /root/.ssh && ssh-keyscan -H -t rsa git.km3net.de >> /root/.ssh/known_hosts
 
-.script:
+.test_script:
   script:
     - |
       julia -e '
@@ -19,6 +29,18 @@ before_script:
         using Pkg
         Pkg.build()
         Pkg.test(coverage=true)'
+
+.benchmark_script:
+  script:
+    - |
+      julia -e '
+        using Pkg
+        Pkg.update()
+        Pkg.Registry.add(RegistrySpec(url = "https://git.km3net.de/common/julia-registry"))'
+      julia --project=@. -e '
+        using Pkg
+        Pkg.build()'
+      make benchmark
 
 .coverage:
   coverage: /Test coverage (\d+\.\d+%)/
@@ -38,18 +60,43 @@ Julia 1.8:
   image: docker.km3net.de/base/julia:1.8
   stage: test
   extends:
-    - .script
+    - .test_script
     - .coverage
 
 Julia 1.9:
   image: docker.km3net.de/base/julia:1.9
   stage: test
   extends:
-    - .script
+    - .test_script
     - .coverage
 
+Julia 1.10:
+  image: git.km3net.de:4567/common/dockerfiles/base/julia:1.10
+  stage: test
+  extends:
+    - .test_script
+    - .coverage
+
+Benchmark Julia 1.8:
+  image: docker.km3net.de/base/julia:1.8
+  stage: benchmarks
+  extends:
+    - .benchmark_script
+
+Benchmark Julia 1.9:
+  image: docker.km3net.de/base/julia:1.9
+  stage: benchmarks
+  extends:
+    - .benchmark_script
+
+Benchmark Julia 1.10:
+  image: git.km3net.de:4567/common/dockerfiles/base/julia:1.10
+  stage: benchmarks
+  extends:
+    - .benchmark_script
+
 docs:
-  image: docker.km3net.de/base/julia:1.9-tex
+  image: git.km3net.de:4567/common/dockerfiles/base/julia:1.10-tex
   stage: docs
   script:
     - |
@@ -63,6 +110,7 @@ docs:
         Pkg.update()
         Pkg.develop(PackageSpec(path=pwd()))
         Pkg.instantiate()
+        Pkg.resolve()
         using Documenter: doctest
         using NeRCA
         doctest(NeRCA)
